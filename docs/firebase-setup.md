@@ -2,9 +2,10 @@
 
 The app is now structured for:
 
-- Auth0 for social login orchestration.
+- Firebase Authentication for Google and Facebook sign-in.
 - Firebase Firestore for user/profile/progress storage.
-- Local storage fallback when Firebase or Auth0 environment values are missing.
+- Auth0/custom-provider path for Instagram if that remains a product requirement.
+- Local storage fallback when Firebase/Auth0 environment values are missing.
 
 ## Firestore Collections
 
@@ -69,19 +70,35 @@ VITE_AUTH0_INSTAGRAM_CONNECTION=instagram
 VITE_FIREBASE_API_KEY=
 VITE_FIREBASE_AUTH_DOMAIN=
 VITE_FIREBASE_PROJECT_ID=
+VITE_FIREBASE_STORAGE_BUCKET=
+VITE_FIREBASE_MESSAGING_SENDER_ID=
 VITE_FIREBASE_APP_ID=
+VITE_FIREBASE_MEASUREMENT_ID=
 ```
 
 ## Important Auth Note
 
 Firestore security rules use `request.auth.uid`. That means production Firestore writes need a Firebase-authenticated user identity.
 
-The current code is ready for Firestore SDK usage and stores data at the correct paths when a Firebase-authenticated session exists. If Auth0 is the identity provider, production should add one of these before enabling live child data:
+The app now uses Firebase Authentication first when Firebase env values exist. Google and Facebook are Firebase-native sign-in targets. Instagram still needs a custom provider or Auth0 connection.
+
+The current code is ready for Firestore SDK usage and stores data at the correct paths when a Firebase-authenticated session exists. If Auth0 is later used as the identity provider, production should add one of these before enabling live child data:
 
 1. Auth0 to Firebase custom-token exchange through a backend endpoint or Cloud Function.
 2. Firebase Authentication as the primary auth provider for Google/Facebook, with a custom provider strategy for Instagram.
 
 The frontend fallback is intentionally safe for development: when Firebase/Auth0 values are missing, or when there is no Firebase-authenticated session yet, it stores progress in browser local storage and does not send child data anywhere.
+
+## Firebase Console Checklist
+
+In Firebase Console:
+
+1. Enable Authentication.
+2. Enable Google sign-in.
+3. Enable Facebook sign-in after creating the Facebook developer app credentials.
+4. Add `wayne9999.github.io` to Authentication authorized domains.
+5. Create Firestore Database in production mode.
+6. Deploy or paste the rules from `firestore.rules`.
 
 ## Security Rules
 

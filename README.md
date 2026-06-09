@@ -12,7 +12,7 @@ For Codex continuity and project handoff notes, see `.codex/project.md` and `PRO
 - Caregiver progress view with known words, reading sessions, memory boards, and next-step suggestions.
 - Teacher/admin dashboard with roster, student strengths, growth areas, and intervention planning.
 - Donation and subscription support page using Stripe Payment Links.
-- Auth0-ready account page with Google, Facebook, and Instagram connection buttons.
+- Firebase Auth account page with Google and Facebook support, plus an Instagram custom-provider placeholder.
 - Firebase Firestore-ready progress repository with local storage fallback for development.
 - Responsive layout for desktop, tablet, and phone-sized screens.
 
@@ -61,7 +61,7 @@ src/
   main.tsx                         React entrypoint
   RootApp.tsx                      App shell, navigation, progress wiring
   data/content.ts                  Reading levels, memory cards, caregiver tips
-  features/auth/                   Auth0-ready account and social login boundary
+  features/auth/                   Firebase/Auth0-ready account and social login boundary
   features/reading/                Sight word, phonics, and sentence flow
   features/memory/                 Matching game flow
   features/progress/               Caregiver-facing progress view
@@ -77,11 +77,12 @@ src/
 
 ## Auth And Database
 
-The app is structured for Auth0 social sign-in and Firebase Firestore storage. See `docs/firebase-setup.md` for setup details, required environment variables, Firestore document paths, and security-rule notes.
+The app now uses Firebase Auth first when Firebase env values exist, and Firebase Firestore for progress storage. See `docs/firebase-setup.md` for setup details, required environment variables, Firestore document paths, and security-rule notes.
 
 Current behavior:
 
-- If Auth0 env values are missing, the account page uses demo sign-in.
+- If Firebase env values are present, the account page uses Firebase Auth.
+- If Firebase/Auth0 env values are missing, the account page uses demo sign-in.
 - If Firebase env values are missing, progress is stored in browser local storage.
 - When Firebase is configured and a Firebase-authenticated user is available, progress saves to `users/{userId}/learning/progress`.
 - Teacher/admin classroom data is planned under `classrooms/{classroomId}` and requires trusted backend-assigned role claims.
@@ -114,7 +115,8 @@ Suggested subscriptions:
 ### Next Milestone
 
 - Add child profiles.
-- Add the Auth0-to-Firebase custom-token bridge or switch to Firebase Auth as primary auth.
+- Finish Firebase Auth provider setup in Firebase Console.
+- Add Instagram through a custom provider or Auth0 bridge if that remains a requirement.
 - Replace demo classroom data with Firestore classroom enrollment data.
 - Add backend AI analysis endpoint for evidence-based teacher recommendations.
 - Add a content editor for caregivers or teachers.

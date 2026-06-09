@@ -53,7 +53,14 @@ export function SignInPanel() {
         <p className="eyebrow">Configuration status</p>
         <h3>Auth and database readiness</h3>
         <ul className="next-steps">
-          <li>Auth mode: {mode === "auth0" ? "Auth0 configured" : "Demo sign-in until Auth0 env values are set"}</li>
+          <li>
+            Auth mode:{" "}
+            {mode === "firebase"
+              ? "Firebase Auth configured"
+              : mode === "auth0"
+                ? "Auth0 configured"
+                : "Demo sign-in until auth env values are set"}
+          </li>
           <li>
             Database:{" "}
             {isFirebaseConfigured()

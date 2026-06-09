@@ -1,7 +1,9 @@
 import { Auth0Provider, useAuth0 } from "@auth0/auth0-react";
 import { createContext, useContext, useMemo, useState, type PropsWithChildren } from "react";
+import { isFirebaseConfigured } from "../../services/firebase";
 import type { AppUser, SocialProvider } from "../../types";
 import { authConfig, isAuth0Configured } from "./authConfig";
+import { FirebaseReadNestAuthProvider, useFirebaseAuth } from "./FirebaseAuthProvider";
 
 type AuthContextValue = {
   user: AppUser | null;
@@ -9,7 +11,7 @@ type AuthContextValue = {
   isLoading: boolean;
   signIn: (provider: SocialProvider) => Promise<void>;
   signOut: () => Promise<void>;
-  mode: "auth0" | "demo";
+  mode: "auth0" | "demo" | "firebase";
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -82,6 +84,14 @@ function Auth0ContextBridge({ children }: PropsWithChildren) {
 }
 
 export function ReadNestAuthProvider({ children }: PropsWithChildren) {
+  if (isFirebaseConfigured()) {
+    return (
+      <FirebaseReadNestAuthProvider>
+        <FirebaseContextBridge>{children}</FirebaseContextBridge>
+      </FirebaseReadNestAuthProvider>
+    );
+  }
+
   if (!isAuth0Configured()) {
     return <DemoAuthProvider>{children}</DemoAuthProvider>;
   }
@@ -98,6 +108,12 @@ export function ReadNestAuthProvider({ children }: PropsWithChildren) {
       <Auth0ContextBridge>{children}</Auth0ContextBridge>
     </Auth0Provider>
   );
+}
+
+function FirebaseContextBridge({ children }: PropsWithChildren) {
+  const firebaseAuth = useFirebaseAuth();
+
+  return <AuthContext.Provider value={firebaseAuth}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
