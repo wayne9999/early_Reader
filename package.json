@@ -1,0 +1,19 @@
+{
+  "name": "early-reader-memory-mvp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A small web MVP that helps early elementary students practice reading, sight words, and age-appropriate memory skills.",
+  "type": "module",
+  "scripts": {
+    "start": "node scripts/server.mjs",
+    "check": "node --check scripts/server.mjs && node --check src/app.js && node --check src/data/content.js && node --check src/services/progressStore.js && node --check src/features/readingPractice.js && node --check src/features/memoryGame.js && node --check src/features/progressDashboard.js"
+  },
+  "keywords": [
+    "reading",
+    "elementary",
+    "education",
+    "memory",
+    "mvp"
+  ],
+  "license": "MIT"
+}
