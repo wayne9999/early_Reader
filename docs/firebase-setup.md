@@ -3,7 +3,7 @@
 The app is now structured for:
 
 - Firebase Authentication for Google and Facebook sign-in.
-- Firebase Firestore for user/profile/progress storage.
+- Firebase Firestore for user profile, role, progress, event history, and teacher assignment storage.
 - Auth0/custom-provider path for Instagram if that remains a product requirement.
 - Local storage fallback when Firebase/Auth0 environment values are missing.
 
@@ -11,10 +11,13 @@ The app is now structured for:
 
 ```text
 users/{userId}
+  uid
+  role
   displayName
   email
   picture
-  provider
+  teacherCode
+  createdAt
   updatedAt
 
 users/{userId}/learning/progress
@@ -26,6 +29,35 @@ users/{userId}/learning/progress
   bestMemoryTurns
   completedToday
   lastPracticeDate
+  updatedAt
+
+users/{userId}/learningEvents/{eventId}
+  userId
+  type
+  label
+  area
+  metadata
+  createdAt
+
+teacherProfiles/{teacherId}
+  uid
+  displayName
+  email
+  picture
+  teacherCode
+  createdAt
+  updatedAt
+
+teacherStudentLinks/{teacherId_studentId}
+  teacherId
+  teacherName
+  teacherEmail
+  studentId
+  studentName
+  studentEmail
+  status
+  latestProgressSnapshot
+  requestedAt
   updatedAt
 
 classrooms/{classroomId}
@@ -100,6 +132,20 @@ In Firebase Console:
 5. Create Firestore Database in production mode.
 6. Deploy or paste the rules from `firestore.rules`.
 
+## Role And Assignment Flow
+
+Current MVP behavior:
+
+1. A signed-in user chooses `student` or `teacher` once.
+2. Teacher profiles are written to `teacherProfiles/{teacherId}` with a searchable teacher code.
+3. Students search by teacher email or code.
+4. Students create `teacherStudentLinks/{teacherId_studentId}` with `status: "requested"`.
+5. Teachers approve requests, changing the status to `active`.
+6. Student reading and memory actions create history records under `users/{studentId}/learningEvents`.
+7. Active assigned teachers can read that student's event history and latest progress snapshot.
+
+The app prevents role switching after profile creation. Firebase Auth also prevents one Google email from becoming two separate accounts under normal email-provider linking rules. For stricter production enforcement, use Cloud Functions or a backend API to validate role creation, custom claims, paid teacher entitlements, and duplicate-email policies.
+
 ## Security Rules
 
 Rules live in `firestore.rules`. They currently allow each signed-in Firebase user to read/update only:
@@ -107,17 +153,27 @@ Rules live in `firestore.rules`. They currently allow each signed-in Firebase us
 ```text
 users/{theirUserId}
 users/{theirUserId}/learning/progress
+users/{theirUserId}/learningEvents
 ```
+
+They also allow:
+
+- Signed-in users to read teacher search profiles.
+- Teachers to create/update only their own `teacherProfiles` when their user role is `teacher`.
+- Students to create assignment requests for themselves.
+- Students to update only the latest progress snapshot on their own assignment links.
+- Teachers to approve or decline only their own assignment links.
+- Active assigned teachers to read assigned student learning events.
 
 Deletes are denied by default.
 
-Teacher/admin classroom paths require a custom Firebase Auth claim:
+Legacy classroom paths still require a trusted role:
 
 ```text
 role: "teacher" | "admin"
 ```
 
-Set this claim only from trusted backend code. Do not let the frontend assign roles.
+For production, set privileged claims and paid access only from trusted backend code. Do not rely on frontend-only role assignment for high-stakes or paid access control.
 
 ## AI Analysis Design
 

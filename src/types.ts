@@ -1,4 +1,14 @@
-export type AppView = "reading" | "memory" | "progress" | "teacher" | "donate" | "support" | "account";
+export type AppView =
+  | "reading"
+  | "memory"
+  | "progress"
+  | "findTeacher"
+  | "teacher"
+  | "donate"
+  | "support"
+  | "account";
+
+export type UserRole = "student" | "teacher";
 
 export type PhonicsPrompt = {
   title: string;
@@ -45,6 +55,49 @@ export type AppUser = {
   provider?: string;
 };
 
+export type UserProfile = {
+  uid: string;
+  role: UserRole;
+  displayName: string;
+  email: string | null;
+  picture: string | null;
+  teacherCode?: string;
+  createdAt?: unknown;
+  updatedAt?: unknown;
+};
+
+export type LearningEventType =
+  | "word_known"
+  | "reading_completed"
+  | "sound_listened"
+  | "sentence_listened"
+  | "memory_match"
+  | "memory_completed";
+
+export type LearningEvent = {
+  id?: string;
+  userId: string;
+  type: LearningEventType;
+  label: string;
+  area: SkillArea;
+  metadata?: Record<string, string | number | boolean>;
+  createdAt?: unknown;
+};
+
+export type TeacherStudentLink = {
+  id: string;
+  teacherId: string;
+  teacherName: string;
+  teacherEmail: string | null;
+  studentId: string;
+  studentName: string;
+  studentEmail: string | null;
+  status: "requested" | "active" | "declined";
+  latestProgressSnapshot: Progress;
+  requestedAt?: unknown;
+  updatedAt?: unknown;
+};
+
 export type SocialProvider = "google" | "facebook" | "instagram";
 
 export type SkillArea = "phonics" | "sightWords" | "fluency" | "workingMemory" | "consistency";
@@ -55,6 +108,9 @@ export type StudentSummary = {
   gradeBand: "K" | "1" | "2";
   lastActive: string;
   progress: Progress;
+  email?: string | null;
+  assignmentStatus?: TeacherStudentLink["status"];
+  history?: LearningEvent[];
 };
 
 export type SkillInsight = {

@@ -1,20 +1,39 @@
 import { useEffect, useMemo, useState } from "react";
+import { RoleSetup } from "./features/account/RoleSetup";
 import { SignInPanel } from "./features/auth/SignInPanel";
 import { useAuth } from "./features/auth/AuthProvider";
 import { MemoryGame } from "./features/memory/MemoryGame";
 import { ProgressDashboard } from "./features/progress/ProgressDashboard";
 import { ReadingPractice } from "./features/reading/ReadingPractice";
+import { FindTeacher } from "./features/student/FindTeacher";
 import { SupportPage } from "./features/support/SupportPage";
 import { TeacherDashboard } from "./features/teacher/TeacherDashboard";
+import { syncAssignmentProgress } from "./services/assignmentRepository";
 import { billingConfig } from "./services/billingConfig";
 import { defaultProgress, loadProgress, saveProgress } from "./services/progressRepository";
-import type { AppView, Progress } from "./types";
+import { loadUserProfile } from "./services/userProfileRepository";
+import type { AppView, Progress, UserProfile } from "./types";
 
-const navItems: Array<{ id: AppView; label: string }> = [
+const studentNavItems: Array<{ id: AppView; label: string }> = [
   { id: "reading", label: "Reading" },
   { id: "memory", label: "Memory" },
   { id: "progress", label: "Progress" },
+  { id: "findTeacher", label: "Find Teacher" },
+  { id: "donate", label: "Donate" },
+  { id: "support", label: "Support" },
+  { id: "account", label: "Account" }
+];
+
+const teacherNavItems: Array<{ id: AppView; label: string }> = [
   { id: "teacher", label: "Teacher" },
+  { id: "support", label: "Plans" },
+  { id: "donate", label: "Donate" },
+  { id: "account", label: "Account" }
+];
+
+const publicNavItems: Array<{ id: AppView; label: string }> = [
+  { id: "reading", label: "Reading" },
+  { id: "memory", label: "Memory" },
   { id: "donate", label: "Donate" },
   { id: "support", label: "Support" },
   { id: "account", label: "Account" }
@@ -30,8 +49,11 @@ export function RootApp() {
   const { isLoading: isAuthLoading, user } = useAuth();
   const [currentView, setCurrentView] = useState<AppView>("reading");
   const [progress, setProgress] = useState<Progress>(defaultProgress);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [isProfileLoading, setIsProfileLoading] = useState(true);
   const [isProgressLoading, setIsProgressLoading] = useState(true);
   const goalCompleted = Math.min(progress.completedToday, 3);
+  const navItems = profile?.role === "teacher" ? teacherNavItems : profile?.role === "student" ? studentNavItems : publicNavItems;
 
   useEffect(() => {
     let isMounted = true;
@@ -54,8 +76,32 @@ export function RootApp() {
     };
   }, [user]);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    setIsProfileLoading(true);
+    loadUserProfile(user)
+      .then((loadedProfile) => {
+        if (isMounted) {
+          setProfile(loadedProfile);
+          if (loadedProfile?.role === "teacher") {
+            setCurrentView("teacher");
+          }
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsProfileLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user]);
+
   const view = useMemo(() => {
-    if (isAuthLoading || isProgressLoading) {
+    if (isAuthLoading || isProgressLoading || isProfileLoading) {
       return (
         <article className="practice-panel">
           <p className="eyebrow">Loading</p>
@@ -67,10 +113,23 @@ export function RootApp() {
     const handleProgressChange = (nextProgress: Progress) => {
       setProgress(nextProgress);
       void saveProgress(nextProgress, user);
+      void syncAssignmentProgress(user, nextProgress);
     };
 
+    if (user && !profile) {
+      return <RoleSetup user={user} onProfileCreated={setProfile} />;
+    }
+
+    if (profile?.role === "teacher" && !["teacher", "support", "donate", "account"].includes(currentView)) {
+      return <TeacherDashboard progress={progress} user={user} />;
+    }
+
+    if (profile?.role === "student" && currentView === "teacher") {
+      return <ProgressDashboard progress={progress} user={user} onProgressChange={handleProgressChange} />;
+    }
+
     if (currentView === "memory") {
-      return <MemoryGame progress={progress} onProgressChange={handleProgressChange} />;
+      return <MemoryGame progress={progress} user={user} onProgressChange={handleProgressChange} />;
     }
 
     if (currentView === "progress") {
@@ -79,6 +138,10 @@ export function RootApp() {
 
     if (currentView === "teacher") {
       return <TeacherDashboard progress={progress} user={user} />;
+    }
+
+    if (currentView === "findTeacher" && profile?.role === "student") {
+      return <FindTeacher progress={progress} user={user} profile={profile} />;
     }
 
     if (currentView === "donate") {
@@ -93,8 +156,8 @@ export function RootApp() {
       return <SignInPanel />;
     }
 
-    return <ReadingPractice progress={progress} onProgressChange={handleProgressChange} />;
-  }, [currentView, isAuthLoading, isProgressLoading, progress, user]);
+    return <ReadingPractice progress={progress} user={user} onProgressChange={handleProgressChange} />;
+  }, [currentView, isAuthLoading, isProfileLoading, isProgressLoading, profile, progress, user]);
 
   return (
     <div className="app-shell">
@@ -106,13 +169,14 @@ export function RootApp() {
           <div>
             <p className="eyebrow">Early reader MVP</p>
             <h1>ReadNest</h1>
+            {profile ? <small className="role-pill">{profile.role}</small> : null}
           </div>
         </div>
 
         <nav className="nav-tabs" aria-label="Main navigation">
           {navItems.map((item) => (
             <button
-              className={`nav-tab${currentView === item.id ? " is-active" : ""}`}
+              className={`nav-tab${item.id === "donate" ? " nav-donate" : ""}${currentView === item.id ? " is-active" : ""}`}
               key={item.id}
               type="button"
               onClick={() => setCurrentView(item.id)}

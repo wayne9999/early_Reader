@@ -12,7 +12,11 @@
 - Added caregiver progress dashboard.
 - Added teacher/admin dashboard with rule-based analysis.
 - Added Auth0-ready account page for Google, Facebook, and Instagram.
-- Added Firebase Firestore-ready repository and security rules.
+- Added Firebase Auth profile roles for student and teacher accounts.
+- Added Firestore progress, learning-event history, teacher profile, and teacher-student assignment repositories.
+- Added student teacher-search and assignment request flow.
+- Added teacher request approval, assigned-student history, progress snapshots, strengths, growth areas, and intervention planning.
+- Added Firestore security rules for profiles, progress, event history, and assignment links.
 - Added donation/subscription support page using Stripe Payment Links.
 - Added SEO metadata, sitemap, robots file, web manifest, Open Graph image, and static SEO pages.
 - Added GitHub Pages deployment workflow.
@@ -20,16 +24,16 @@
 
 ## Not Yet Fully Connected
 
-- Stripe Payment Links need to be created in the owner's Stripe account and added as env values.
-- Firebase project credentials need to be added.
-- Auth0 or Firebase Auth needs to be configured for real sign-in.
-- Firestore live writes require Firebase Auth or an Auth0-to-Firebase token bridge.
+- Facebook and Instagram sign-in still need provider setup/custom-provider work.
+- Teacher Pro payment is linked through Stripe Payment Links, but paid entitlement enforcement still needs a Stripe webhook and backend-controlled user claim or Firestore subscription document.
+- Teacher-created student invitations are not fully automated yet; current MVP lets students find and request teachers.
 - AI analysis needs a backend endpoint before using real AI on student data.
+- Production role enforcement should move to backend logic/custom claims before live classroom use at scale.
 
 ## Verification Last Run
 
 - `npm run check`
-- `npm run build`
+- `VITE_BASE_PATH=/early_Reader/ npm run build`
 - `npm audit --audit-level=moderate`
 - GitHub Pages deployment succeeded.
 - Live URL returned HTTP 200.

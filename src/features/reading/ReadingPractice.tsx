@@ -2,14 +2,16 @@ import { useState } from "react";
 import { readingLevels } from "../../data/content";
 import { recordKnownWord, recordReadingSession } from "../../services/progressRepository";
 import { celebrate, speak, speakSentence, speakSounds, speakWord } from "../../shared/speech";
-import type { Progress } from "../../types";
+import type { AppUser, Progress } from "../../types";
+import { recordLearningEvent } from "../../services/learningEventRepository";
 
 type ReadingPracticeProps = {
   progress: Progress;
+  user: AppUser | null;
   onProgressChange: (progress: Progress) => void;
 };
 
-export function ReadingPractice({ progress, onProgressChange }: ReadingPracticeProps) {
+export function ReadingPractice({ progress, user, onProgressChange }: ReadingPracticeProps) {
   const [levelIndex, setLevelIndex] = useState(0);
   const [wordIndex, setWordIndex] = useState(0);
   const level = readingLevels[levelIndex];
@@ -21,12 +23,20 @@ export function ReadingPractice({ progress, onProgressChange }: ReadingPracticeP
 
   function handleKnownWord() {
     onProgressChange(recordKnownWord(progress, word.text));
+    void recordLearningEvent(user, "word_known", word.text, "sightWords", {
+      level: level.id,
+      sentence: word.sentence
+    });
     celebrate(`Nice reading! You knew ${word.text}.`);
     goToNextWord();
   }
 
   function handleCompleteReading() {
     onProgressChange(recordReadingSession(progress));
+    void recordLearningEvent(user, "reading_completed", word.sentence, "fluency", {
+      level: level.id,
+      word: word.text
+    });
     celebrate("Wonderful reading! Let's try the next one.");
     goToNextWord();
   }
@@ -104,7 +114,17 @@ export function ReadingPractice({ progress, onProgressChange }: ReadingPracticeP
           <p className="eyebrow">Read a sentence</p>
           <p className="sentence">{word.sentence}</p>
           <div className="button-row">
-            <button className="secondary-button" type="button" onClick={() => speakSentence(word.sentence)}>
+            <button
+              className="secondary-button"
+              type="button"
+              onClick={() => {
+                speakSentence(word.sentence);
+                void recordLearningEvent(user, "sentence_listened", word.sentence, "fluency", {
+                  level: level.id,
+                  word: word.text
+                });
+              }}
+            >
               Listen
             </button>
             <button className="primary-button" type="button" onClick={handleCompleteReading}>

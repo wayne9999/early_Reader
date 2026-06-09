@@ -10,8 +10,28 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
+    function userRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    function isTeacherAssignedTo(studentId) {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/teacherStudentLinks/$(request.auth.uid + "_" + studentId))
+        && get(/databases/$(database)/documents/teacherStudentLinks/$(request.auth.uid + "_" + studentId)).data.status == "active";
+    }
+
+    function onlyChanged(keys) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys);
+    }
+
     match /users/{userId} {
-      allow read, create, update: if ownsUserDocument(userId);
+      allow read: if ownsUserDocument(userId);
+      allow create: if ownsUserDocument(userId)
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.role in ["student", "teacher"];
+      allow update: if ownsUserDocument(userId)
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.role == resource.data.role;
       allow delete: if false;
 
       match /learning/{documentId} {
@@ -19,22 +39,63 @@ service cloud.firestore {
           && documentId == "progress";
         allow delete: if false;
       }
+
+      match /learningEvents/{eventId} {
+        allow create: if ownsUserDocument(userId);
+        allow read: if ownsUserDocument(userId) || isTeacherAssignedTo(userId);
+        allow update, delete: if false;
+      }
+    }
+
+    match /teacherProfiles/{teacherId} {
+      allow read: if isSignedIn();
+      allow create, update: if ownsUserDocument(teacherId)
+        && request.resource.data.uid == request.auth.uid
+        && userRole() == "teacher";
+      allow delete: if false;
+    }
+
+    match /teacherStudentLinks/{linkId} {
+      allow create: if isSignedIn()
+        && linkId == request.resource.data.teacherId + "_" + request.auth.uid
+        && request.resource.data.studentId == request.auth.uid
+        && request.resource.data.status == "requested"
+        && exists(/databases/$(database)/documents/teacherProfiles/$(request.resource.data.teacherId));
+      allow read: if isSignedIn()
+        && (resource.data.studentId == request.auth.uid || resource.data.teacherId == request.auth.uid);
+      allow update: if isSignedIn()
+        && (
+          (
+            resource.data.studentId == request.auth.uid
+            && request.resource.data.studentId == resource.data.studentId
+            && request.resource.data.teacherId == resource.data.teacherId
+            && onlyChanged(["latestProgressSnapshot", "updatedAt"])
+          )
+          || (
+            resource.data.teacherId == request.auth.uid
+            && request.resource.data.studentId == resource.data.studentId
+            && request.resource.data.teacherId == resource.data.teacherId
+            && request.resource.data.status in ["active", "declined"]
+            && onlyChanged(["status", "updatedAt"])
+          )
+        );
+      allow delete: if false;
     }
 
     match /classrooms/{classroomId} {
       allow read, create, update: if isSignedIn()
-        && request.auth.token.role in ["teacher", "admin"];
+        && userRole() in ["teacher", "admin"];
       allow delete: if false;
 
       match /students/{studentId} {
         allow read, create, update: if isSignedIn()
-          && request.auth.token.role in ["teacher", "admin"];
+          && userRole() in ["teacher", "admin"];
         allow delete: if false;
       }
 
       match /analyses/{analysisId} {
         allow read, create, update: if isSignedIn()
-          && request.auth.token.role in ["teacher", "admin"];
+          && userRole() in ["teacher", "admin"];
         allow delete: if false;
       }
     }

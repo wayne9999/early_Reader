@@ -2,7 +2,8 @@ import { useMemo, useState } from "react";
 import { memoryCards } from "../../data/content";
 import { recordMemoryWin } from "../../services/progressRepository";
 import { celebrate, speak } from "../../shared/speech";
-import type { MemoryCardContent, Progress } from "../../types";
+import type { AppUser, MemoryCardContent, Progress } from "../../types";
+import { recordLearningEvent } from "../../services/learningEventRepository";
 
 type MemoryCardInstance = MemoryCardContent & {
   instanceId: string;
@@ -10,6 +11,7 @@ type MemoryCardInstance = MemoryCardContent & {
 
 type MemoryGameProps = {
   progress: Progress;
+  user: AppUser | null;
   onProgressChange: (progress: Progress) => void;
 };
 
@@ -26,7 +28,7 @@ function buildDeck() {
   );
 }
 
-export function MemoryGame({ progress, onProgressChange }: MemoryGameProps) {
+export function MemoryGame({ progress, user, onProgressChange }: MemoryGameProps) {
   const [deck, setDeck] = useState<MemoryCardInstance[]>(() => buildDeck());
   const [selected, setSelected] = useState<MemoryCardInstance[]>([]);
   const [matchedIds, setMatchedIds] = useState<Set<string>>(() => new Set());
@@ -75,11 +77,19 @@ export function MemoryGame({ progress, onProgressChange }: MemoryGameProps) {
       const nextMatchedIds = new Set(matchedIds).add(first.id);
       setMatchedIds(nextMatchedIds);
       setSelected([]);
+      void recordLearningEvent(user, "memory_match", first.label, "workingMemory", {
+        turns: nextTurns,
+        category: first.category
+      });
       celebrate(`You found a match: ${first.label}!`);
 
       if (nextMatchedIds.size === memoryCards.length) {
         setCompleted(true);
         onProgressChange(recordMemoryWin(progress, nextTurns));
+        void recordLearningEvent(user, "memory_completed", "Memory board completed", "workingMemory", {
+          turns: nextTurns,
+          matches: memoryCards.length
+        });
         celebrate(`Amazing work! You finished the board in ${nextTurns} turns.`);
       }
       return;

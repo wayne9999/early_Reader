@@ -1,7 +1,9 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getClassroomStudents } from "../../services/classroomRepository";
 import { analyzeClassroom, analyzeStudent } from "../../services/learningAnalysisService";
-import type { AppUser, Progress, SkillInsight } from "../../types";
+import { loadTeacherAssignments, updateTeacherAssignmentStatus } from "../../services/assignmentRepository";
+import { loadLearningEvents } from "../../services/learningEventRepository";
+import type { AppUser, LearningEvent, Progress, SkillInsight, StudentSummary, TeacherStudentLink } from "../../types";
 
 type TeacherDashboardProps = {
   progress: Progress;
@@ -21,11 +23,76 @@ function scoreLabel(insight: SkillInsight) {
 }
 
 export function TeacherDashboard({ progress, user }: TeacherDashboardProps) {
-  const students = useMemo(() => getClassroomStudents(progress, user), [progress, user]);
+  const [assignments, setAssignments] = useState<TeacherStudentLink[]>([]);
+  const [studentHistories, setStudentHistories] = useState<Record<string, LearningEvent[]>>({});
+  const [isLoadingRoster, setIsLoadingRoster] = useState(true);
+  const demoStudents = useMemo(() => getClassroomStudents(progress, user), [progress, user]);
+  const assignedStudents = useMemo<StudentSummary[]>(
+    () =>
+      assignments
+        .filter((assignment) => assignment.status !== "declined")
+        .map((assignment) => ({
+          id: assignment.studentId,
+          name: assignment.studentName,
+          email: assignment.studentEmail,
+          gradeBand: "1",
+          lastActive: assignment.status === "requested" ? "Pending approval" : "Assigned",
+          progress: assignment.latestProgressSnapshot,
+          assignmentStatus: assignment.status,
+          history: studentHistories[assignment.studentId] ?? []
+        })),
+    [assignments, studentHistories]
+  );
+  const students = assignedStudents.length ? assignedStudents : demoStudents;
   const classroomAnalysis = useMemo(() => analyzeClassroom(students), [students]);
   const [selectedStudentId, setSelectedStudentId] = useState(students[0]?.id ?? "");
   const selectedStudent = students.find((student) => student.id === selectedStudentId) ?? students[0];
-  const selectedAnalysis = analyzeStudent(selectedStudent);
+  const selectedAnalysis = selectedStudent ? analyzeStudent(selectedStudent) : null;
+
+  useEffect(() => {
+    let isMounted = true;
+
+    setIsLoadingRoster(true);
+    loadTeacherAssignments(user)
+      .then(async (loadedAssignments) => {
+        if (!isMounted) {
+          return;
+        }
+
+        setAssignments(loadedAssignments);
+        const activeAssignments = loadedAssignments.filter((assignment) => assignment.status === "active");
+        const historyEntries = await Promise.all(
+          activeAssignments.map(async (assignment) => [
+            assignment.studentId,
+            await loadLearningEvents(user, assignment.studentId)
+          ] as const)
+        );
+
+        if (isMounted) {
+          setStudentHistories(Object.fromEntries(historyEntries));
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsLoadingRoster(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user]);
+
+  useEffect(() => {
+    if (students.length && !students.some((student) => student.id === selectedStudentId)) {
+      setSelectedStudentId(students[0].id);
+    }
+  }, [selectedStudentId, students]);
+
+  async function changeAssignmentStatus(linkId: string, status: TeacherStudentLink["status"]) {
+    await updateTeacherAssignmentStatus(linkId, status);
+    setAssignments(await loadTeacherAssignments(user));
+  }
 
   return (
     <>
@@ -45,6 +112,9 @@ export function TeacherDashboard({ progress, user }: TeacherDashboardProps) {
             <span>{classroomAnalysis.analyses.filter((analysis) => analysis.growthAreas.length > 0).length} need follow-up</span>
             <span>{classroomAnalysis.analyses.filter((analysis) => analysis.strengths.length > 0).length} showing strengths</span>
           </div>
+          {!assignments.length && !isLoadingRoster ? (
+            <p className="helper-text">Showing demo data until students request this teacher account.</p>
+          ) : null}
         </article>
 
         <article className="practice-panel">
@@ -60,6 +130,20 @@ export function TeacherDashboard({ progress, user }: TeacherDashboardProps) {
       <section className="teacher-grid">
         <aside className="practice-panel roster-panel" aria-label="Student roster">
           <p className="eyebrow">Roster</p>
+          {assignments.some((assignment) => assignment.status === "requested") ? (
+            <div className="request-list">
+              {assignments
+                .filter((assignment) => assignment.status === "requested")
+                .map((assignment) => (
+                  <div className="request-row" key={assignment.id}>
+                    <span>{assignment.studentName} requested access</span>
+                    <button type="button" onClick={() => void changeAssignmentStatus(assignment.id, "active")}>
+                      Approve
+                    </button>
+                  </div>
+                ))}
+            </div>
+          ) : null}
           <div className="student-list">
             {students.map((student) => {
               const analysis = analyzeStudent(student);
@@ -67,14 +151,14 @@ export function TeacherDashboard({ progress, user }: TeacherDashboardProps) {
 
               return (
                 <button
-                  className={`student-row${student.id === selectedStudent.id ? " is-active" : ""}`}
+                  className={`student-row${student.id === selectedStudent?.id ? " is-active" : ""}`}
                   key={student.id}
                   type="button"
                   onClick={() => setSelectedStudentId(student.id)}
                 >
                   <span>
                     <strong>{student.name}</strong>
-                    <small>Grade {student.gradeBand} · {student.lastActive}</small>
+                    <small>Grade {student.gradeBand} - {student.lastActive}</small>
                   </span>
                   <em>{supportCount} focus</em>
                 </button>
@@ -86,14 +170,17 @@ export function TeacherDashboard({ progress, user }: TeacherDashboardProps) {
         <div className="student-insight-stack">
           <article className="practice-panel">
             <p className="eyebrow">Student analysis</p>
-            <h3>{selectedStudent.name}</h3>
-            <p className="helper-text">{selectedAnalysis.summary}</p>
+            <h3>{selectedStudent?.name ?? "No students yet"}</h3>
+            <p className="helper-text">
+              {selectedAnalysis?.summary ?? "Students will appear here after they request this teacher account."}
+            </p>
+            {selectedStudent?.email ? <p className="helper-text">{selectedStudent.email}</p> : null}
           </article>
 
           <div className="insight-columns">
             <article className="practice-panel">
               <p className="eyebrow">Strengths</p>
-              {selectedAnalysis.strengths.length ? (
+              {selectedAnalysis?.strengths.length ? (
                 selectedAnalysis.strengths.map((insight) => <InsightCard insight={insight} key={insight.area} />)
               ) : (
                 <p className="helper-text">No strong area yet. Keep collecting practice data.</p>
@@ -102,7 +189,7 @@ export function TeacherDashboard({ progress, user }: TeacherDashboardProps) {
 
             <article className="practice-panel">
               <p className="eyebrow">Growth areas</p>
-              {selectedAnalysis.growthAreas.map((insight) => (
+              {selectedAnalysis?.growthAreas.map((insight) => (
                 <InsightCard insight={insight} key={insight.area} />
               ))}
             </article>
@@ -111,16 +198,34 @@ export function TeacherDashboard({ progress, user }: TeacherDashboardProps) {
           <article className="practice-panel">
             <p className="eyebrow">Intervention plan</p>
             <ol className="teacher-plan">
-              {selectedAnalysis.recommendedPlan.map((step) => (
+              {selectedAnalysis?.recommendedPlan.map((step) => (
                 <li key={step}>{step}</li>
               ))}
             </ol>
           </article>
 
+          <article className="practice-panel">
+            <p className="eyebrow">Recent learning history</p>
+            {selectedStudent?.history?.length ? (
+              <ul className="history-list">
+                {selectedStudent.history.slice(0, 10).map((event) => (
+                  <li key={event.id ?? `${event.type}-${event.label}`}>
+                    <strong>{event.label}</strong>
+                    <span>{event.type.replace("_", " ")} - {event.area}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="helper-text">No recent event history is available yet.</p>
+            )}
+          </article>
+
           <article className="practice-panel ai-boundary">
             <p className="eyebrow">AI analysis boundary</p>
             <h3>Ready for backend AI, not browser-side secrets</h3>
-            <p className="helper-text">{selectedAnalysis.aiReadinessNote}</p>
+            <p className="helper-text">
+              {selectedAnalysis?.aiReadinessNote ?? "Collect assigned-student activity before generating AI summaries."}
+            </p>
             <ul className="next-steps">
               <li>Send de-identified progress events to a secure backend.</li>
               <li>Ask AI for evidence-based instructional summaries, not diagnoses.</li>

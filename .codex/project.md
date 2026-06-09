@@ -2,7 +2,7 @@
 
 ## Purpose
 
-ReadNest is a web application for early elementary children learning to read. It includes reading practice, phonics, sight words, memory games, caregiver progress, teacher/admin insights, SEO pages, donation support, and subscription-plan scaffolding.
+ReadNest is a web application for early elementary children learning to read. It includes reading practice, phonics, sight words, memory games, caregiver progress, role-aware student and teacher workspaces, teacher assignment requests, SEO pages, donation support, and subscription-plan scaffolding.
 
 ## Primary Workspace
 
@@ -23,8 +23,8 @@ Branch:     main
 - React
 - TypeScript
 - Vite
-- Firebase Firestore-ready data layer
-- Auth0-ready social login boundary
+- Firebase Auth and Firestore-ready data layer
+- Auth0-ready fallback/social login boundary
 - Stripe Payment Links for donations/subscriptions
 - GitHub Pages deployment through GitHub Actions
 
@@ -65,17 +65,21 @@ VITE_STRIPE_TEACHER_PRO_LINK=
 - Sight word practice
 - Memory matching game
 - Caregiver progress dashboard
-- Teacher/admin insight dashboard
+- Student teacher-search and assignment request flow
+- Teacher insight dashboard with assigned-student history
 - Account/social sign-in screen
 - Donation/subscription support page
 - Static SEO landing pages
 
 ## Current Architecture Notes
 
-- Progress falls back to browser `localStorage` until Firebase and a Firebase-authenticated user are available.
+- Users choose either `student` or `teacher` after sign-in. The frontend locks that profile after creation.
+- Progress and learning events fall back to browser `localStorage` until Firebase and a Firebase-authenticated user are available.
+- Firestore paths in active use: `users/{uid}`, `users/{uid}/learning/progress`, `users/{uid}/learningEvents/{eventId}`, `teacherProfiles/{teacherId}`, and `teacherStudentLinks/{teacherId_studentId}`.
+- Students search teacher profiles by email or teacher code, then request assignment. Teachers approve requests in their dashboard.
 - Auth0 UI exists, but production Firestore writes require Firebase Auth or an Auth0-to-Firebase custom-token bridge.
 - AI analysis is currently rule-based in the browser. Production AI should run only from a backend or Cloud Function.
-- Stripe buttons are disabled until real Stripe Payment Links are added to environment variables.
+- Stripe Payment Links are configured, but paid subscription enforcement still needs a backend webhook and trusted entitlement storage.
 
 ## Deployment
 
@@ -95,10 +99,10 @@ VITE_BASE_PATH=/early_Reader/
 
 ## Best Next Steps
 
-1. Create Stripe Payment Links and add them to GitHub Actions/environment configuration.
-2. Decide between Firebase Auth as primary auth or Auth0 plus Firebase custom-token bridge.
-3. Create the Firebase project and deploy Firestore rules.
-4. Replace demo teacher classroom data with Firestore classroom records.
-5. Add a backend AI endpoint for teacher analysis.
+1. Deploy updated Firestore rules after every rules change.
+2. Add Stripe webhook handling for Family Plus and Teacher Pro entitlements.
+3. Add teacher-created student invitations in addition to student-initiated requests.
+4. Add a backend AI endpoint for teacher analysis.
+5. Replace remaining demo teacher fallback data with live Firestore records.
 6. Add route-level navigation and possibly prerendering/SSR for better SEO at scale.
-7. Add automated tests for reading, memory, progress, support, and teacher flows.
+7. Add automated tests for reading, memory, progress, support, role, assignment, and teacher flows.
