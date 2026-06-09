@@ -1,0 +1,126 @@
+# Firebase And Auth Setup
+
+The app is now structured for:
+
+- Auth0 for social login orchestration.
+- Firebase Firestore for user/profile/progress storage.
+- Local storage fallback when Firebase or Auth0 environment values are missing.
+
+## Firestore Collections
+
+```text
+users/{userId}
+  displayName
+  email
+  picture
+  provider
+  updatedAt
+
+users/{userId}/learning/progress
+  knownWords
+  readingSessions
+  memoryWins
+  memoryMoves
+  memoryTurns
+  bestMemoryTurns
+  completedToday
+  lastPracticeDate
+  updatedAt
+
+classrooms/{classroomId}
+  name
+  teacherIds
+  createdAt
+  updatedAt
+
+classrooms/{classroomId}/students/{studentId}
+  userId
+  displayName
+  gradeBand
+  consentStatus
+  enrolledAt
+  latestProgressSnapshot
+
+classrooms/{classroomId}/analyses/{analysisId}
+  studentId
+  generatedBy
+  model
+  sourceDataWindow
+  summary
+  strengths
+  growthAreas
+  recommendedPlan
+  createdAt
+```
+
+## Required Environment Values
+
+Create `.env.local` from `.env.example` and fill in the values:
+
+```text
+VITE_AUTH0_DOMAIN=
+VITE_AUTH0_CLIENT_ID=
+VITE_AUTH0_AUDIENCE=
+VITE_AUTH0_REDIRECT_URI=http://localhost:4173
+VITE_AUTH0_GOOGLE_CONNECTION=google-oauth2
+VITE_AUTH0_FACEBOOK_CONNECTION=facebook
+VITE_AUTH0_INSTAGRAM_CONNECTION=instagram
+
+VITE_FIREBASE_API_KEY=
+VITE_FIREBASE_AUTH_DOMAIN=
+VITE_FIREBASE_PROJECT_ID=
+VITE_FIREBASE_APP_ID=
+```
+
+## Important Auth Note
+
+Firestore security rules use `request.auth.uid`. That means production Firestore writes need a Firebase-authenticated user identity.
+
+The current code is ready for Firestore SDK usage and stores data at the correct paths when a Firebase-authenticated session exists. If Auth0 is the identity provider, production should add one of these before enabling live child data:
+
+1. Auth0 to Firebase custom-token exchange through a backend endpoint or Cloud Function.
+2. Firebase Authentication as the primary auth provider for Google/Facebook, with a custom provider strategy for Instagram.
+
+The frontend fallback is intentionally safe for development: when Firebase/Auth0 values are missing, or when there is no Firebase-authenticated session yet, it stores progress in browser local storage and does not send child data anywhere.
+
+## Security Rules
+
+Rules live in `firestore.rules`. They currently allow each signed-in Firebase user to read/update only:
+
+```text
+users/{theirUserId}
+users/{theirUserId}/learning/progress
+```
+
+Deletes are denied by default.
+
+Teacher/admin classroom paths require a custom Firebase Auth claim:
+
+```text
+role: "teacher" | "admin"
+```
+
+Set this claim only from trusted backend code. Do not let the frontend assign roles.
+
+## AI Analysis Design
+
+The current teacher dashboard uses rule-based local analysis so the MVP can run without sending child data to an AI provider.
+
+For production AI:
+
+1. Store granular learning events with timestamps and content ids.
+2. Send only the needed student/classroom window to a secure backend endpoint.
+3. Redact unnecessary personal data before calling an AI model.
+4. Require AI output to cite the evidence it used.
+5. Store generated recommendations with `model`, `sourceDataWindow`, and `createdAt`.
+6. Treat AI as decision support for teachers, not as a diagnostic authority.
+
+## Deployment Checks
+
+```bash
+npm run check
+npm run build
+npm audit --audit-level=moderate
+```
+
+Deploying to Firebase Hosting/Firestore requires the Firebase CLI and an authenticated Firebase project.

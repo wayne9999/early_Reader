@@ -3,137 +3,98 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#2f80ed" />
+    <meta name="application-name" content="ReadNest" />
+    <meta name="apple-mobile-web-app-title" content="ReadNest" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
     <meta
       name="description"
-      content="ReadNest is a small learning app for early elementary reading and memory practice."
+      content="ReadNest helps kindergarten, first grade, and second grade children practice reading, sight words, phonics, sentence fluency, and memory skills with teacher and caregiver progress insights."
     />
-    <title>ReadNest</title>
-    <link rel="stylesheet" href="./src/styles.css" />
+    <meta
+      name="keywords"
+      content="kids reading app, early reading app, learn to read, elementary reading practice, kindergarten reading, first grade reading, second grade reading, sight words practice, phonics practice, reading fluency, memory game for kids, literacy app, teacher reading dashboard, student reading progress, reading intervention, caregiver reading practice, educational app for children"
+    />
+    <link rel="canonical" href="https://wayne9999.github.io/early_Reader/" />
+    <link rel="manifest" href="/site.webmanifest" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="ReadNest" />
+    <meta property="og:title" content="ReadNest | Early Reading, Phonics, and Memory Practice for Kids" />
+    <meta
+      property="og:description"
+      content="A playful literacy app for kindergarten through grade 2 learners, with sight word practice, phonics blending, memory games, caregiver progress, and teacher insights."
+    />
+    <meta property="og:url" content="https://wayne9999.github.io/early_Reader/" />
+    <meta property="og:image" content="https://wayne9999.github.io/early_Reader/og-image.svg" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="ReadNest | Early Reading Practice for Kids" />
+    <meta
+      name="twitter:description"
+      content="Help young learners practice sight words, phonics, sentence fluency, and memory skills with playful activities and progress insights."
+    />
+    <meta name="twitter:image" content="https://wayne9999.github.io/early_Reader/og-image.svg" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "ReadNest",
+        "applicationCategory": "EducationalApplication",
+        "operatingSystem": "Web",
+        "description": "ReadNest helps early elementary children practice reading, sight words, phonics, sentence fluency, and memory skills while giving caregivers and teachers progress insights.",
+        "audience": [
+          {
+            "@type": "EducationalAudience",
+            "educationalRole": "student"
+          },
+          {
+            "@type": "EducationalAudience",
+            "educationalRole": "teacher"
+          },
+          {
+            "@type": "EducationalAudience",
+            "educationalRole": "parent"
+          }
+        ],
+        "educationalLevel": ["Kindergarten", "Grade 1", "Grade 2"],
+        "learningResourceType": ["Practice", "Game", "Assessment"],
+        "teaches": [
+          "sight word recognition",
+          "phonics blending",
+          "reading fluency",
+          "sentence reading",
+          "working memory",
+          "early literacy"
+        ],
+        "url": "https://wayne9999.github.io/early_Reader/",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        }
+      }
+    </script>
+
+    <title>ReadNest | Early Reading, Phonics, Sight Words, and Memory Practice for Kids</title>
   </head>
   <body>
-    <div class="app-shell">
-      <aside class="sidebar" aria-label="Learning areas">
-        <div class="brand">
-          <span class="brand-mark" aria-hidden="true">R</span>
-          <div>
-            <p class="eyebrow">Early reader MVP</p>
-            <h1>ReadNest</h1>
-          </div>
-        </div>
-
-        <nav class="nav-tabs" aria-label="Main navigation">
-          <button class="nav-tab is-active" type="button" data-view="reading">Reading</button>
-          <button class="nav-tab" type="button" data-view="memory">Memory</button>
-          <button class="nav-tab" type="button" data-view="progress">Progress</button>
-        </nav>
-
-        <section class="daily-goal" aria-labelledby="goal-title">
-          <h2 id="goal-title">Today</h2>
-          <p>Practice 3 short activities. Keep sessions calm, brief, and repeatable.</p>
-          <div class="goal-meter" aria-label="Daily activities completed">
-            <span data-goal-fill></span>
-          </div>
-          <strong data-goal-label>0 of 3 complete</strong>
-        </section>
-      </aside>
-
-      <main class="main-content">
-        <section class="hero">
-          <div>
-            <p class="eyebrow">A calm practice space</p>
-            <h2>Play with words. Grow your reading.</h2>
-            <p>
-              Built for kindergarten through grade 2 learners with large text,
-              short turns, read-aloud support, and caregiver-visible progress.
-            </p>
-          </div>
-          <div class="hero-scene" aria-hidden="true">
-            <div class="book-shape">
-              <span>A</span>
-              <span>B</span>
-              <span>C</span>
-              <span>go</span>
-            </div>
-          </div>
-        </section>
-
-        <section id="view-root" class="view-root" aria-live="polite"></section>
+    <noscript>
+      <main>
+        <h1>ReadNest Early Reading App</h1>
+        <p>
+          ReadNest is an educational reading app for kindergarten, first grade, and second grade children.
+          It helps young learners practice sight words, phonics blending, sentence fluency, and memory
+          skills through short child-friendly activities.
+        </p>
+        <p>
+          The app also supports caregiver progress tracking and a teacher dashboard for student reading
+          strengths, growth areas, classroom literacy insights, and intervention planning.
+        </p>
       </main>
-    </div>
-
-    <template id="reading-template">
-      <div class="section-heading">
-        <div>
-          <p class="eyebrow">Step-by-step reading</p>
-          <h2>Practice short sounds, words, and sentences</h2>
-        </div>
-        <select class="level-select" aria-label="Choose reading level" data-reading-level></select>
-      </div>
-
-      <div class="learning-grid">
-        <article class="practice-panel word-panel">
-          <div class="panel-header">
-            <p class="eyebrow">Sight word</p>
-            <span data-reading-count></span>
-          </div>
-          <button class="sound-button" type="button" data-speak-word aria-label="Read the word aloud">Listen</button>
-          <p class="big-word" data-current-word></p>
-          <p class="helper-text" data-current-hint></p>
-          <div class="button-row">
-            <button class="primary-button" type="button" data-known-word>I know it</button>
-            <button class="secondary-button" type="button" data-next-word>Next word</button>
-          </div>
-        </article>
-
-        <article class="practice-panel">
-          <p class="eyebrow">Blend sounds</p>
-          <h3 data-phonics-title></h3>
-          <div class="sound-chips" data-sound-chips></div>
-          <button class="secondary-button" type="button" data-speak-sounds>Hear sounds</button>
-        </article>
-
-        <article class="practice-panel sentence-panel">
-          <p class="eyebrow">Read a sentence</p>
-          <p class="sentence" data-current-sentence></p>
-          <div class="button-row">
-            <button class="secondary-button" type="button" data-speak-sentence>Listen</button>
-            <button class="primary-button" type="button" data-complete-reading>Complete reading</button>
-          </div>
-        </article>
-      </div>
-    </template>
-
-    <template id="memory-template">
-      <div class="section-heading">
-        <div>
-          <p class="eyebrow">Remember and match</p>
-          <h2>Memory cards with school-ready ideas</h2>
-        </div>
-        <button class="secondary-button" type="button" data-reset-memory>New game</button>
-      </div>
-      <div class="memory-status">
-        <span data-memory-turns>0 turns taken</span>
-        <span data-memory-matches>0 of 6 pairs matched</span>
-      </div>
-      <p class="memory-message" data-memory-message>Find matching pairs. One turn is two card picks.</p>
-      <div class="memory-board" data-memory-board></div>
-    </template>
-
-    <template id="progress-template">
-      <div class="section-heading">
-        <div>
-          <p class="eyebrow">Caregiver view</p>
-          <h2>Progress that is simple to understand</h2>
-        </div>
-        <button class="secondary-button" type="button" data-reset-progress>Reset progress</button>
-      </div>
-      <div class="stats-grid" data-stats-grid></div>
-      <article class="practice-panel">
-        <h3>Recommended next steps</h3>
-        <ul class="next-steps" data-next-steps></ul>
-      </article>
-    </template>
-
-    <script type="module" src="./src/app.js"></script>
+    </noscript>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

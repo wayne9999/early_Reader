@@ -1,0 +1,12 @@
+{
+  "name": "ReadNest - Early Reading Practice",
+  "short_name": "ReadNest",
+  "description": "Early reading, phonics, sight word, sentence fluency, memory practice, and teacher progress insights for young learners.",
+  "start_url": "/early_Reader/",
+  "display": "standalone",
+  "background_color": "#fff7d7",
+  "theme_color": "#2f80ed",
+  "categories": ["education", "kids", "productivity"],
+  "lang": "en-US",
+  "orientation": "portrait-primary"
+}

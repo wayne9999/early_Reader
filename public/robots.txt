@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://wayne9999.github.io/early_Reader/sitemap.xml

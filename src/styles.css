@@ -548,6 +548,276 @@ button {
   line-height: 1.7;
 }
 
+.auth-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) minmax(260px, 0.8fr);
+  gap: 18px;
+}
+
+.auth-panel h2,
+.setup-panel h3 {
+  margin: 0;
+}
+
+.social-buttons {
+  display: grid;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.social-button {
+  min-height: 54px;
+  border: 0;
+  border-radius: 8px;
+  color: white;
+  font-weight: 900;
+  box-shadow: 0 9px 0 rgba(32, 34, 56, 0.16);
+}
+
+.google-button {
+  background: linear-gradient(135deg, #4285f4, #34a853);
+}
+
+.facebook-button {
+  background: linear-gradient(135deg, #1877f2, #145dbd);
+}
+
+.instagram-button {
+  background: linear-gradient(135deg, #f58529, #dd2a7b 52%, #8134af);
+}
+
+.account-card {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  margin-top: 20px;
+  padding: 16px;
+  border-radius: 8px;
+  background: #fffdf2;
+  border: 2px solid rgba(47, 128, 237, 0.16);
+}
+
+.account-card img,
+.account-card > span {
+  width: 58px;
+  height: 58px;
+  border-radius: 8px;
+}
+
+.account-card > span {
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, var(--purple), var(--blue));
+  color: white;
+  font-size: 1.5rem;
+  font-weight: 900;
+}
+
+.account-card strong,
+.account-card small {
+  display: block;
+}
+
+.account-card small {
+  color: var(--muted);
+}
+
+.teacher-summary,
+.teacher-grid,
+.insight-columns {
+  display: grid;
+  gap: 18px;
+}
+
+.teacher-summary {
+  grid-template-columns: minmax(280px, 1.2fr) minmax(260px, 0.8fr);
+}
+
+.teacher-grid {
+  grid-template-columns: 320px minmax(0, 1fr);
+  align-items: start;
+}
+
+.teacher-hero-card {
+  background: linear-gradient(180deg, #ffffff, #eef8ff);
+}
+
+.teacher-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.teacher-metrics span {
+  padding: 9px 12px;
+  border-radius: 999px;
+  background: #ffffff;
+  border: 2px solid rgba(47, 128, 237, 0.14);
+  color: #333a53;
+  font-weight: 900;
+}
+
+.roster-panel {
+  position: sticky;
+  top: 20px;
+}
+
+.student-list,
+.student-insight-stack {
+  display: grid;
+  gap: 12px;
+}
+
+.student-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+  min-height: 68px;
+  padding: 12px;
+  border: 2px solid rgba(47, 128, 237, 0.12);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--ink);
+  text-align: left;
+}
+
+.student-row.is-active {
+  border-color: var(--purple);
+  background: linear-gradient(180deg, #ffffff, #f2eaff);
+  box-shadow: 0 8px 0 rgba(139, 92, 246, 0.12);
+}
+
+.student-row strong,
+.student-row small {
+  display: block;
+}
+
+.student-row small,
+.student-row em {
+  color: var(--muted);
+  font-style: normal;
+  font-weight: 800;
+}
+
+.insight-columns {
+  grid-template-columns: repeat(2, minmax(240px, 1fr));
+}
+
+.insight-card {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 14px;
+  border-radius: 8px;
+  border: 2px solid rgba(47, 128, 237, 0.12);
+  background: #ffffff;
+}
+
+.insight-card div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.insight-card span,
+.insight-card small {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.insight-card p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.insight-card.strong {
+  border-color: rgba(92, 200, 95, 0.42);
+  background: linear-gradient(180deg, #ffffff, #efffeb);
+}
+
+.insight-card.watch {
+  border-color: rgba(255, 203, 71, 0.58);
+  background: linear-gradient(180deg, #ffffff, #fff5c7);
+}
+
+.insight-card.needsSupport {
+  border-color: rgba(255, 107, 107, 0.5);
+  background: linear-gradient(180deg, #ffffff, #fff0f0);
+}
+
+.teacher-plan {
+  margin: 12px 0 0;
+  padding-left: 24px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.ai-boundary {
+  background: linear-gradient(180deg, #ffffff, #f2eaff);
+}
+
+.support-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: center;
+  background: linear-gradient(135deg, #ffffff, #fff2b8 55%, #ffeef6);
+}
+
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(220px, 1fr));
+  gap: 18px;
+}
+
+.pricing-card {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+  padding: 24px;
+  border-radius: 8px;
+  border: 3px solid rgba(255, 255, 255, 0.88);
+  background: linear-gradient(180deg, #ffffff, #eef8ff);
+  box-shadow: 0 10px 30px rgba(21, 37, 54, 0.08);
+}
+
+.pricing-card.familyPlus {
+  background: linear-gradient(180deg, #ffffff, #fff2b8);
+}
+
+.pricing-card.teacherPro {
+  background: linear-gradient(180deg, #ffffff, #f2eaff);
+}
+
+.pricing-card h3,
+.pricing-card p {
+  margin: 0;
+}
+
+.pricing-card > strong {
+  color: var(--purple);
+  font-size: 2.4rem;
+  line-height: 1;
+}
+
+.pricing-card ul {
+  margin: 0;
+  padding-left: 22px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.pricing-card button:disabled,
+.support-hero button:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
 @media (max-width: 900px) {
   .app-shell {
     grid-template-columns: 1fr;
@@ -571,8 +841,17 @@ button {
   }
 
   .hero,
-  .learning-grid {
+  .learning-grid,
+  .teacher-summary,
+  .teacher-grid,
+  .insight-columns,
+  .support-hero,
+  .pricing-grid {
     grid-template-columns: 1fr;
+  }
+
+  .roster-panel {
+    position: static;
   }
 
   .hero-scene {
@@ -580,7 +859,8 @@ button {
   }
 
   .memory-board,
-  .stats-grid {
+  .stats-grid,
+  .auth-grid {
     grid-template-columns: repeat(2, minmax(120px, 1fr));
   }
 }
@@ -604,7 +884,8 @@ button {
   }
 
   .memory-board,
-  .stats-grid {
+  .stats-grid,
+  .auth-grid {
     grid-template-columns: 1fr;
   }
 

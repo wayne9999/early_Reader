@@ -1,4 +1,6 @@
-export const readingLevels = [
+import type { MemoryCardContent, ReadingLevel } from "../types";
+
+export const readingLevels: ReadingLevel[] = [
   {
     id: "starter",
     label: "Starter",
@@ -94,7 +96,7 @@ export const readingLevels = [
   }
 ];
 
-export const memoryCards = [
+export const memoryCards: MemoryCardContent[] = [
   { id: "brush", label: "Brush teeth", category: "healthy habit" },
   { id: "water", label: "Drink water", category: "healthy habit" },
   { id: "kind", label: "Use kind words", category: "social skill" },

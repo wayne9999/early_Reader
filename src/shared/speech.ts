@@ -8,18 +8,14 @@ const naturalVoiceHints = [
   "Microsoft"
 ];
 
-let cachedVoice = null;
-
-function getVoices() {
-  return window.speechSynthesis.getVoices();
-}
+let cachedVoice: SpeechSynthesisVoice | null = null;
 
 function chooseFriendlyVoice() {
   if (cachedVoice) {
     return cachedVoice;
   }
 
-  const voices = getVoices();
+  const voices = window.speechSynthesis.getVoices();
   const englishVoices = voices.filter((voice) => voice.lang.toLowerCase().startsWith("en"));
   const usEnglishVoices = englishVoices.filter((voice) => voice.lang.toLowerCase().startsWith("en-us"));
 
@@ -28,10 +24,10 @@ function chooseFriendlyVoice() {
       .map((hint) =>
         usEnglishVoices.find((voice) => voice.name.toLowerCase().includes(hint.toLowerCase()))
       )
-      .find(Boolean) ||
-    usEnglishVoices[0] ||
-    englishVoices[0] ||
-    voices[0] ||
+      .find(Boolean) ??
+    usEnglishVoices[0] ??
+    englishVoices[0] ??
+    voices[0] ??
     null;
 
   return cachedVoice;
@@ -44,7 +40,7 @@ if ("speechSynthesis" in window) {
   });
 }
 
-function makeUtterance(text, options = {}) {
+function makeUtterance(text: string, options: Partial<SpeechSynthesisUtterance> = {}) {
   const utterance = new SpeechSynthesisUtterance(text);
   const voice = chooseFriendlyVoice();
 
@@ -61,7 +57,7 @@ function makeUtterance(text, options = {}) {
   return utterance;
 }
 
-export function speak(text, options = {}) {
+export function speak(text: string, options: Partial<SpeechSynthesisUtterance> = {}) {
   if (!("speechSynthesis" in window)) {
     return;
   }
@@ -70,15 +66,15 @@ export function speak(text, options = {}) {
   window.speechSynthesis.speak(makeUtterance(text, options));
 }
 
-export function speakWord(word) {
+export function speakWord(word: string) {
   speak(word, { rate: 0.82, pitch: 1.22 });
 }
 
-export function speakSentence(sentence) {
+export function speakSentence(sentence: string) {
   speak(sentence, { rate: 0.84, pitch: 1.14 });
 }
 
-export function speakSounds(sounds, word) {
+export function speakSounds(sounds: string[], word: string) {
   speak(`${sounds.join(" ... ")}. Blend it together: ${word}!`, {
     rate: 0.72,
     pitch: 1.2
