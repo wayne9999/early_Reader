@@ -6,6 +6,7 @@ import { ProgressDashboard } from "./features/progress/ProgressDashboard";
 import { ReadingPractice } from "./features/reading/ReadingPractice";
 import { SupportPage } from "./features/support/SupportPage";
 import { TeacherDashboard } from "./features/teacher/TeacherDashboard";
+import { billingConfig } from "./services/billingConfig";
 import { defaultProgress, loadProgress, saveProgress } from "./services/progressRepository";
 import type { AppView, Progress } from "./types";
 
@@ -14,9 +15,16 @@ const navItems: Array<{ id: AppView; label: string }> = [
   { id: "memory", label: "Memory" },
   { id: "progress", label: "Progress" },
   { id: "teacher", label: "Teacher" },
+  { id: "donate", label: "Donate" },
   { id: "support", label: "Support" },
   { id: "account", label: "Account" }
 ];
+
+function openDonationLink() {
+  if (billingConfig.donationLink) {
+    window.open(billingConfig.donationLink, "_blank", "noopener,noreferrer");
+  }
+}
 
 export function RootApp() {
   const { isLoading: isAuthLoading, user } = useAuth();
@@ -73,6 +81,10 @@ export function RootApp() {
       return <TeacherDashboard progress={progress} user={user} />;
     }
 
+    if (currentView === "donate") {
+      return <SupportPage initialFocus="donation" />;
+    }
+
     if (currentView === "support") {
       return <SupportPage />;
     }
@@ -109,6 +121,15 @@ export function RootApp() {
             </button>
           ))}
         </nav>
+
+        <section className="donation-card" aria-labelledby="donation-title">
+          <p className="eyebrow">Mission fund</p>
+          <h2 id="donation-title">Help a child read</h2>
+          <p>Donations support free lessons, accessibility work, hosting, and classroom tools.</p>
+          <button type="button" onClick={openDonationLink} disabled={!billingConfig.donationLink}>
+            Donate
+          </button>
+        </section>
 
         <section className="daily-goal" aria-labelledby="goal-title">
           <h2 id="goal-title">Today</h2>

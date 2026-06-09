@@ -8,32 +8,46 @@ function openPaymentLink(url: string) {
   window.open(url, "_blank", "noopener,noreferrer");
 }
 
-export function SupportPage() {
+type SupportPageProps = {
+  initialFocus?: "donation" | "plans";
+};
+
+export function SupportPage({ initialFocus = "plans" }: SupportPageProps) {
+  const heading =
+    initialFocus === "donation"
+      ? "Give the gift of early reading"
+      : "Help keep early reading practice accessible";
+
   return (
     <>
       <div className="section-heading">
         <div>
           <p className="eyebrow">Support ReadNest</p>
-          <h2>Help keep early reading practice accessible</h2>
+          <h2>{heading}</h2>
         </div>
       </div>
 
       <section className="support-hero practice-panel">
         <div>
-          <p className="eyebrow">Donations</p>
-          <h3>Fund new lessons, hosting, and classroom tools</h3>
+          <p className="eyebrow">Donate to the mission</p>
+          <h3>Help more children build reading confidence</h3>
           <p className="helper-text">
-            Donations help cover hosting, development, accessibility testing, teacher tools, and expanded
-            literacy content for young learners.
+            Every donation helps fund free lessons, hosting, accessibility testing, classroom tools,
+            teacher resources, and expanded literacy content for young learners.
           </p>
+          <div className="impact-row" aria-label="Donation impact examples">
+            <span>$5 helps hosting</span>
+            <span>$10 supports new words</span>
+            <span>$25 helps classroom tools</span>
+          </div>
         </div>
         <button
-          className="primary-button"
+          className="donation-button"
           disabled={!billingConfig.donationLink}
           type="button"
           onClick={() => openPaymentLink(billingConfig.donationLink)}
         >
-          Donate with Stripe
+          Donate now
         </button>
       </section>
 

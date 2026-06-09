@@ -1,4 +1,4 @@
-export type AppView = "reading" | "memory" | "progress" | "teacher" | "support" | "account";
+export type AppView = "reading" | "memory" | "progress" | "teacher" | "donate" | "support" | "account";
 
 export type PhonicsPrompt = {
   title: string;
