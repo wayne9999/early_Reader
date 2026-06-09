@@ -12,7 +12,7 @@ import { syncAssignmentProgress } from "./services/assignmentRepository";
 import { billingConfig } from "./services/billingConfig";
 import { defaultProgress, loadProgress, saveProgress } from "./services/progressRepository";
 import { loadUserProfile } from "./services/userProfileRepository";
-import type { AppView, Progress, UserProfile } from "./types";
+import type { AppView, Progress, UserProfile, UserRole } from "./types";
 
 const studentNavItems: Array<{ id: AppView; label: string }> = [
   { id: "reading", label: "Reading" },
@@ -31,6 +31,13 @@ const teacherNavItems: Array<{ id: AppView; label: string }> = [
   { id: "account", label: "Account" }
 ];
 
+const adminNavItems: Array<{ id: AppView; label: string }> = [
+  { id: "teacher", label: "Admin View" },
+  { id: "support", label: "Plans" },
+  { id: "donate", label: "Donate" },
+  { id: "account", label: "Account" }
+];
+
 const publicNavItems: Array<{ id: AppView; label: string }> = [
   { id: "reading", label: "Reading" },
   { id: "memory", label: "Memory" },
@@ -39,10 +46,40 @@ const publicNavItems: Array<{ id: AppView; label: string }> = [
   { id: "account", label: "Account" }
 ];
 
+const roleIndicatorMeta: Record<UserRole, { label: string; shortLabel: string; detail: string }> = {
+  student: {
+    label: "Student",
+    shortLabel: "S",
+    detail: "Practice mode"
+  },
+  teacher: {
+    label: "Teacher",
+    shortLabel: "T",
+    detail: "Class tools"
+  },
+  admin: {
+    label: "Admin",
+    shortLabel: "A",
+    detail: "System access"
+  }
+};
+
 function openDonationLink() {
   if (billingConfig.donationLink) {
     window.open(billingConfig.donationLink, "_blank", "noopener,noreferrer");
   }
+}
+
+function RoleIndicator({ role }: { role: UserRole }) {
+  const meta = roleIndicatorMeta[role];
+
+  return (
+    <div className={`role-indicator is-${role}`} aria-label={`Signed in as ${meta.label}`}>
+      <span aria-hidden="true">{meta.shortLabel}</span>
+      <strong>{meta.label}</strong>
+      <small>{meta.detail}</small>
+    </div>
+  );
 }
 
 export function RootApp() {
@@ -53,7 +90,14 @@ export function RootApp() {
   const [isProfileLoading, setIsProfileLoading] = useState(true);
   const [isProgressLoading, setIsProgressLoading] = useState(true);
   const goalCompleted = Math.min(progress.completedToday, 3);
-  const navItems = profile?.role === "teacher" ? teacherNavItems : profile?.role === "student" ? studentNavItems : publicNavItems;
+  const navItems =
+    profile?.role === "admin"
+      ? adminNavItems
+      : profile?.role === "teacher"
+        ? teacherNavItems
+        : profile?.role === "student"
+          ? studentNavItems
+          : publicNavItems;
 
   useEffect(() => {
     let isMounted = true;
@@ -84,7 +128,7 @@ export function RootApp() {
       .then((loadedProfile) => {
         if (isMounted) {
           setProfile(loadedProfile);
-          if (loadedProfile?.role === "teacher") {
+          if (loadedProfile?.role === "teacher" || loadedProfile?.role === "admin") {
             setCurrentView("teacher");
           }
         }
@@ -120,7 +164,7 @@ export function RootApp() {
       return <RoleSetup user={user} onProfileCreated={setProfile} />;
     }
 
-    if (profile?.role === "teacher" && !["teacher", "support", "donate", "account"].includes(currentView)) {
+    if ((profile?.role === "teacher" || profile?.role === "admin") && !["teacher", "support", "donate", "account"].includes(currentView)) {
       return <TeacherDashboard progress={progress} user={user} />;
     }
 
@@ -169,7 +213,7 @@ export function RootApp() {
           <div>
             <p className="eyebrow">Early reader MVP</p>
             <h1>ReadNest</h1>
-            {profile ? <small className="role-pill">{profile.role}</small> : null}
+            {profile ? <RoleIndicator role={profile.role} /> : null}
           </div>
         </div>
 

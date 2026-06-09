@@ -91,16 +91,78 @@ button {
   letter-spacing: 0;
 }
 
-.role-pill {
-  display: inline-block;
+.role-indicator {
+  display: inline-grid;
+  grid-template-columns: 30px auto;
+  grid-template-areas:
+    "mark label"
+    "mark detail";
+  align-items: center;
+  column-gap: 9px;
   margin-top: 6px;
-  padding: 5px 9px;
+  padding: 7px 10px 7px 7px;
   border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.82);
   background: #fff2b8;
-  color: #6b4600;
-  font-size: 0.72rem;
+  color: #5a3f00;
+  box-shadow: 0 8px 16px rgba(54, 74, 102, 0.1);
+}
+
+.role-indicator span {
+  grid-area: mark;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  background: #6b4600;
+  color: white;
+  font-size: 0.86rem;
+  font-weight: 900;
+}
+
+.role-indicator strong {
+  grid-area: label;
+  font-size: 0.78rem;
   font-weight: 900;
   text-transform: uppercase;
+  line-height: 1;
+}
+
+.role-indicator small {
+  grid-area: detail;
+  color: inherit;
+  font-size: 0.68rem;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.role-indicator.is-student {
+  background: linear-gradient(135deg, #fff2b8, #eaffec);
+  color: #26642f;
+}
+
+.role-indicator.is-student span {
+  background: linear-gradient(135deg, var(--green), var(--teal));
+}
+
+.role-indicator.is-teacher {
+  background: linear-gradient(135deg, #eef8ff, #f2eaff);
+  color: #47328f;
+}
+
+.role-indicator.is-teacher span {
+  background: linear-gradient(135deg, var(--purple), var(--blue));
+}
+
+.role-indicator.is-admin {
+  background: linear-gradient(135deg, #fff0f0, #fff2b8);
+  color: #7d251f;
+}
+
+.role-indicator.is-admin span {
+  background: linear-gradient(135deg, var(--coral), var(--gold));
+  color: #3c2540;
 }
 
 .eyebrow {

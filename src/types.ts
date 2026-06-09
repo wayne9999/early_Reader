@@ -8,7 +8,7 @@ export type AppView =
   | "support"
   | "account";
 
-export type UserRole = "student" | "teacher";
+export type UserRole = "student" | "teacher" | "admin";
 
 export type PhonicsPrompt = {
   title: string;
