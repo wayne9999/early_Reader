@@ -2,6 +2,8 @@
 
 ReadNest is a React MVP for children in kindergarten through grade 2 who are practicing early reading and age-appropriate memory skills.
 
+For Codex continuity and project handoff notes, see `.codex/project.md` and `PROJECT_STATUS.md`.
+
 ## What The MVP Includes
 
 - Reading practice with level-based sight words, phonics blending, and short sentences.
