@@ -100,7 +100,7 @@ export async function saveProgress(progress: Progress, user: AppUser | null): Pr
       email: user.email ?? null,
       picture: user.picture ?? null,
       provider: user.provider ?? null,
-      auth0Subject: user.id,
+      authSubject: user.id,
       firebaseUid: firebaseUser.uid,
       updatedAt: serverTimestamp()
     },
