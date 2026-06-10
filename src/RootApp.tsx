@@ -12,7 +12,7 @@ import { syncAssignmentProgress } from "./services/assignmentRepository";
 import { billingConfig } from "./services/billingConfig";
 import { defaultProgress, loadProgress, saveProgress } from "./services/progressRepository";
 import { loadUserProfile } from "./services/userProfileRepository";
-import type { AppView, Progress, UserProfile, UserRole } from "./types";
+import type { AppUser, AppView, Progress, UserProfile, UserRole } from "./types";
 
 const studentNavItems: Array<{ id: AppView; label: string }> = [
   { id: "reading", label: "Reading" },
@@ -78,6 +78,26 @@ function RoleIndicator({ role }: { role: UserRole }) {
       <span aria-hidden="true">{meta.shortLabel}</span>
       <strong>{meta.label}</strong>
       <small>{meta.detail}</small>
+    </div>
+  );
+}
+
+function AccountStatusIndicator({ user }: { user: AppUser | null }) {
+  if (!user) {
+    return (
+      <div className="account-status is-guest" aria-label="Browsing as guest">
+        <span aria-hidden="true" />
+        <strong>Guest</strong>
+        <small>Local practice</small>
+      </div>
+    );
+  }
+
+  return (
+    <div className="account-status is-signed-in" aria-label={`Signed in as ${user.name}`}>
+      <span aria-hidden="true" />
+      <strong>Signed in</strong>
+      <small>{user.name}</small>
     </div>
   );
 }
@@ -213,7 +233,10 @@ export function RootApp() {
           <div>
             <p className="eyebrow">Early reader MVP</p>
             <h1>ReadNest</h1>
-            {profile ? <RoleIndicator role={profile.role} /> : null}
+            <div className="identity-stack">
+              <AccountStatusIndicator user={user} />
+              {profile ? <RoleIndicator role={profile.role} /> : null}
+            </div>
           </div>
         </div>
 
