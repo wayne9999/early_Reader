@@ -78,6 +78,12 @@ export type UserProfile = {
   email: string | null;
   picture: string | null;
   teacherCode?: string;
+  bio?: string;
+  gradeBands?: Array<"K" | "1" | "2">;
+  specialties?: string[];
+  maxStudentLoad?: number;
+  activeStudentCount?: number;
+  payModelNote?: string;
   createdAt?: unknown;
   updatedAt?: unknown;
 };
@@ -114,6 +120,8 @@ export type TeacherStudentLink = {
   requestedAt?: unknown;
   updatedAt?: unknown;
 };
+
+export type TeacherLoadStatus = "open" | "nearlyFull" | "full";
 
 export type SocialProvider = "google" | "facebook" | "instagram";
 

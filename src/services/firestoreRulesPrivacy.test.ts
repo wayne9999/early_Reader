@@ -12,7 +12,7 @@ describe("firestore privacy rules", () => {
   it("uses a limited teacher directory for student search", () => {
     expect(rules).toContain("match /teacherDirectory/{teacherId}");
     expect(rules).toContain("allow list: if isSignedIn()");
-    expect(rules).toContain("request.query.limit <= 10");
+    expect(rules).toContain("request.query.limit <= 12");
   });
 
   it("lets teachers read student history only when actively assigned", () => {

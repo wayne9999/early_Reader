@@ -14,6 +14,7 @@ For Codex continuity and project handoff notes, see `.codex/project.md` and `PRO
 - Role-aware student and teacher workspaces.
 - Student learning-event history for reading, sentence, and memory interactions.
 - Teacher dashboard with assigned-student roster, approval requests, strengths, growth areas, history, and intervention planning.
+- Student teacher selection with teacher bios, grade fit, specialties, visible workload, and request approval.
 - Donation and subscription support page using Stripe Payment Links.
 - Firebase Auth account page with Google and Facebook support, plus an Instagram custom-provider placeholder.
 - Firebase Firestore profile, assignment, event, and progress repositories with local storage fallback for development.
@@ -132,9 +133,13 @@ Current behavior:
 - When Firebase is configured and a Firebase-authenticated user is available, progress saves to `users/{userId}/learning/progress`.
 - Signed-in users choose one locked app role: `student` or `teacher`.
 - Teacher lookup uses `teacherProfiles/{teacherId}` by email or teacher code.
-- Student assignment requests use `teacherStudentLinks/{teacherId_studentId}`.
+- Students can browse or search the limited `teacherDirectory` and review each teacher's bio, grade bands, specialties, load, and pay/load note before requesting.
+- Student assignment requests use `teacherStudentLinks/{teacherId_studentId}` and start as `requested`.
+- Teachers approve or decline requests from their dashboard; approved students become active assignments.
+- Teacher workload is tracked through `activeStudentCount` and `maxStudentLoad` so students are guided toward teachers with available capacity.
 - Student interaction history is stored under `users/{studentId}/learningEvents/{eventId}`.
-- Active assigned teachers can read assigned student event history through Firestore rules.
+- Active assigned teachers can read assigned student event history through Firestore rules and see reading, memory, and logged-in activity completions in the dashboard.
+- Teacher compensation should be calculated on trusted backend data from active assignments before real payouts are made.
 - Production role and paid-entitlement enforcement should move to trusted backend logic or Firebase custom claims before handling real classrooms at scale.
 
 ## Donations And Subscriptions
@@ -172,6 +177,7 @@ Suggested subscriptions:
 - Finish Firebase Auth provider setup in Firebase Console.
 - Add Instagram through a custom provider or Auth0 bridge if that remains a requirement.
 - Add teacher-created student invitations and Stripe webhook entitlement checks for Teacher Pro.
+- Add backend payout reporting for teachers based on active assigned students and approved pay rules.
 - Replace remaining demo classroom fallback data with fully live Firestore enrollment data.
 - Add backend AI analysis endpoint for evidence-based teacher recommendations.
 - Add a content editor for caregivers or teachers.

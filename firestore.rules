@@ -63,7 +63,7 @@ service cloud.firestore {
     match /teacherDirectory/{teacherId} {
       allow get: if isSignedIn();
       allow list: if isSignedIn()
-        && request.query.limit <= 10;
+        && request.query.limit <= 12;
       allow create, update: if ownsUserDocument(teacherId)
         && request.resource.data.uid == request.auth.uid
         && userRole() == "teacher";

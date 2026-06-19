@@ -9,27 +9,150 @@ import {
   updateDoc,
   where
 } from "firebase/firestore";
-import type { AppUser, Progress, TeacherStudentLink, UserProfile } from "../types";
+import type { AppUser, Progress, TeacherLoadStatus, TeacherStudentLink, UserProfile } from "../types";
 import { getFirebaseRuntime } from "./firebase";
+
+const TEACHER_DIRECTORY_LIMIT = 12;
+const ASSIGNMENT_STORAGE_KEY = "readnest-teacher-assignments-v1";
+const fallbackTeacherDirectory: UserProfile[] = [
+  {
+    uid: "demo-teacher-lina",
+    role: "teacher",
+    displayName: "Ms. Lina Carter",
+    email: "lina.teacher@example.com",
+    picture: null,
+    teacherCode: "LINA-READ",
+    bio: "Kindergarten and grade 1 reading guide who uses songs, sound tapping, and quick confidence wins.",
+    gradeBands: ["K", "1"],
+    specialties: ["rhyming", "beginning sounds", "sight words"],
+    maxStudentLoad: 10,
+    activeStudentCount: 4,
+    payModelNote: "Paid per active assigned student after teacher approval."
+  },
+  {
+    uid: "demo-teacher-marcus",
+    role: "teacher",
+    displayName: "Mr. Marcus Reed",
+    email: "marcus.teacher@example.com",
+    picture: null,
+    teacherCode: "REED-READ",
+    bio: "Grade 1 and 2 reading coach focused on sentence fluency, story order, and vocabulary growth.",
+    gradeBands: ["1", "2"],
+    specialties: ["sentence fluency", "story sequencing", "word meaning"],
+    maxStudentLoad: 12,
+    activeStudentCount: 9,
+    payModelNote: "Paid per active assigned student with load kept visible to families."
+  },
+  {
+    uid: "demo-teacher-nia",
+    role: "teacher",
+    displayName: "Ms. Nia Brooks",
+    email: "nia.teacher@example.com",
+    picture: null,
+    teacherCode: "NIA-READ",
+    bio: "Early literacy specialist who helps hesitant readers practice calmly with clear next steps.",
+    gradeBands: ["K", "1", "2"],
+    specialties: ["reading confidence", "phonics review", "memory routines"],
+    maxStudentLoad: 8,
+    activeStudentCount: 8,
+    payModelNote: "Currently full so students can choose a teacher with enough attention available."
+  }
+];
+
+function fallbackTeacherSearch(searchTerm: string) {
+  const normalizedTerm = searchTerm.trim().toLowerCase();
+
+  if (normalizedTerm.length < 2) {
+    return sortTeachersForStudentChoice(fallbackTeacherDirectory);
+  }
+
+  return sortTeachersForStudentChoice(
+    fallbackTeacherDirectory.filter((teacher) =>
+      [teacher.displayName, teacher.email, teacher.teacherCode, teacher.bio]
+        .filter(Boolean)
+        .some((value) => value?.toLowerCase().includes(normalizedTerm))
+    )
+  );
+}
+
+function localAssignmentKey(userId: string) {
+  return `${ASSIGNMENT_STORAGE_KEY}:${userId}`;
+}
+
+function loadLocalAssignments(userId: string): TeacherStudentLink[] {
+  return JSON.parse(localStorage.getItem(localAssignmentKey(userId)) || "[]") as TeacherStudentLink[];
+}
+
+function saveLocalAssignments(userId: string, assignments: TeacherStudentLink[]) {
+  localStorage.setItem(localAssignmentKey(userId), JSON.stringify(assignments));
+}
+
+export function teacherLoadStatus(teacher: UserProfile): TeacherLoadStatus {
+  const activeStudentCount = teacher.activeStudentCount ?? 0;
+  const maxStudentLoad = teacher.maxStudentLoad ?? 12;
+
+  if (activeStudentCount >= maxStudentLoad) {
+    return "full";
+  }
+
+  if (activeStudentCount / maxStudentLoad >= 0.75) {
+    return "nearlyFull";
+  }
+
+  return "open";
+}
+
+export function availableTeacherSlots(teacher: UserProfile) {
+  return Math.max((teacher.maxStudentLoad ?? 12) - (teacher.activeStudentCount ?? 0), 0);
+}
+
+export function sortTeachersForStudentChoice(teachers: UserProfile[]) {
+  return [...teachers].sort((first, second) => {
+    const firstStatus = teacherLoadStatus(first);
+    const secondStatus = teacherLoadStatus(second);
+
+    if (firstStatus === "full" && secondStatus !== "full") {
+      return 1;
+    }
+
+    if (firstStatus !== "full" && secondStatus === "full") {
+      return -1;
+    }
+
+    return (first.activeStudentCount ?? 0) - (second.activeStudentCount ?? 0)
+      || first.displayName.localeCompare(second.displayName);
+  });
+}
 
 export async function searchTeachers(searchTerm: string): Promise<UserProfile[]> {
   const runtime = getFirebaseRuntime();
   const firebaseUser = runtime?.auth.currentUser;
 
-  if (!runtime || !firebaseUser || searchTerm.trim().length < 2) {
-    return [];
+  if (!runtime || !firebaseUser) {
+    return fallbackTeacherSearch(searchTerm);
   }
 
   const normalizedTerm = searchTerm.trim();
+
+  if (normalizedTerm.length < 2) {
+    const directoryQuery = query(
+      collection(runtime.db, "teacherDirectory"),
+      limit(TEACHER_DIRECTORY_LIMIT)
+    );
+    const snapshot = await getDocs(directoryQuery);
+
+    return sortTeachersForStudentChoice(snapshot.docs.map((teacherDoc) => teacherDoc.data() as UserProfile));
+  }
+
   const byCode = query(
     collection(runtime.db, "teacherDirectory"),
     where("teacherCode", "==", normalizedTerm.toUpperCase()),
-    limit(10)
+    limit(TEACHER_DIRECTORY_LIMIT)
   );
   const byEmail = query(
     collection(runtime.db, "teacherDirectory"),
     where("email", "==", normalizedTerm.toLowerCase()),
-    limit(10)
+    limit(TEACHER_DIRECTORY_LIMIT)
   );
   const [codeSnapshot, emailSnapshot] = await Promise.all([getDocs(byCode), getDocs(byEmail)]);
   const teachers = new Map<string, UserProfile>();
@@ -38,7 +161,7 @@ export async function searchTeachers(searchTerm: string): Promise<UserProfile[]>
     teachers.set(teacherDoc.id, teacherDoc.data() as UserProfile);
   });
 
-  return [...teachers.values()];
+  return sortTeachersForStudentChoice([...teachers.values()]);
 }
 
 export async function requestTeacherAssignment(
@@ -51,6 +174,25 @@ export async function requestTeacherAssignment(
   const firebaseUser = runtime?.auth.currentUser;
 
   if (!runtime || !firebaseUser) {
+    const linkId = `${teacher.uid}_${student.id}`;
+    const assignments = loadLocalAssignments(student.id).filter((assignment) => assignment.id !== linkId);
+
+    saveLocalAssignments(student.id, [
+      {
+        id: linkId,
+        teacherId: teacher.uid,
+        teacherName: teacher.displayName,
+        teacherEmail: teacher.email,
+        studentId: student.id,
+        studentName: studentProfile.displayName || student.name,
+        studentEmail: student.email ?? null,
+        status: "requested",
+        latestProgressSnapshot: progress,
+        requestedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      },
+      ...assignments
+    ]);
     return;
   }
 
@@ -78,7 +220,7 @@ export async function loadStudentAssignments(user: AppUser | null): Promise<Teac
   const firebaseUser = runtime?.auth.currentUser;
 
   if (!runtime || !firebaseUser || !user) {
-    return [];
+    return user ? loadLocalAssignments(user.id) : [];
   }
 
   const assignmentsQuery = query(collection(runtime.db, "teacherStudentLinks"), where("studentId", "==", firebaseUser.uid));
@@ -107,8 +249,9 @@ export async function loadTeacherAssignments(user: AppUser | null): Promise<Teac
 
 export async function updateTeacherAssignmentStatus(linkId: string, status: TeacherStudentLink["status"]) {
   const runtime = getFirebaseRuntime();
+  const firebaseUser = runtime?.auth.currentUser;
 
-  if (!runtime) {
+  if (!runtime || !firebaseUser) {
     return;
   }
 
@@ -116,13 +259,37 @@ export async function updateTeacherAssignmentStatus(linkId: string, status: Teac
     status,
     updatedAt: serverTimestamp()
   });
+
+  const assignments = await loadTeacherAssignments({
+    id: firebaseUser.uid,
+    name: firebaseUser.displayName ?? "Teacher",
+    email: firebaseUser.email ?? undefined
+  });
+  const activeStudentCount = assignments.filter((assignment) => assignment.status === "active").length;
+
+  await updateDoc(doc(runtime.db, "teacherDirectory", firebaseUser.uid), {
+    activeStudentCount,
+    updatedAt: serverTimestamp()
+  });
 }
 
 export async function syncAssignmentProgress(user: AppUser | null, progress: Progress) {
+  if (!user) {
+    return;
+  }
+
   const assignments = await loadStudentAssignments(user);
   const runtime = getFirebaseRuntime();
 
   if (!runtime) {
+    saveLocalAssignments(
+      user.id,
+      assignments.map((assignment) => ({
+        ...assignment,
+        latestProgressSnapshot: progress,
+        updatedAt: new Date().toISOString()
+      }))
+    );
     return;
   }
 

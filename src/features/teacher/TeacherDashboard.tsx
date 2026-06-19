@@ -48,6 +48,9 @@ export function TeacherDashboard({ progress, user }: TeacherDashboardProps) {
   const [selectedStudentId, setSelectedStudentId] = useState(students[0]?.id ?? "");
   const selectedStudent = students.find((student) => student.id === selectedStudentId) ?? students[0];
   const selectedAnalysis = selectedStudent ? analyzeStudent(selectedStudent) : null;
+  const selectedActivityEvents = selectedStudent?.history?.filter((event) => event.type === "activity_completed") ?? [];
+  const activeAssignments = assignments.filter((assignment) => assignment.status === "active");
+  const requestedAssignments = assignments.filter((assignment) => assignment.status === "requested");
 
   useEffect(() => {
     let isMounted = true;
@@ -109,6 +112,8 @@ export function TeacherDashboard({ progress, user }: TeacherDashboardProps) {
           <h3>{classroomAnalysis.headline}</h3>
           <div className="teacher-metrics">
             <span>{students.length} students</span>
+            <span>{activeAssignments.length} active assignments</span>
+            <span>{requestedAssignments.length} pending requests</span>
             <span>{classroomAnalysis.analyses.filter((analysis) => analysis.growthAreas.length > 0).length} need follow-up</span>
             <span>{classroomAnalysis.analyses.filter((analysis) => analysis.strengths.length > 0).length} showing strengths</span>
           </div>
@@ -130,18 +135,21 @@ export function TeacherDashboard({ progress, user }: TeacherDashboardProps) {
       <section className="teacher-grid">
         <aside className="practice-panel roster-panel" aria-label="Student roster">
           <p className="eyebrow">Roster</p>
-          {assignments.some((assignment) => assignment.status === "requested") ? (
+          {requestedAssignments.length ? (
             <div className="request-list">
-              {assignments
-                .filter((assignment) => assignment.status === "requested")
-                .map((assignment) => (
-                  <div className="request-row" key={assignment.id}>
-                    <span>{assignment.studentName} requested access</span>
+              {requestedAssignments.map((assignment) => (
+                <div className="request-row" key={assignment.id}>
+                  <span>{assignment.studentName} requested access</span>
+                  <div className="request-actions">
                     <button type="button" onClick={() => void changeAssignmentStatus(assignment.id, "active")}>
                       Approve
                     </button>
+                    <button type="button" onClick={() => void changeAssignmentStatus(assignment.id, "declined")}>
+                      Decline
+                    </button>
                   </div>
-                ))}
+                </div>
+              ))}
             </div>
           ) : null}
           <div className="student-list">
@@ -202,6 +210,36 @@ export function TeacherDashboard({ progress, user }: TeacherDashboardProps) {
                 <li key={step}>{step}</li>
               ))}
             </ol>
+          </article>
+
+          <article className="practice-panel">
+            <p className="eyebrow">Skill activity review</p>
+            <div className="activity-review-grid">
+              <span>
+                <strong>{selectedStudent?.progress.activityCompletions ?? 0}</strong>
+                <small>Total skill activities</small>
+              </span>
+              <span>
+                <strong>{selectedActivityEvents.length}</strong>
+                <small>Recent logged activity events</small>
+              </span>
+              <span>
+                <strong>{selectedStudent?.progress.completedToday ?? 0}/3</strong>
+                <small>Daily practice progress</small>
+              </span>
+            </div>
+            {selectedActivityEvents.length ? (
+              <ul className="history-list">
+                {selectedActivityEvents.slice(0, 5).map((event) => (
+                  <li key={event.id ?? `${event.type}-${event.label}-${event.createdAt}`}>
+                    <strong>{event.label}</strong>
+                    <span>{event.area} practice - completed</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="helper-text">Logged-in activities will appear here after this student completes them.</p>
+            )}
           </article>
 
           <article className="practice-panel">

@@ -899,6 +899,23 @@ button {
   font-weight: 900;
 }
 
+.teacher-choice-intro {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: center;
+  background: linear-gradient(135deg, #ffffff, #f4fbf6 55%, #fff5c7);
+}
+
+.teacher-load-key,
+.teacher-specialties,
+.teacher-profile-details,
+.request-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .teacher-search {
   display: grid;
   grid-template-columns: minmax(260px, 1fr) auto;
@@ -932,13 +949,63 @@ button {
 
 .teacher-result {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
   gap: 16px;
-  align-items: center;
+  border-color: rgba(47, 128, 237, 0.16);
 }
 
 .teacher-result h3 {
   margin: 0;
+}
+
+.teacher-result-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: start;
+}
+
+.load-pill,
+.teacher-specialties span,
+.teacher-profile-details span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  font-weight: 900;
+}
+
+.load-pill {
+  border: 2px solid rgba(47, 128, 237, 0.12);
+  white-space: nowrap;
+}
+
+.load-pill.open {
+  background: #efffeb;
+  color: #1f6d2b;
+  border-color: rgba(92, 200, 95, 0.45);
+}
+
+.load-pill.nearlyFull {
+  background: #fff5c7;
+  color: #7a5310;
+  border-color: rgba(255, 203, 71, 0.62);
+}
+
+.load-pill.full {
+  background: #fff0f0;
+  color: #9f1d1d;
+  border-color: rgba(255, 107, 107, 0.46);
+}
+
+.teacher-profile-details span {
+  background: #eef8ff;
+  color: #333a53;
+}
+
+.teacher-specialties span {
+  background: #f2eaff;
+  color: #4f3b89;
 }
 
 .request-list {
@@ -967,6 +1034,12 @@ button {
   background: linear-gradient(135deg, var(--green), var(--teal));
   color: white;
   font-weight: 900;
+}
+
+.request-actions button:last-child {
+  background: #ffffff;
+  color: var(--ink);
+  border: 2px solid rgba(32, 38, 55, 0.12);
 }
 
 .history-list {
@@ -1393,6 +1466,32 @@ button {
   line-height: 1.7;
 }
 
+.activity-review-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(120px, 1fr));
+  gap: 10px;
+  margin: 14px 0;
+}
+
+.activity-review-grid span {
+  display: grid;
+  gap: 4px;
+  min-height: 82px;
+  padding: 12px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #ffffff, #eef8ff);
+  border: 2px solid rgba(47, 128, 237, 0.14);
+}
+
+.activity-review-grid strong {
+  font-size: 1.45rem;
+}
+
+.activity-review-grid small {
+  color: var(--muted);
+  font-weight: 900;
+}
+
 .ai-boundary {
   background: linear-gradient(180deg, #ffffff, #f2eaff);
 }
@@ -1741,13 +1840,16 @@ button {
   .donation-hero,
   .donation-use-panel,
   .activity-hero,
+  .activity-review-grid,
   .support-center-hero,
   .support-help-grid,
   .package-panel-heading,
   .package-grid,
   .role-grid,
+  .teacher-choice-intro,
   .teacher-search,
-  .teacher-result {
+  .teacher-result,
+  .teacher-result-main {
     grid-template-columns: 1fr;
   }
 

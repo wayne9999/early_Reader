@@ -19,6 +19,18 @@ function createTeacherCode(name: string, uid: string) {
 }
 
 function buildProfile(user: AppUser, role: UserRole, signupPath?: SignupPath): UserProfile {
+  const teacherDetails = role === "teacher"
+    ? {
+        bio:
+          "I support early readers with short, calm practice, phonics modeling, and teacher-reviewed next steps.",
+        gradeBands: ["K", "1", "2"] as UserProfile["gradeBands"],
+        specialties: ["phonics", "sight words", "reading confidence"],
+        maxStudentLoad: 12,
+        activeStudentCount: 0,
+        payModelNote: "Teacher support is paid based on active assigned students."
+      }
+    : {};
+
   return {
     uid: user.id,
     role,
@@ -26,7 +38,8 @@ function buildProfile(user: AppUser, role: UserRole, signupPath?: SignupPath): U
     displayName: user.name,
     email: user.email ?? null,
     picture: user.picture ?? null,
-    teacherCode: role === "teacher" ? createTeacherCode(user.name, user.id) : undefined
+    teacherCode: role === "teacher" ? createTeacherCode(user.name, user.id) : undefined,
+    ...teacherDetails
   };
 }
 
@@ -83,6 +96,12 @@ export async function createUserProfile(user: AppUser, role: UserRole, signupPat
         email: profile.email,
         picture: profile.picture,
         teacherCode: profile.teacherCode,
+        bio: profile.bio,
+        gradeBands: profile.gradeBands,
+        specialties: profile.specialties,
+        maxStudentLoad: profile.maxStudentLoad,
+        activeStudentCount: profile.activeStudentCount,
+        payModelNote: profile.payModelNote,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       },
@@ -96,6 +115,12 @@ export async function createUserProfile(user: AppUser, role: UserRole, signupPat
         displayName: profile.displayName,
         email: profile.email,
         teacherCode: profile.teacherCode,
+        bio: profile.bio,
+        gradeBands: profile.gradeBands,
+        specialties: profile.specialties,
+        maxStudentLoad: profile.maxStudentLoad,
+        activeStudentCount: profile.activeStudentCount,
+        payModelNote: profile.payModelNote,
         updatedAt: serverTimestamp()
       },
       { merge: true }

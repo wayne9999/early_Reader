@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import {
+  availableTeacherSlots,
   loadStudentAssignments,
   requestTeacherAssignment,
-  searchTeachers
+  searchTeachers,
+  teacherLoadStatus
 } from "../../services/assignmentRepository";
 import type { AppUser, Progress, TeacherStudentLink, UserProfile } from "../../types";
 
@@ -23,6 +25,27 @@ export function FindTeacher({ progress, user, profile }: FindTeacherProps) {
     void loadStudentAssignments(user).then(setAssignments);
   }, [user]);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    setIsSearching(true);
+    searchTeachers("")
+      .then((directoryTeachers) => {
+        if (isMounted) {
+          setTeachers(directoryTeachers);
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsSearching(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   async function handleSearch() {
     setIsSearching(true);
     setMessage("");
@@ -40,18 +63,38 @@ export function FindTeacher({ progress, user, profile }: FindTeacherProps) {
     setMessage(`Request sent to ${teacher.displayName}.`);
   }
 
+  function assignmentForTeacher(teacherId: string) {
+    return assignments.find((assignment) => assignment.teacherId === teacherId);
+  }
+
   return (
     <>
       <div className="section-heading">
         <div>
           <p className="eyebrow">Student connection</p>
-          <h2>Find and request your teacher</h2>
+          <h2>Choose a teacher guide</h2>
         </div>
       </div>
 
+      <section className="practice-panel teacher-choice-intro">
+        <div>
+          <p className="eyebrow">Human-in-the-loop support</p>
+          <h3>Pick a teacher who fits your reading goals</h3>
+          <p className="helper-text">
+            Teachers review student activity history, spot strong and weak areas, and help keep each child on the
+            right path. To keep support realistic, ReadNest shows teacher load before a request is sent.
+          </p>
+        </div>
+        <div className="teacher-load-key" aria-label="Teacher load key">
+          <span className="load-pill open">Open</span>
+          <span className="load-pill nearlyFull">Nearly full</span>
+          <span className="load-pill full">Full</span>
+        </div>
+      </section>
+
       <section className="practice-panel teacher-search">
         <label>
-          <span>Teacher email or code</span>
+          <span>Search teacher email or code</span>
           <input
             value={searchTerm}
             onChange={(event) => setSearchTerm(event.target.value)}
@@ -59,26 +102,70 @@ export function FindTeacher({ progress, user, profile }: FindTeacherProps) {
           />
         </label>
         <button className="primary-button" type="button" disabled={isSearching} onClick={() => void handleSearch()}>
-          Search
+          {isSearching ? "Loading" : "Search"}
         </button>
       </section>
 
       {message ? <p className="success-message">{message}</p> : null}
 
       <section className="teacher-results">
-        {teachers.map((teacher) => (
-          <article className="practice-panel teacher-result" key={teacher.uid}>
-            <div>
-              <p className="eyebrow">Teacher</p>
-              <h3>{teacher.displayName}</h3>
-              <p className="helper-text">{teacher.email}</p>
-              <p className="helper-text">Code: {teacher.teacherCode}</p>
-            </div>
-            <button className="primary-button" type="button" onClick={() => void requestAssignment(teacher)}>
-              Request teacher
-            </button>
+        {teachers.map((teacher) => {
+          const currentAssignment = assignmentForTeacher(teacher.uid);
+          const loadStatus = teacherLoadStatus(teacher);
+          const isFull = loadStatus === "full";
+          const requestLabel = currentAssignment
+            ? `Request ${currentAssignment.status}`
+            : isFull
+              ? "Teacher is full"
+              : "Request teacher";
+
+          return (
+            <article className="practice-panel teacher-result" key={teacher.uid}>
+              <div className="teacher-result-main">
+                <div>
+                  <p className="eyebrow">Teacher profile</p>
+                  <h3>{teacher.displayName}</h3>
+                  <p className="helper-text">{teacher.bio ?? "Early reading teacher focused on calm, short practice."}</p>
+                </div>
+                <span className={`load-pill ${loadStatus}`}>
+                  {availableTeacherSlots(teacher)} spots open
+                </span>
+              </div>
+
+              <div className="teacher-profile-details">
+                <span>Grades {(teacher.gradeBands ?? ["K", "1", "2"]).join(", ")}</span>
+                <span>Code {teacher.teacherCode}</span>
+                <span>{teacher.email}</span>
+              </div>
+
+              <div className="teacher-specialties" aria-label={`${teacher.displayName} specialties`}>
+                {(teacher.specialties ?? ["phonics", "sight words", "reading confidence"]).map((specialty) => (
+                  <span key={specialty}>{specialty}</span>
+                ))}
+              </div>
+
+              <p className="helper-text">
+                {teacher.payModelNote ?? "Teacher support is paid based on active assigned students."}
+              </p>
+
+              <button
+                className="primary-button"
+                type="button"
+                disabled={Boolean(currentAssignment) || isFull}
+                onClick={() => void requestAssignment(teacher)}
+              >
+                {requestLabel}
+              </button>
+            </article>
+          );
+        })}
+        {!teachers.length && !isSearching ? (
+          <article className="practice-panel teacher-result">
+            <p className="eyebrow">No teachers found</p>
+            <h3>Try a teacher code or email</h3>
+            <p className="helper-text">As teachers create profiles, this page will show their bios and available load.</p>
           </article>
-        ))}
+        ) : null}
       </section>
 
       <article className="practice-panel">

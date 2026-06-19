@@ -46,6 +46,12 @@ teacherProfiles/{teacherId}
   email
   picture
   teacherCode
+  bio
+  gradeBands
+  specialties
+  maxStudentLoad
+  activeStudentCount
+  payModelNote
   createdAt
   updatedAt
 
@@ -54,6 +60,12 @@ teacherDirectory/{teacherId}
   displayName
   email
   teacherCode
+  bio
+  gradeBands
+  specialties
+  maxStudentLoad
+  activeStudentCount
+  payModelNote
   updatedAt
 
 teacherStudentLinks/{teacherId_studentId}
@@ -146,15 +158,16 @@ Current MVP behavior:
 
 1. A visitor chooses a signup path before sign-in: `parentChild` or `teacher`.
 2. Parent/child signup creates a `student` role profile for the child learning workspace.
-3. Teacher signup creates a `teacher` role profile and a searchable teacher code.
+3. Teacher signup creates a `teacher` role profile, searchable teacher code, public bio, grade bands, specialties, and load settings.
 4. The selected signup path is stored in `users/{userId}.signupPath`.
 5. Private teacher profiles are written to `teacherProfiles/{teacherId}`.
 6. Searchable teacher lookup data is written to `teacherDirectory/{teacherId}`.
-7. Students search the limited teacher directory by teacher email or code.
+7. Students browse or search the limited teacher directory and compare bio, grade fit, specialties, active load, and available capacity.
 8. Students create `teacherStudentLinks/{teacherId_studentId}` with `status: "requested"`.
-9. Teachers approve requests, changing the status to `active`.
-10. Student reading and memory actions create history records under `users/{studentId}/learningEvents`.
-11. Active assigned teachers can read that student's event history and latest progress snapshot.
+9. Teachers approve or decline requests from the dashboard. Approval changes the status to `active` and refreshes the teacher directory active-student count.
+10. Student reading, memory, and logged-in activity actions create history records under `users/{studentId}/learningEvents`.
+11. Active assigned teachers can read that student's event history, latest progress snapshot, and activity-completion summary.
+12. Teacher compensation should be calculated from active assignment records in trusted backend code before real payouts are made.
 
 The app prevents role switching after profile creation. Firebase Auth also prevents one Google email from becoming two separate accounts under normal email-provider linking rules. For stricter production enforcement, use Cloud Functions or a backend API to validate role creation, custom claims, paid teacher entitlements, and duplicate-email policies.
 
