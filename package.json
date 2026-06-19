@@ -4,8 +4,9 @@
   "private": true,
   "description": "A small web MVP that helps early elementary students practice reading, sight words, and age-appropriate memory skills.",
   "type": "module",
+  "packageManager": "npm@11.13.0",
   "engines": {
-    "node": ">=20.19.0"
+    "node": ">=24.17.0"
   },
   "scripts": {
     "dev": "vite --host 127.0.0.1 --port 4173",

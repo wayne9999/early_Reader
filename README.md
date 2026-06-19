@@ -20,10 +20,14 @@ For Codex continuity and project handoff notes, see `.codex/project.md` and `PRO
 
 ## Run It
 
+Use Node 24.17+.
+
 ```bash
 npm install
 npm run start
 ```
+
+If you use a Node version manager, run `nvm use` or the equivalent first.
 
 Then visit `http://localhost:4173`.
 
@@ -38,7 +42,7 @@ npm run build
 npm audit --audit-level=moderate
 ```
 
-The test stack uses Node 20.19+ for current Vitest, jsdom, and Playwright support. GitHub Actions already runs Node 20.
+The project uses Node 24.17+ so local development, Vitest, jsdom, Playwright, Firebase tooling, and GitHub Actions stay on the same LTS runtime.
 
 Test metrics:
 
