@@ -9,6 +9,7 @@ For Codex continuity and project handoff notes, see `.codex/project.md` and `PRO
 - Reading practice with level-based sight words, phonics blending, and short sentences.
 - Browser read-aloud support using the built-in SpeechSynthesis API.
 - Memory matching using school-ready concepts like healthy habits, kind words, and classroom routines.
+- Five extra logged-in student activities for rhyming, beginning sounds, sentence order, story sequencing, and word meaning.
 - Caregiver progress view with known words, reading sessions, memory boards, and next-step suggestions.
 - Role-aware student and teacher workspaces.
 - Student learning-event history for reading, sentence, and memory interactions.
@@ -84,9 +85,14 @@ ReadNest uses hash-based routes so deep links work on GitHub Pages without a ser
 - `#/account`
 - `#/progress` for signed-in students
 - `#/find-teacher` for signed-in students
+- `#/rhymes` for signed-in students
+- `#/sound-sort` for signed-in students
+- `#/sentence-builder` for signed-in students
+- `#/story-order` for signed-in students
+- `#/word-meaning` for signed-in students
 - `#/teacher` for signed-in teachers and admins
 
-Guest-accessible routes open directly. Protected routes redirect guests to the neutral Account page at `#/account?next={route}` and save the requested route in session storage. The Account page does not assume whether the link is meant for a student or teacher; the user still chooses the correct account path. After sign-in and role setup, ReadNest opens the saved route when that role is allowed to access it, otherwise it sends the user to the correct home page for their role.
+Guest-accessible routes open directly. Guests can use Reading and Memory as the open practice activities. The five added skill activities are student-only, so protected activity links redirect guests to the neutral Account page at `#/account?next={route}` and save the requested route in session storage. The Account page does not assume whether the link is meant for a student or teacher; the user still chooses the correct account path. After sign-in and role setup, ReadNest opens the saved route when that role is allowed to access it, otherwise it sends the user to the correct home page for their role.
 
 ## Architecture
 

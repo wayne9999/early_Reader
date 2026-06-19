@@ -3,6 +3,11 @@ export type AppView =
   | "memory"
   | "progress"
   | "findTeacher"
+  | "rhymes"
+  | "soundSort"
+  | "sentenceBuilder"
+  | "storyOrder"
+  | "wordMeaning"
   | "teacher"
   | "donate"
   | "support"
@@ -45,6 +50,7 @@ export type Progress = {
   memoryMoves: number;
   memoryTurns: number;
   bestMemoryTurns: number | null;
+  activityCompletions: number;
   completedToday: number;
   lastPracticeDate: string;
 };
@@ -82,7 +88,8 @@ export type LearningEventType =
   | "sound_listened"
   | "sentence_listened"
   | "memory_match"
-  | "memory_completed";
+  | "memory_completed"
+  | "activity_completed";
 
 export type LearningEvent = {
   id?: string;
@@ -111,6 +118,22 @@ export type TeacherStudentLink = {
 export type SocialProvider = "google" | "facebook" | "instagram";
 
 export type SkillArea = "phonics" | "sightWords" | "fluency" | "workingMemory" | "consistency";
+
+export type LearningActivity = {
+  id: "rhymes" | "soundSort" | "sentenceBuilder" | "storyOrder" | "wordMeaning";
+  title: string;
+  shortLabel: string;
+  routeLabel: string;
+  eyebrow: string;
+  skill: SkillArea;
+  intro: string;
+  prompt: string;
+  target: string;
+  choices: string[];
+  correctChoice: string;
+  successMessage: string;
+  coachMessage: string;
+};
 
 export type StudentSummary = {
   id: string;

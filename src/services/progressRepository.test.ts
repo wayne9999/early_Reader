@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { defaultProgress, recordKnownWord, recordMemoryWin, recordReadingSession } from "./progressRepository";
+import {
+  defaultProgress,
+  recordActivityCompletion,
+  recordKnownWord,
+  recordMemoryWin,
+  recordReadingSession
+} from "./progressRepository";
 
 describe("progressRepository helpers", () => {
   it("tracks repeated known words without losing existing words", () => {
@@ -30,5 +36,12 @@ describe("progressRepository helpers", () => {
     expect(secondWin.memoryTurns).toBe(20);
     expect(secondWin.memoryMoves).toBe(20);
     expect(secondWin.bestMemoryTurns).toBe(8);
+  });
+
+  it("records logged-in activity completions toward the daily goal", () => {
+    const progress = recordActivityCompletion(defaultProgress);
+
+    expect(progress.activityCompletions).toBe(1);
+    expect(progress.completedToday).toBe(1);
   });
 });

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { RoleSetup } from "./features/account/RoleSetup";
+import { LearningActivityPage } from "./features/activities/LearningActivityPage";
 import { SignInPanel } from "./features/auth/SignInPanel";
 import { useAuth } from "./features/auth/AuthProvider";
 import { MemoryGame } from "./features/memory/MemoryGame";
@@ -29,6 +30,11 @@ import type { AppUser, AppView, Progress, SignupPath, UserProfile, UserRole } fr
 const studentNavItems: Array<{ id: AppView; label: string }> = [
   { id: "reading", label: "Reading" },
   { id: "memory", label: "Memory" },
+  { id: "rhymes", label: "Rhymes" },
+  { id: "soundSort", label: "Sounds" },
+  { id: "sentenceBuilder", label: "Sentences" },
+  { id: "storyOrder", label: "Story" },
+  { id: "wordMeaning", label: "Words" },
   { id: "progress", label: "Progress" },
   { id: "findTeacher", label: "Find Teacher" },
   { id: "donate", label: "Donate" },
@@ -300,6 +306,23 @@ export function RootApp() {
 
     if (currentView === "memory") {
       return <MemoryGame progress={progress} user={user} onProgressChange={handleProgressChange} />;
+    }
+
+    if (
+      currentView === "rhymes" ||
+      currentView === "soundSort" ||
+      currentView === "sentenceBuilder" ||
+      currentView === "storyOrder" ||
+      currentView === "wordMeaning"
+    ) {
+      return (
+        <LearningActivityPage
+          activityId={currentView}
+          progress={progress}
+          user={user}
+          onProgressChange={handleProgressChange}
+        />
+      );
     }
 
     if (currentView === "progress") {

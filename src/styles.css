@@ -658,6 +658,98 @@ button {
   color: var(--muted);
 }
 
+.activity-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(160px, 0.34fr);
+  gap: 20px;
+  align-items: center;
+  background: linear-gradient(135deg, #ffffff, #fff2b8 50%, #eef8ff);
+}
+
+.activity-rhymes {
+  background: linear-gradient(135deg, #ffffff, #ffeef6 48%, #fff2b8);
+}
+
+.activity-soundSort {
+  background: linear-gradient(135deg, #ffffff, #eaffec 48%, #eef8ff);
+}
+
+.activity-sentenceBuilder {
+  background: linear-gradient(135deg, #ffffff, #eef8ff 48%, #f2eaff);
+}
+
+.activity-storyOrder {
+  background: linear-gradient(135deg, #ffffff, #fffdf2 46%, #fff2b8);
+}
+
+.activity-wordMeaning {
+  background: linear-gradient(135deg, #ffffff, #eaffec 46%, #fffdf2);
+}
+
+.activity-hero h3 {
+  font-size: clamp(1.8rem, 4vw, 3.2rem);
+  line-height: 1;
+}
+
+.activity-target {
+  display: grid;
+  place-items: center;
+  min-height: 150px;
+  padding: 16px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--purple), var(--blue));
+  color: white;
+  font-size: clamp(2.2rem, 6vw, 4rem);
+  font-weight: 900;
+  text-align: center;
+  box-shadow: 0 16px 26px rgba(54, 74, 102, 0.18);
+  transform: rotate(2deg);
+}
+
+.activity-choice-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(180px, 1fr));
+  gap: 14px;
+}
+
+.activity-choice {
+  min-height: 110px;
+  padding: 18px;
+  border: 3px solid rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  background: linear-gradient(180deg, #ffffff, #eef8ff);
+  color: var(--ink);
+  font-size: 1.35rem;
+  font-weight: 900;
+  box-shadow: 0 10px 24px rgba(54, 74, 102, 0.08);
+}
+
+.activity-choice:nth-child(2) {
+  background: linear-gradient(180deg, #ffffff, #fff2b8);
+}
+
+.activity-choice:nth-child(3) {
+  background: linear-gradient(180deg, #ffffff, #f2eaff);
+}
+
+.activity-choice:nth-child(4) {
+  background: linear-gradient(180deg, #ffffff, #eaffec);
+}
+
+.activity-choice.is-correct {
+  border-color: var(--green);
+  background: linear-gradient(180deg, #ffffff, #eaffec);
+  box-shadow: 0 0 0 5px rgba(92, 200, 95, 0.2), 0 10px 24px rgba(54, 74, 102, 0.08);
+}
+
+.activity-choice:disabled {
+  cursor: default;
+}
+
+.activity-coach-panel {
+  background: linear-gradient(180deg, #ffffff, #fffdf2);
+}
+
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(5, minmax(150px, 1fr));
@@ -686,6 +778,10 @@ button {
 
 .stat-card:nth-child(5) {
   background: linear-gradient(180deg, #ffffff, #ffeef6);
+}
+
+.stat-card:nth-child(6) {
+  background: linear-gradient(180deg, #ffffff, #fffdf2);
 }
 
 .stat-card strong {
@@ -1644,6 +1740,7 @@ button {
   .insight-columns,
   .donation-hero,
   .donation-use-panel,
+  .activity-hero,
   .support-center-hero,
   .support-help-grid,
   .package-panel-heading,
@@ -1664,6 +1761,7 @@ button {
 
   .memory-board,
   .stats-grid,
+  .activity-choice-grid,
   .signup-choice-grid {
     grid-template-columns: repeat(2, minmax(120px, 1fr));
   }
@@ -1693,6 +1791,7 @@ button {
 
   .memory-board,
   .stats-grid,
+  .activity-choice-grid,
   .auth-grid,
   .signup-choice-grid {
     grid-template-columns: 1fr;

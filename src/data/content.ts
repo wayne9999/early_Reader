@@ -1,4 +1,4 @@
-import type { MemoryCardContent, ReadingLevel } from "../types";
+import type { LearningActivity, MemoryCardContent, ReadingLevel } from "../types";
 
 export const readingLevels: ReadingLevel[] = [
   {
@@ -110,4 +110,82 @@ export const progressTips = [
   "Ask the child to point under each word while reading.",
   "Keep memory games short and end after a successful match.",
   "Read one familiar sentence before introducing a new one."
+];
+
+export const learningActivities: LearningActivity[] = [
+  {
+    id: "rhymes",
+    title: "Rhyme Rocket",
+    shortLabel: "Rhymes",
+    routeLabel: "Rhyme Rocket",
+    eyebrow: "Listen for ending sounds",
+    skill: "phonics",
+    intro: "Rhyming helps children hear word parts and notice sound patterns.",
+    prompt: "Which word rhymes with cat?",
+    target: "cat",
+    choices: ["sun", "hat", "fish", "book"],
+    correctChoice: "hat",
+    successMessage: "Yes. Cat and hat both end with the /at/ sound.",
+    coachMessage: "Listen to the ending sound. Cat ends like hat."
+  },
+  {
+    id: "soundSort",
+    title: "Sound Sort",
+    shortLabel: "Sounds",
+    routeLabel: "Sound Sort",
+    eyebrow: "Find the first sound",
+    skill: "phonics",
+    intro: "Beginning sound practice builds decoding confidence before harder words appear.",
+    prompt: "Pick the word that starts with /m/.",
+    target: "m",
+    choices: ["sun", "map", "run", "fish"],
+    correctChoice: "map",
+    successMessage: "Great listening. Map starts with /m/.",
+    coachMessage: "Stretch the first sound. Mmmmap starts with /m/."
+  },
+  {
+    id: "sentenceBuilder",
+    title: "Sentence Builder",
+    shortLabel: "Sentence",
+    routeLabel: "Sentence Builder",
+    eyebrow: "Make words make sense",
+    skill: "fluency",
+    intro: "Sentence order helps children connect words into meaning, not just read one word at a time.",
+    prompt: "Which sentence is in the right order?",
+    target: "The dog can run.",
+    choices: ["Run dog the can.", "The dog can run.", "Can the run dog.", "Dog the can run."],
+    correctChoice: "The dog can run.",
+    successMessage: "That sentence sounds right and makes sense.",
+    coachMessage: "Try the sentence that starts with who it is about."
+  },
+  {
+    id: "storyOrder",
+    title: "Story Steps",
+    shortLabel: "Story",
+    routeLabel: "Story Steps",
+    eyebrow: "What happens first?",
+    skill: "fluency",
+    intro: "Sequencing strengthens comprehension because readers track what happens first, next, and last.",
+    prompt: "What should happen first in this school story?",
+    target: "First",
+    choices: ["Put on a backpack.", "Eat lunch at school.", "Go home after class.", "Read after the bell."],
+    correctChoice: "Put on a backpack.",
+    successMessage: "Right. Getting the backpack ready comes first.",
+    coachMessage: "Think about the beginning of a school day."
+  },
+  {
+    id: "wordMeaning",
+    title: "Word Garden",
+    shortLabel: "Word Meaning",
+    routeLabel: "Word Garden",
+    eyebrow: "Sort by meaning",
+    skill: "sightWords",
+    intro: "Sorting words by meaning grows vocabulary and helps children connect reading to real life.",
+    prompt: "Which word belongs with food?",
+    target: "food",
+    choices: ["apple", "chair", "pencil", "shoe"],
+    correctChoice: "apple",
+    successMessage: "Yes. Apple is a food word.",
+    coachMessage: "Look for the word you could eat."
+  }
 ];

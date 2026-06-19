@@ -47,7 +47,8 @@ export function analyzeStudent(student: StudentSummary): TeacherAnalysis {
   const { progress } = student;
   const words = knownWordCount(progress);
   const memoryAverage = averageMemoryTurns(progress);
-  const consistencyScore = progress.completedToday >= 3 ? 95 : progress.readingSessions >= 10 ? 72 : 38;
+  const activityCompletions = progress.activityCompletions ?? 0;
+  const consistencyScore = progress.completedToday >= 3 ? 95 : progress.readingSessions + activityCompletions >= 10 ? 72 : 38;
   const memoryScore = progress.memoryWins === 0 ? 25 : clampScore(100 - Math.max(memoryAverage - 8, 0) * 7);
   const insights = [
     createInsight(
@@ -60,9 +61,9 @@ export function analyzeStudent(student: StudentSummary): TeacherAnalysis {
     createInsight(
       "fluency",
       "Reading fluency",
-      progress.readingSessions * 7,
-      `${progress.readingSessions} sentence reading sessions completed.`,
-      progress.readingSessions < 8
+      progress.readingSessions * 7 + activityCompletions * 4,
+      `${progress.readingSessions} sentence reading sessions and ${activityCompletions} skill activities completed.`,
+      progress.readingSessions + activityCompletions < 8
         ? "Use one short sentence twice: first with audio, then without audio."
         : "Ask the learner to read one familiar sentence before listening."
     ),

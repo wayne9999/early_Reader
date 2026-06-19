@@ -11,6 +11,7 @@ export const defaultProgress: Progress = {
   memoryMoves: 0,
   memoryTurns: 0,
   bestMemoryTurns: null,
+  activityCompletions: 0,
   completedToday: 0,
   lastPracticeDate: ""
 };
@@ -39,7 +40,8 @@ function normalizeStoredProgress(value: Partial<Progress> | null | undefined): P
     ...value,
     knownWords: value?.knownWords ?? {},
     memoryTurns: value?.memoryTurns ?? value?.memoryMoves ?? 0,
-    bestMemoryTurns: value?.bestMemoryTurns ?? null
+    bestMemoryTurns: value?.bestMemoryTurns ?? null,
+    activityCompletions: value?.activityCompletions ?? 0
   });
 }
 
@@ -135,6 +137,14 @@ export function recordMemoryWin(progress: Progress, turns: number): Progress {
     memoryMoves: progress.memoryMoves + turns,
     memoryTurns: progress.memoryTurns + turns,
     bestMemoryTurns: previousBest === null || turns < previousBest ? turns : previousBest,
+    completedToday: Math.min(progress.completedToday + 1, 3)
+  };
+}
+
+export function recordActivityCompletion(progress: Progress): Progress {
+  return {
+    ...progress,
+    activityCompletions: progress.activityCompletions + 1,
     completedToday: Math.min(progress.completedToday + 1, 3)
   };
 }

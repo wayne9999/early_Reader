@@ -4,6 +4,7 @@ test("visitor can distinguish guest state and choose a teacher signup path", asy
   await page.goto("/");
 
   await expect(page.getByLabel("Browsing as guest")).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Main navigation" }).getByRole("button", { name: "Rhymes" })).toHaveCount(0);
   await page.getByRole("button", { name: "Account" }).click();
 
   await expect(page.getByRole("heading", { name: "Sign up for the right workspace" })).toBeVisible();
@@ -37,6 +38,14 @@ test("account signup choices align cleanly on mobile", async ({ page }) => {
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)
   ).toBe(true);
+});
+
+test("guest deep links to student activities are protected", async ({ page }) => {
+  await page.goto("/#/rhymes");
+
+  await expect(page).toHaveURL(/#\/account\?next=rhymes$/);
+  await expect(page.getByText("Sign in to continue to the page from your link.")).toBeVisible();
+  expect(await page.evaluate(() => window.sessionStorage.getItem("readnest-pending-auth-route-v1"))).toBe("rhymes");
 });
 
 test("public deep links open directly and navigation updates the URL", async ({ page }) => {

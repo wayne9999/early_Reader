@@ -12,6 +12,11 @@ export const routePathByView: Record<AppView, string> = {
   memory: "memory",
   progress: "progress",
   findTeacher: "find-teacher",
+  rhymes: "rhymes",
+  soundSort: "sound-sort",
+  sentenceBuilder: "sentence-builder",
+  storyOrder: "story-order",
+  wordMeaning: "word-meaning",
   teacher: "teacher",
   donate: "donate",
   support: "support",
@@ -26,7 +31,20 @@ const guestViews = new Set<AppView>(["reading", "memory", "donate", "support", "
 const pendingAuthRouteKey = "readnest-pending-auth-route-v1";
 
 const viewsByRole: Record<UserRole, Set<AppView>> = {
-  student: new Set(["reading", "memory", "progress", "findTeacher", "donate", "support", "account"]),
+  student: new Set([
+    "reading",
+    "memory",
+    "progress",
+    "findTeacher",
+    "rhymes",
+    "soundSort",
+    "sentenceBuilder",
+    "storyOrder",
+    "wordMeaning",
+    "donate",
+    "support",
+    "account"
+  ]),
   teacher: new Set(["teacher", "donate", "support", "account"]),
   admin: new Set(["teacher", "donate", "support", "account"])
 };

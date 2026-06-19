@@ -25,6 +25,11 @@ export function ProgressDashboard({ progress, user, onProgressChange }: Progress
       label: "Avg. memory turns",
       value: averageTurns || "Not yet",
       note: "Average turns across completed boards."
+    },
+    {
+      label: "Skill activities",
+      value: progress.activityCompletions,
+      note: "Logged-in learning games completed."
     }
   ];
 
@@ -38,6 +43,9 @@ export function ProgressDashboard({ progress, user, onProgressChange }: Progress
     progress.memoryWins === 0
       ? "Finish one full memory board to start tracking best and average turns."
       : "Replay the memory board and try to finish with fewer turns.",
+    progress.activityCompletions < 3
+      ? "Try one logged-in activity that targets sound, meaning, or sentence order."
+      : "Keep rotating activities so practice stays fresh.",
     ...progressTips.slice(0, 2)
   ];
 
