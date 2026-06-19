@@ -16,6 +16,29 @@ test("visitor can distinguish guest state and choose a teacher signup path", asy
   await expect(page.getByRole("button", { name: "Create Teacher account" })).toBeVisible();
 });
 
+test("account signup choices align cleanly on mobile", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 900 });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Account" }).click();
+
+  const parentChoice = page.getByRole("button", { name: "Choose Parent / Child signup" });
+  const teacherChoice = page.getByRole("button", { name: "Choose Teacher signup" });
+  const parentBox = await parentChoice.boundingBox();
+  const teacherBox = await teacherChoice.boundingBox();
+
+  expect(parentBox).not.toBeNull();
+  expect(teacherBox).not.toBeNull();
+  if (!parentBox || !teacherBox) {
+    throw new Error("Signup choices were not visible on mobile.");
+  }
+
+  expect(Math.abs(parentBox.x - teacherBox.x)).toBeLessThanOrEqual(1);
+  expect(Math.abs(parentBox.width - teacherBox.width)).toBeLessThanOrEqual(1);
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)
+  ).toBe(true);
+});
+
 test("visitor sees distinct donate and support pages", async ({ page }) => {
   await page.goto("/");
 

@@ -740,7 +740,12 @@ button {
 }
 
 .role-grid button {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  justify-items: start;
   min-height: 180px;
+  width: 100%;
   padding: 22px;
   border: 3px solid rgba(255, 255, 255, 0.88);
   border-radius: 8px;
@@ -907,7 +912,11 @@ button {
 .signup-choice {
   display: grid;
   gap: 8px;
+  position: relative;
+  align-content: start;
+  justify-items: start;
   min-height: 170px;
+  width: 100%;
   padding: 18px;
   border: 3px solid rgba(47, 128, 237, 0.14);
   border-radius: 8px;
@@ -915,6 +924,7 @@ button {
   color: var(--ink);
   text-align: left;
   box-shadow: 0 10px 24px rgba(54, 74, 102, 0.08);
+  appearance: none;
 }
 
 .signup-choice.teacher-choice {
@@ -924,6 +934,20 @@ button {
 .signup-choice.is-selected {
   border-color: var(--gold);
   box-shadow: 0 0 0 5px rgba(255, 203, 71, 0.24), 0 10px 24px rgba(54, 74, 102, 0.08);
+}
+
+.signup-choice.is-selected::after {
+  content: "Selected";
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: var(--gold);
+  color: #4d3500;
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: uppercase;
 }
 
 .signup-choice span,
@@ -941,6 +965,7 @@ button {
 
 .signup-choice strong {
   font-size: 1.2rem;
+  line-height: 1.18;
 }
 
 .signup-choice small {
@@ -984,6 +1009,13 @@ button {
   border-radius: 8px;
   background: linear-gradient(180deg, #ffffff, #eef8ff);
   border: 2px solid rgba(47, 128, 237, 0.14);
+}
+
+.email-auth-form > .primary-button,
+.social-button {
+  width: 100%;
+  white-space: normal;
+  line-height: 1.2;
 }
 
 .email-auth-form label {
@@ -1610,9 +1642,12 @@ button {
 
   .memory-board,
   .stats-grid,
-  .auth-grid,
   .signup-choice-grid {
     grid-template-columns: repeat(2, minmax(120px, 1fr));
+  }
+
+  .auth-grid {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -1659,5 +1694,37 @@ button {
     min-width: 96px;
     min-height: 64px;
     font-size: 1.05rem;
+  }
+
+  .auth-panel,
+  .setup-panel,
+  .role-setup {
+    padding: 18px;
+  }
+
+  .signup-choice-grid {
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .signup-choice,
+  .role-grid button {
+    min-height: 0;
+    padding: 16px;
+  }
+
+  .signup-choice {
+    padding-right: 92px;
+  }
+
+  .signup-choice.is-selected::after {
+    top: 10px;
+    right: 10px;
+  }
+
+  .selected-signup-path,
+  .email-auth-form,
+  .social-buttons {
+    margin-top: 12px;
   }
 }
