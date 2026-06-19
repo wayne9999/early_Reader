@@ -55,9 +55,10 @@ test("protected deep links prompt sign-in and preserve the requested page", asyn
   await page.goto("/#/teacher");
 
   await expect(page).toHaveURL(/#\/account\?next=teacher$/);
-  await expect(page.getByText("Sign in to continue to Teacher dashboard.")).toBeVisible();
-  await expect(page.getByText("Teacher signup selected")).toBeVisible();
+  await expect(page.getByText("Sign in to continue to the page from your link.")).toBeVisible();
+  await expect(page.getByText("Parent / Child signup selected")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Sign up for the right workspace" })).toBeVisible();
+  expect(await page.evaluate(() => window.sessionStorage.getItem("readnest-pending-auth-route-v1"))).toBe("teacher");
 });
 
 test("visitor sees distinct donate and support pages", async ({ page }) => {

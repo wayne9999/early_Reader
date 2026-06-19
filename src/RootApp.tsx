@@ -11,11 +11,13 @@ import { TeacherDashboard } from "./features/teacher/TeacherDashboard";
 import { syncAssignmentProgress } from "./services/assignmentRepository";
 import {
   canAccessView,
+  clearPendingAuthView,
   hashForView,
   homeViewForRole,
+  loadPendingAuthView,
   parseAppRoute,
   requiresAuthentication,
-  signupPathForView,
+  savePendingAuthView,
   type AppRouteState
 } from "./services/appRoutes";
 import { billingConfig } from "./services/billingConfig";
@@ -117,6 +119,7 @@ export function RootApp() {
   const [routeState, setRouteState] = useState<AppRouteState>(() => parseAppRoute(window.location.hash));
   const [progress, setProgress] = useState<Progress>(defaultProgress);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [pendingAuthView, setPendingAuthView] = useState<AppView | null>(() => loadPendingAuthView());
   const [signupIntent, setSignupIntent] = useState<SignupPath | null>(() => loadSignupIntent());
   const [isProfileLoading, setIsProfileLoading] = useState(true);
   const [isProgressLoading, setIsProgressLoading] = useState(true);
@@ -130,7 +133,7 @@ export function RootApp() {
           ? studentNavItems
           : publicNavItems;
   const currentView = routeState.view;
-  const requestedAuthView = currentView === "account" ? routeState.nextView : null;
+  const requestedAuthView = currentView === "account" ? routeState.nextView ?? pendingAuthView : null;
 
   const navigateToView = useCallback((view: AppView, options: { nextView?: AppView | null; replace?: boolean } = {}) => {
     const nextHash = hashForView(view, options.nextView ?? null);
@@ -213,21 +216,36 @@ export function RootApp() {
     }
 
     if (!user && requiresAuthentication(currentView)) {
+      savePendingAuthView(currentView);
+      setPendingAuthView(currentView);
       navigateToView("account", { nextView: currentView, replace: true });
       return;
     }
 
     if (user && profile && requestedAuthView) {
-      navigateToView(canAccessView(profile, requestedAuthView) ? requestedAuthView : homeViewForRole(profile.role), {
+      const nextView = canAccessView(profile, requestedAuthView) ? requestedAuthView : homeViewForRole(profile.role);
+
+      clearPendingAuthView();
+      setPendingAuthView(null);
+      navigateToView(nextView, {
         replace: true
       });
+      return;
+    }
+
+    if (user && profile && pendingAuthView) {
+      const nextView = canAccessView(profile, pendingAuthView) ? pendingAuthView : homeViewForRole(profile.role);
+
+      clearPendingAuthView();
+      setPendingAuthView(null);
+      navigateToView(nextView, { replace: true });
       return;
     }
 
     if (user && profile && !canAccessView(profile, currentView)) {
       navigateToView(homeViewForRole(profile.role), { replace: true });
     }
-  }, [currentView, isAuthLoading, isProfileLoading, navigateToView, profile, requestedAuthView, user]);
+  }, [currentView, isAuthLoading, isProfileLoading, navigateToView, pendingAuthView, profile, requestedAuthView, user]);
 
   const view = useMemo(() => {
     if (isAuthLoading || isProgressLoading || isProfileLoading) {
@@ -246,14 +264,15 @@ export function RootApp() {
     };
 
     const handleProfileCreated = (createdProfile: UserProfile) => {
-      const targetView = requestedAuthView ?? currentView;
+      const targetView = requestedAuthView ?? pendingAuthView ?? currentView;
+      const nextView = canAccessView(createdProfile, targetView) ? targetView : homeViewForRole(createdProfile.role);
 
       setProfile(createdProfile);
       clearSignupIntent();
       setSignupIntent(null);
-      navigateToView(canAccessView(createdProfile, targetView) ? targetView : homeViewForRole(createdProfile.role), {
-        replace: true
-      });
+      clearPendingAuthView();
+      setPendingAuthView(null);
+      navigateToView(nextView, { replace: true });
     };
 
     if (!user && requiresAuthentication(currentView)) {
@@ -264,7 +283,7 @@ export function RootApp() {
       return (
         <RoleSetup
           user={user}
-          preferredSignupPath={signupIntent ?? signupPathForView(requestedAuthView ?? currentView)}
+          preferredSignupPath={signupIntent}
           onProfileCreated={handleProfileCreated}
         />
       );
@@ -314,6 +333,7 @@ export function RootApp() {
     isProfileLoading,
     isProgressLoading,
     navigateToView,
+    pendingAuthView,
     profile,
     progress,
     requestedAuthView,

@@ -86,7 +86,7 @@ ReadNest uses hash-based routes so deep links work on GitHub Pages without a ser
 - `#/find-teacher` for signed-in students
 - `#/teacher` for signed-in teachers and admins
 
-Guest-accessible routes open directly. Protected routes redirect guests to `#/account?next={route}` and then send the user to the requested page after sign-in and role setup when their role is allowed to access it.
+Guest-accessible routes open directly. Protected routes redirect guests to the neutral Account page at `#/account?next={route}` and save the requested route in session storage. The Account page does not assume whether the link is meant for a student or teacher; the user still chooses the correct account path. After sign-in and role setup, ReadNest opens the saved route when that role is allowed to access it, otherwise it sends the user to the correct home page for their role.
 
 ## Architecture
 

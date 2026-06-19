@@ -1,11 +1,13 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import {
   canAccessView,
+  clearPendingAuthView,
   hashForView,
   homeViewForRole,
+  loadPendingAuthView,
   parseAppRoute,
   requiresAuthentication,
-  signupPathForView
+  savePendingAuthView
 } from "./appRoutes";
 import type { UserProfile } from "../types";
 
@@ -26,6 +28,10 @@ const teacherProfile: UserProfile = {
 };
 
 describe("appRoutes", () => {
+  beforeEach(() => {
+    window.sessionStorage.clear();
+  });
+
   it("parses shareable hash routes and account return targets", () => {
     expect(parseAppRoute("#/donate")).toEqual({ view: "donate", nextView: null });
     expect(parseAppRoute("#/find-teacher")).toEqual({ view: "findTeacher", nextView: null });
@@ -47,8 +53,19 @@ describe("appRoutes", () => {
     expect(canAccessView(teacherProfile, "progress")).toBe(false);
     expect(homeViewForRole("teacher")).toBe("teacher");
     expect(homeViewForRole("student")).toBe("reading");
-    expect(signupPathForView("teacher")).toBe("teacher");
-    expect(signupPathForView("findTeacher")).toBe("parentChild");
-    expect(signupPathForView("support")).toBeNull();
+  });
+
+  it("stores only protected pending auth routes", () => {
+    savePendingAuthView("teacher");
+
+    expect(loadPendingAuthView()).toBe("teacher");
+
+    savePendingAuthView("support");
+
+    expect(loadPendingAuthView()).toBe("teacher");
+
+    clearPendingAuthView();
+
+    expect(loadPendingAuthView()).toBeNull();
   });
 });

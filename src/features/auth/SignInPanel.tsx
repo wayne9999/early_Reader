@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { routeLabelByView, signupPathForView } from "../../services/appRoutes";
+import { useState, type FormEvent } from "react";
 import { isFirebaseConfigured } from "../../services/firebase";
 import { labelFromSignupPath, saveSignupIntent } from "../../services/signupIntent";
 import type { AppView, SignupPath, SocialProvider } from "../../types";
@@ -17,22 +16,12 @@ type SignInPanelProps = {
 
 export function SignInPanel({ redirectView = null }: SignInPanelProps) {
   const { isAuthenticated, isLoading, mode, signIn, signInWithEmail, signOut, user } = useAuth();
-  const preferredSignupPath = useMemo<SignupPath>(
-    () => (redirectView ? signupPathForView(redirectView) ?? "parentChild" : "parentChild"),
-    [redirectView]
-  );
-  const [selectedPath, setSelectedPath] = useState<SignupPath>(() => preferredSignupPath);
+  const [selectedPath, setSelectedPath] = useState<SignupPath>("parentChild");
   const [emailMode, setEmailMode] = useState<"signUp" | "signIn">("signUp");
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState("");
-
-  useEffect(() => {
-    if (redirectView) {
-      setSelectedPath(preferredSignupPath);
-    }
-  }, [preferredSignupPath, redirectView]);
 
   async function signInForPath(provider: SocialProvider) {
     saveSignupIntent(selectedPath);
@@ -71,8 +60,8 @@ export function SignInPanel({ redirectView = null }: SignInPanelProps) {
 
         {redirectView ? (
           <div className="redirect-notice" role="status">
-            <strong>Sign in to continue to {routeLabelByView[redirectView]}.</strong>
-            <span>After your account is ready, ReadNest will open the page from your shared link.</span>
+            <strong>Sign in to continue to the page from your link.</strong>
+            <span>ReadNest saved that link and will open it after your account is ready.</span>
           </div>
         ) : null}
 

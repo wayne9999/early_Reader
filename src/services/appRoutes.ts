@@ -1,4 +1,4 @@
-import type { AppView, SignupPath, UserProfile, UserRole } from "../types";
+import type { AppView, UserProfile, UserRole } from "../types";
 
 export type AppRouteState = {
   view: AppView;
@@ -18,22 +18,12 @@ export const routePathByView: Record<AppView, string> = {
   account: "account"
 };
 
-export const routeLabelByView: Record<AppView, string> = {
-  reading: "Reading practice",
-  memory: "Memory game",
-  progress: "Progress dashboard",
-  findTeacher: "Find Teacher",
-  teacher: "Teacher dashboard",
-  donate: "Donate",
-  support: "Support center",
-  account: "Account"
-};
-
 const viewByRoutePath = Object.fromEntries(
   Object.entries(routePathByView).map(([view, path]) => [path, view])
 ) as Record<string, AppView>;
 
 const guestViews = new Set<AppView>(["reading", "memory", "donate", "support", "account"]);
+const pendingAuthRouteKey = "readnest-pending-auth-route-v1";
 
 const viewsByRole: Record<UserRole, Set<AppView>> = {
   student: new Set(["reading", "memory", "progress", "findTeacher", "donate", "support", "account"]),
@@ -88,16 +78,30 @@ export function homeViewForRole(role: UserRole): AppView {
   return role === "student" ? "reading" : "teacher";
 }
 
-export function signupPathForView(view: AppView): SignupPath | null {
-  if (view === "teacher") {
-    return "teacher";
+export function savePendingAuthView(view: AppView) {
+  if (typeof window === "undefined" || !requiresAuthentication(view)) {
+    return;
   }
 
-  if (view === "progress" || view === "findTeacher") {
-    return "parentChild";
+  window.sessionStorage.setItem(pendingAuthRouteKey, routePathByView[view]);
+}
+
+export function loadPendingAuthView(): AppView | null {
+  if (typeof window === "undefined") {
+    return null;
   }
 
-  return null;
+  const pendingPath = normalizePath(window.sessionStorage.getItem(pendingAuthRouteKey) ?? "");
+
+  return viewByRoutePath[pendingPath] ?? null;
+}
+
+export function clearPendingAuthView() {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.sessionStorage.removeItem(pendingAuthRouteKey);
 }
 
 function normalizePath(path: string) {
