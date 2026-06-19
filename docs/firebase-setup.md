@@ -49,6 +49,13 @@ teacherProfiles/{teacherId}
   createdAt
   updatedAt
 
+teacherDirectory/{teacherId}
+  uid
+  displayName
+  email
+  teacherCode
+  updatedAt
+
 teacherStudentLinks/{teacherId_studentId}
   teacherId
   teacherName
@@ -141,12 +148,13 @@ Current MVP behavior:
 2. Parent/child signup creates a `student` role profile for the child learning workspace.
 3. Teacher signup creates a `teacher` role profile and a searchable teacher code.
 4. The selected signup path is stored in `users/{userId}.signupPath`.
-5. Teacher profiles are written to `teacherProfiles/{teacherId}` with a searchable teacher code.
-6. Students search by teacher email or code.
-7. Students create `teacherStudentLinks/{teacherId_studentId}` with `status: "requested"`.
-8. Teachers approve requests, changing the status to `active`.
-9. Student reading and memory actions create history records under `users/{studentId}/learningEvents`.
-10. Active assigned teachers can read that student's event history and latest progress snapshot.
+5. Private teacher profiles are written to `teacherProfiles/{teacherId}`.
+6. Searchable teacher lookup data is written to `teacherDirectory/{teacherId}`.
+7. Students search the limited teacher directory by teacher email or code.
+8. Students create `teacherStudentLinks/{teacherId_studentId}` with `status: "requested"`.
+9. Teachers approve requests, changing the status to `active`.
+10. Student reading and memory actions create history records under `users/{studentId}/learningEvents`.
+11. Active assigned teachers can read that student's event history and latest progress snapshot.
 
 The app prevents role switching after profile creation. Firebase Auth also prevents one Google email from becoming two separate accounts under normal email-provider linking rules. For stricter production enforcement, use Cloud Functions or a backend API to validate role creation, custom claims, paid teacher entitlements, and duplicate-email policies.
 
@@ -162,8 +170,8 @@ users/{theirUserId}/learningEvents
 
 They also allow:
 
-- Signed-in users to read teacher search profiles.
-- Teachers to create/update only their own `teacherProfiles` when their user role is `teacher`.
+- Signed-in users to search a limited `teacherDirectory` with query limits.
+- Teachers to create/update only their own private `teacherProfiles` when their user role is `teacher`.
 - Students to create assignment requests for themselves.
 - Students to update only the latest progress snapshot on their own assignment links.
 - Teachers to approve or decline only their own assignment links.
@@ -171,13 +179,13 @@ They also allow:
 
 Deletes are denied by default.
 
-Legacy classroom paths still require a trusted role:
+Classroom paths are scoped to admins or teachers listed on that classroom:
 
 ```text
 role: "teacher" | "admin"
 ```
 
-For production, set privileged claims and paid access only from trusted backend code. Do not rely on frontend-only role assignment for high-stakes or paid access control.
+For production, set privileged admin claims and paid access only from trusted backend code. Do not rely on frontend-only role assignment for high-stakes or paid access control.
 
 ## AI Analysis Design
 

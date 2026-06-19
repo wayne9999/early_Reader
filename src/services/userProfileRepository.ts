@@ -88,6 +88,18 @@ export async function createUserProfile(user: AppUser, role: UserRole, signupPat
       },
       { merge: true }
     );
+
+    await setDoc(
+      doc(runtime.db, "teacherDirectory", firebaseUser.uid),
+      {
+        uid: firebaseUser.uid,
+        displayName: profile.displayName,
+        email: profile.email,
+        teacherCode: profile.teacherCode,
+        updatedAt: serverTimestamp()
+      },
+      { merge: true }
+    );
   }
 
   return profile;

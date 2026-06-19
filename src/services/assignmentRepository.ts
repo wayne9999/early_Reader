@@ -2,6 +2,7 @@ import {
   collection,
   doc,
   getDocs,
+  limit,
   query,
   serverTimestamp,
   setDoc,
@@ -20,8 +21,16 @@ export async function searchTeachers(searchTerm: string): Promise<UserProfile[]>
   }
 
   const normalizedTerm = searchTerm.trim();
-  const byCode = query(collection(runtime.db, "teacherProfiles"), where("teacherCode", "==", normalizedTerm.toUpperCase()));
-  const byEmail = query(collection(runtime.db, "teacherProfiles"), where("email", "==", normalizedTerm.toLowerCase()));
+  const byCode = query(
+    collection(runtime.db, "teacherDirectory"),
+    where("teacherCode", "==", normalizedTerm.toUpperCase()),
+    limit(10)
+  );
+  const byEmail = query(
+    collection(runtime.db, "teacherDirectory"),
+    where("email", "==", normalizedTerm.toLowerCase()),
+    limit(10)
+  );
   const [codeSnapshot, emailSnapshot] = await Promise.all([getDocs(byCode), getDocs(byEmail)]);
   const teachers = new Map<string, UserProfile>();
 

@@ -90,22 +90,7 @@ export async function saveProgress(progress: Progress, user: AppUser | null): Pr
     return saveLocalProgress(nextProgress, user);
   }
 
-  const userRef = doc(runtime.db, "users", firebaseUser.uid);
   const progressRef = doc(runtime.db, "users", firebaseUser.uid, "learning", "progress");
-
-  await setDoc(
-    userRef,
-    {
-      displayName: user.name,
-      email: user.email ?? null,
-      picture: user.picture ?? null,
-      provider: user.provider ?? null,
-      authSubject: user.id,
-      firebaseUid: firebaseUser.uid,
-      updatedAt: serverTimestamp()
-    },
-    { merge: true }
-  );
 
   await setDoc(
     progressRef,

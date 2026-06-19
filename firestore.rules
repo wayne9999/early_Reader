@@ -20,6 +20,11 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/teacherStudentLinks/$(request.auth.uid + "_" + studentId)).data.status == "active";
     }
 
+    function isClassroomMember(classroomId) {
+      return isSignedIn()
+        && request.auth.uid in get(/databases/$(database)/documents/classrooms/$(classroomId)).data.teacherIds;
+    }
+
     function onlyChanged(keys) {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys);
     }
@@ -48,7 +53,17 @@ service cloud.firestore {
     }
 
     match /teacherProfiles/{teacherId} {
-      allow read: if isSignedIn();
+      allow read: if ownsUserDocument(teacherId);
+      allow create, update: if ownsUserDocument(teacherId)
+        && request.resource.data.uid == request.auth.uid
+        && userRole() == "teacher";
+      allow delete: if false;
+    }
+
+    match /teacherDirectory/{teacherId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn()
+        && request.query.limit <= 10;
       allow create, update: if ownsUserDocument(teacherId)
         && request.resource.data.uid == request.auth.uid
         && userRole() == "teacher";
@@ -83,19 +98,30 @@ service cloud.firestore {
     }
 
     match /classrooms/{classroomId} {
-      allow read, create, update: if isSignedIn()
-        && userRole() in ["teacher", "admin"];
+      allow read: if isSignedIn()
+        && (userRole() == "admin" || isClassroomMember(classroomId));
+      allow create: if isSignedIn()
+        && userRole() == "teacher"
+        && request.resource.data.teacherIds.hasOnly([request.auth.uid]);
+      allow update: if isSignedIn()
+        && (
+          userRole() == "admin"
+          || (
+            isClassroomMember(classroomId)
+            && request.resource.data.teacherIds == resource.data.teacherIds
+          )
+        );
       allow delete: if false;
 
       match /students/{studentId} {
         allow read, create, update: if isSignedIn()
-          && userRole() in ["teacher", "admin"];
+          && (userRole() == "admin" || isClassroomMember(classroomId));
         allow delete: if false;
       }
 
       match /analyses/{analysisId} {
         allow read, create, update: if isSignedIn()
-          && userRole() in ["teacher", "admin"];
+          && (userRole() == "admin" || isClassroomMember(classroomId));
         allow delete: if false;
       }
     }
