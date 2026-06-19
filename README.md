@@ -31,9 +31,21 @@ Then visit `http://localhost:4173`.
 
 ```bash
 npm run check
+npm run test
+npm run test:coverage
+npm run test:e2e
 npm run build
 npm audit --audit-level=moderate
 ```
+
+The test stack uses Node 20.19+ for current Vitest, jsdom, and Playwright support. GitHub Actions already runs Node 20.
+
+Test metrics:
+
+- Unit/integration results print in the terminal from `npm run test`.
+- Coverage prints in the terminal and writes an HTML report to `coverage/index.html`.
+- Browser automation writes an HTML report to `playwright-report/index.html`.
+- On GitHub, open the latest Actions run and download the `coverage-report` and `playwright-report` artifacts.
 
 ## SEO
 

@@ -1,20 +1,24 @@
 import {
+  createUserWithEmailAndPassword,
   FacebookAuthProvider,
   GoogleAuthProvider,
   onAuthStateChanged,
+  signInWithEmailAndPassword,
   signInWithPopup,
   signOut as firebaseSignOut,
+  updateProfile,
   type User
 } from "firebase/auth";
 import { createContext, useContext, useEffect, useMemo, useState, type PropsWithChildren } from "react";
 import { getFirebaseRuntime } from "../../services/firebase";
-import type { AppUser, SocialProvider } from "../../types";
+import type { AppUser, EmailAuthInput, SocialProvider } from "../../types";
 
 type FirebaseAuthContextValue = {
   user: AppUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   signIn: (provider: SocialProvider) => Promise<void>;
+  signInWithEmail: (input: EmailAuthInput) => Promise<void>;
   signOut: () => Promise<void>;
   mode: "firebase";
 };
@@ -66,6 +70,25 @@ export function FirebaseReadNestAuthProvider({ children }: PropsWithChildren) {
 
         const authProvider = provider === "google" ? new GoogleAuthProvider() : new FacebookAuthProvider();
         await signInWithPopup(runtime.auth, authProvider);
+      },
+      async signInWithEmail(input) {
+        if (!runtime) {
+          return;
+        }
+
+        if (input.mode === "signUp") {
+          const credential = await createUserWithEmailAndPassword(runtime.auth, input.email, input.password);
+
+          if (input.displayName?.trim()) {
+            await updateProfile(credential.user, {
+              displayName: input.displayName.trim()
+            });
+            setUser(toAppUser(credential.user));
+          }
+          return;
+        }
+
+        await signInWithEmailAndPassword(runtime.auth, input.email, input.password);
       },
       async signOut() {
         if (runtime) {

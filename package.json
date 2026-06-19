@@ -4,12 +4,20 @@
   "private": true,
   "description": "A small web MVP that helps early elementary students practice reading, sight words, and age-appropriate memory skills.",
   "type": "module",
+  "engines": {
+    "node": ">=20.19.0"
+  },
   "scripts": {
     "dev": "vite --host 127.0.0.1 --port 4173",
     "start": "npm run dev",
     "build": "tsc -b && vite build",
     "preview": "vite preview --host 127.0.0.1 --port 4173",
-    "check": "tsc -b --pretty false"
+    "check": "tsc -b --pretty false",
+    "test": "vitest run --coverage=false",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "test:all": "npm run check && npm run test && npm run test:e2e"
   },
   "dependencies": {
     "@auth0/auth0-react": "^2.3.0",
@@ -18,11 +26,18 @@
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.3",
+    "@vitest/coverage-v8": "^4.1.9",
+    "jsdom": "^29.1.1",
     "typescript": "^5.6.3",
-    "vite": "^6.4.2"
+    "vite": "^6.4.2",
+    "vitest": "^4.1.9"
   },
   "keywords": [
     "reading",

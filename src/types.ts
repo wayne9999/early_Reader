@@ -57,6 +57,13 @@ export type AppUser = {
   provider?: string;
 };
 
+export type EmailAuthInput = {
+  email: string;
+  password: string;
+  displayName?: string;
+  mode: "signIn" | "signUp";
+};
+
 export type UserProfile = {
   uid: string;
   role: UserRole;
