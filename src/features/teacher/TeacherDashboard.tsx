@@ -3,6 +3,7 @@ import { getClassroomStudents } from "../../services/classroomRepository";
 import { analyzeClassroom, analyzeStudent } from "../../services/learningAnalysisService";
 import { loadTeacherAssignments, updateTeacherAssignmentStatus } from "../../services/assignmentRepository";
 import { loadLearningEvents } from "../../services/learningEventRepository";
+import { downloadStudentReportCard } from "../../services/reportCardService";
 import type { AppUser, LearningEvent, Progress, SkillInsight, StudentSummary, TeacherStudentLink } from "../../types";
 
 type TeacherDashboardProps = {
@@ -30,13 +31,13 @@ export function TeacherDashboard({ progress, user }: TeacherDashboardProps) {
   const assignedStudents = useMemo<StudentSummary[]>(
     () =>
       assignments
-        .filter((assignment) => assignment.status !== "declined")
+        .filter((assignment) => assignment.status === "active")
         .map((assignment) => ({
           id: assignment.studentId,
           name: assignment.studentName,
           email: assignment.studentEmail,
           gradeBand: "1",
-          lastActive: assignment.status === "requested" ? "Pending approval" : "Assigned",
+          lastActive: "Assigned",
           progress: assignment.latestProgressSnapshot,
           assignmentStatus: assignment.status,
           history: studentHistories[assignment.studentId] ?? []
@@ -95,6 +96,14 @@ export function TeacherDashboard({ progress, user }: TeacherDashboardProps) {
   async function changeAssignmentStatus(linkId: string, status: TeacherStudentLink["status"]) {
     await updateTeacherAssignmentStatus(linkId, status);
     setAssignments(await loadTeacherAssignments(user));
+  }
+
+  function downloadSelectedReport() {
+    if (!selectedStudent || !selectedAnalysis) {
+      return;
+    }
+
+    downloadStudentReportCard(selectedStudent, selectedAnalysis, user?.name);
   }
 
   return (
@@ -177,8 +186,20 @@ export function TeacherDashboard({ progress, user }: TeacherDashboardProps) {
 
         <div className="student-insight-stack">
           <article className="practice-panel">
-            <p className="eyebrow">Student analysis</p>
-            <h3>{selectedStudent?.name ?? "No students yet"}</h3>
+            <div className="student-analysis-header">
+              <div>
+                <p className="eyebrow">Student analysis</p>
+                <h3>{selectedStudent?.name ?? "No students yet"}</h3>
+              </div>
+              <button
+                className="secondary-button"
+                type="button"
+                disabled={!selectedStudent || !selectedAnalysis}
+                onClick={downloadSelectedReport}
+              >
+                Download report card
+              </button>
+            </div>
             <p className="helper-text">
               {selectedAnalysis?.summary ?? "Students will appear here after they request this teacher account."}
             </p>

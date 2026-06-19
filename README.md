@@ -14,6 +14,7 @@ For Codex continuity and project handoff notes, see `.codex/project.md` and `PRO
 - Role-aware student and teacher workspaces.
 - Student learning-event history for reading, sentence, and memory interactions.
 - Teacher dashboard with assigned-student roster, approval requests, strengths, growth areas, history, and intervention planning.
+- Downloadable teacher report cards for assigned students with quarter and annual goal comparisons for parent sharing.
 - Student teacher selection with teacher bios, grade fit, specialties, visible workload, and request approval.
 - Donation and subscription support page using Stripe Payment Links.
 - Firebase Auth account page with Google and Facebook support, plus an Instagram custom-provider placeholder.
@@ -139,6 +140,7 @@ Current behavior:
 - Teacher workload is tracked through `activeStudentCount` and `maxStudentLoad` so students are guided toward teachers with available capacity.
 - Student interaction history is stored under `users/{studentId}/learningEvents/{eventId}`.
 - Active assigned teachers can read assigned student event history through Firestore rules and see reading, memory, and logged-in activity completions in the dashboard.
+- Teachers can download a concise HTML report card for each active assigned student. The report is generated in-browser from the teacher-visible data and escapes report text before writing the file.
 - Teacher compensation should be calculated on trusted backend data from active assignments before real payouts are made.
 - Production role and paid-entitlement enforcement should move to trusted backend logic or Firebase custom claims before handling real classrooms at scale.
 

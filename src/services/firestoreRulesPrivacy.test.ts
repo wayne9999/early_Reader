@@ -24,6 +24,10 @@ describe("firestore privacy rules", () => {
     expect(rules).toContain("resource.data.studentId == request.auth.uid || resource.data.teacherId == request.auth.uid");
   });
 
+  it("prevents declined teacher links from receiving new student progress snapshots", () => {
+    expect(rules).toContain("resource.data.status in [\"requested\", \"active\"]");
+  });
+
   it("scopes classroom data to admins or classroom members", () => {
     expect(rules).toContain("function isClassroomMember(classroomId)");
     expect(rules).toContain("userRole() == \"admin\" || isClassroomMember(classroomId)");

@@ -294,11 +294,13 @@ export async function syncAssignmentProgress(user: AppUser | null, progress: Pro
   }
 
   await Promise.all(
-    assignments.map((assignment) =>
-      updateDoc(doc(runtime.db, "teacherStudentLinks", assignment.id), {
-        latestProgressSnapshot: progress,
-        updatedAt: serverTimestamp()
-      })
+    assignments
+      .filter((assignment) => assignment.status !== "declined")
+      .map((assignment) =>
+        updateDoc(doc(runtime.db, "teacherStudentLinks", assignment.id), {
+          latestProgressSnapshot: progress,
+          updatedAt: serverTimestamp()
+        })
     )
   );
 }

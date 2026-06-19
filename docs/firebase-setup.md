@@ -167,7 +167,8 @@ Current MVP behavior:
 9. Teachers approve or decline requests from the dashboard. Approval changes the status to `active` and refreshes the teacher directory active-student count.
 10. Student reading, memory, and logged-in activity actions create history records under `users/{studentId}/learningEvents`.
 11. Active assigned teachers can read that student's event history, latest progress snapshot, and activity-completion summary.
-12. Teacher compensation should be calculated from active assignment records in trusted backend code before real payouts are made.
+12. Teachers can download a concise parent-facing report card for active assigned students using only the data visible in the dashboard.
+13. Teacher compensation should be calculated from active assignment records in trusted backend code before real payouts are made.
 
 The app prevents role switching after profile creation. Firebase Auth also prevents one Google email from becoming two separate accounts under normal email-provider linking rules. For stricter production enforcement, use Cloud Functions or a backend API to validate role creation, custom claims, paid teacher entitlements, and duplicate-email policies.
 
@@ -186,7 +187,7 @@ They also allow:
 - Signed-in users to search a limited `teacherDirectory` with query limits.
 - Teachers to create/update only their own private `teacherProfiles` when their user role is `teacher`.
 - Students to create assignment requests for themselves.
-- Students to update only the latest progress snapshot on their own assignment links.
+- Students to update only the latest progress snapshot on their own requested or active assignment links.
 - Teachers to approve or decline only their own assignment links.
 - Active assigned teachers to read assigned student learning events.
 

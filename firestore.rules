@@ -82,6 +82,7 @@ service cloud.firestore {
         && (
           (
             resource.data.studentId == request.auth.uid
+            && resource.data.status in ["requested", "active"]
             && request.resource.data.studentId == resource.data.studentId
             && request.resource.data.teacherId == resource.data.teacherId
             && onlyChanged(["latestProgressSnapshot", "updatedAt"])
