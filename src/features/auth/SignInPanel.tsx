@@ -1,7 +1,8 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { routeLabelByView, signupPathForView } from "../../services/appRoutes";
 import { isFirebaseConfigured } from "../../services/firebase";
 import { labelFromSignupPath, saveSignupIntent } from "../../services/signupIntent";
-import type { SignupPath, SocialProvider } from "../../types";
+import type { AppView, SignupPath, SocialProvider } from "../../types";
 import { useAuth } from "./AuthProvider";
 
 const providers: Array<{ id: SocialProvider; label: string; className: string }> = [
@@ -10,14 +11,28 @@ const providers: Array<{ id: SocialProvider; label: string; className: string }>
   { id: "instagram", label: "Continue with Instagram", className: "instagram-button" }
 ];
 
-export function SignInPanel() {
+type SignInPanelProps = {
+  redirectView?: AppView | null;
+};
+
+export function SignInPanel({ redirectView = null }: SignInPanelProps) {
   const { isAuthenticated, isLoading, mode, signIn, signInWithEmail, signOut, user } = useAuth();
-  const [selectedPath, setSelectedPath] = useState<SignupPath>("parentChild");
+  const preferredSignupPath = useMemo<SignupPath>(
+    () => (redirectView ? signupPathForView(redirectView) ?? "parentChild" : "parentChild"),
+    [redirectView]
+  );
+  const [selectedPath, setSelectedPath] = useState<SignupPath>(() => preferredSignupPath);
   const [emailMode, setEmailMode] = useState<"signUp" | "signIn">("signUp");
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState("");
+
+  useEffect(() => {
+    if (redirectView) {
+      setSelectedPath(preferredSignupPath);
+    }
+  }, [preferredSignupPath, redirectView]);
 
   async function signInForPath(provider: SocialProvider) {
     saveSignupIntent(selectedPath);
@@ -53,6 +68,13 @@ export function SignInPanel() {
           Parents create a child learning account for practice and progress. Teachers create a classroom
           account for student requests, history, and intervention planning.
         </p>
+
+        {redirectView ? (
+          <div className="redirect-notice" role="status">
+            <strong>Sign in to continue to {routeLabelByView[redirectView]}.</strong>
+            <span>After your account is ready, ReadNest will open the page from your shared link.</span>
+          </div>
+        ) : null}
 
         {isAuthenticated ? (
           <div className="account-card">

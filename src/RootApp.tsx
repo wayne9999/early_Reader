@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { RoleSetup } from "./features/account/RoleSetup";
 import { SignInPanel } from "./features/auth/SignInPanel";
 import { useAuth } from "./features/auth/AuthProvider";
@@ -9,6 +9,15 @@ import { FindTeacher } from "./features/student/FindTeacher";
 import { SupportPage } from "./features/support/SupportPage";
 import { TeacherDashboard } from "./features/teacher/TeacherDashboard";
 import { syncAssignmentProgress } from "./services/assignmentRepository";
+import {
+  canAccessView,
+  hashForView,
+  homeViewForRole,
+  parseAppRoute,
+  requiresAuthentication,
+  signupPathForView,
+  type AppRouteState
+} from "./services/appRoutes";
 import { billingConfig } from "./services/billingConfig";
 import { defaultProgress, loadProgress, saveProgress } from "./services/progressRepository";
 import { clearSignupIntent, loadSignupIntent } from "./services/signupIntent";
@@ -105,7 +114,7 @@ function AccountStatusIndicator({ user }: { user: AppUser | null }) {
 
 export function RootApp() {
   const { isLoading: isAuthLoading, user } = useAuth();
-  const [currentView, setCurrentView] = useState<AppView>("reading");
+  const [routeState, setRouteState] = useState<AppRouteState>(() => parseAppRoute(window.location.hash));
   const [progress, setProgress] = useState<Progress>(defaultProgress);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [signupIntent, setSignupIntent] = useState<SignupPath | null>(() => loadSignupIntent());
@@ -120,6 +129,37 @@ export function RootApp() {
         : profile?.role === "student"
           ? studentNavItems
           : publicNavItems;
+  const currentView = routeState.view;
+  const requestedAuthView = currentView === "account" ? routeState.nextView : null;
+
+  const navigateToView = useCallback((view: AppView, options: { nextView?: AppView | null; replace?: boolean } = {}) => {
+    const nextHash = hashForView(view, options.nextView ?? null);
+    const nextUrl = `${window.location.pathname}${window.location.search}${nextHash}`;
+
+    if (options.replace) {
+      window.history.replaceState(null, "", nextUrl);
+    } else {
+      window.history.pushState(null, "", nextUrl);
+    }
+
+    setRouteState(parseAppRoute(nextHash));
+  }, []);
+
+  useEffect(() => {
+    const syncRoute = () => setRouteState(parseAppRoute(window.location.hash));
+
+    if (!window.location.hash) {
+      navigateToView("reading", { replace: true });
+    }
+
+    window.addEventListener("hashchange", syncRoute);
+    window.addEventListener("popstate", syncRoute);
+
+    return () => {
+      window.removeEventListener("hashchange", syncRoute);
+      window.removeEventListener("popstate", syncRoute);
+    };
+  }, [navigateToView]);
 
   useEffect(() => {
     let isMounted = true;
@@ -154,9 +194,6 @@ export function RootApp() {
       .then((loadedProfile) => {
         if (isMounted) {
           setProfile(loadedProfile);
-          if (loadedProfile?.role === "teacher" || loadedProfile?.role === "admin") {
-            setCurrentView("teacher");
-          }
         }
       })
       .finally(() => {
@@ -169,6 +206,28 @@ export function RootApp() {
       isMounted = false;
     };
   }, [user]);
+
+  useEffect(() => {
+    if (isAuthLoading || isProfileLoading) {
+      return;
+    }
+
+    if (!user && requiresAuthentication(currentView)) {
+      navigateToView("account", { nextView: currentView, replace: true });
+      return;
+    }
+
+    if (user && profile && requestedAuthView) {
+      navigateToView(canAccessView(profile, requestedAuthView) ? requestedAuthView : homeViewForRole(profile.role), {
+        replace: true
+      });
+      return;
+    }
+
+    if (user && profile && !canAccessView(profile, currentView)) {
+      navigateToView(homeViewForRole(profile.role), { replace: true });
+    }
+  }, [currentView, isAuthLoading, isProfileLoading, navigateToView, profile, requestedAuthView, user]);
 
   const view = useMemo(() => {
     if (isAuthLoading || isProgressLoading || isProfileLoading) {
@@ -187,24 +246,37 @@ export function RootApp() {
     };
 
     const handleProfileCreated = (createdProfile: UserProfile) => {
+      const targetView = requestedAuthView ?? currentView;
+
       setProfile(createdProfile);
       clearSignupIntent();
       setSignupIntent(null);
-      if (createdProfile.role === "teacher" || createdProfile.role === "admin") {
-        setCurrentView("teacher");
-      }
+      navigateToView(canAccessView(createdProfile, targetView) ? targetView : homeViewForRole(createdProfile.role), {
+        replace: true
+      });
     };
 
+    if (!user && requiresAuthentication(currentView)) {
+      return <SignInPanel redirectView={currentView} />;
+    }
+
     if (user && !profile) {
-      return <RoleSetup user={user} preferredSignupPath={signupIntent} onProfileCreated={handleProfileCreated} />;
+      return (
+        <RoleSetup
+          user={user}
+          preferredSignupPath={signupIntent ?? signupPathForView(requestedAuthView ?? currentView)}
+          onProfileCreated={handleProfileCreated}
+        />
+      );
     }
 
-    if ((profile?.role === "teacher" || profile?.role === "admin") && !["teacher", "support", "donate", "account"].includes(currentView)) {
-      return <TeacherDashboard progress={progress} user={user} />;
-    }
-
-    if (profile?.role === "student" && currentView === "teacher") {
-      return <ProgressDashboard progress={progress} user={user} onProgressChange={handleProgressChange} />;
+    if (profile && !canAccessView(profile, currentView)) {
+      return (
+        <article className="practice-panel">
+          <p className="eyebrow">Opening workspace</p>
+          <h2>Taking you to the right page...</h2>
+        </article>
+      );
     }
 
     if (currentView === "memory") {
@@ -232,11 +304,22 @@ export function RootApp() {
     }
 
     if (currentView === "account") {
-      return <SignInPanel />;
+      return <SignInPanel redirectView={requestedAuthView} />;
     }
 
     return <ReadingPractice progress={progress} user={user} onProgressChange={handleProgressChange} />;
-  }, [currentView, isAuthLoading, isProfileLoading, isProgressLoading, profile, progress, signupIntent, user]);
+  }, [
+    currentView,
+    isAuthLoading,
+    isProfileLoading,
+    isProgressLoading,
+    navigateToView,
+    profile,
+    progress,
+    requestedAuthView,
+    signupIntent,
+    user
+  ]);
 
   return (
     <div className="app-shell">
@@ -261,7 +344,7 @@ export function RootApp() {
               className={`nav-tab${item.id === "donate" ? " nav-donate" : ""}${currentView === item.id ? " is-active" : ""}`}
               key={item.id}
               type="button"
-              onClick={() => setCurrentView(item.id)}
+              onClick={() => navigateToView(item.id)}
             >
               {item.label}
             </button>

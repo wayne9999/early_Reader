@@ -38,6 +38,14 @@ describe("SignInPanel", () => {
     ).toHaveAttribute("aria-pressed", "true");
   });
 
+  it("shows the target page when a protected route sends the user to sign in", () => {
+    render(<SignInPanel redirectView="teacher" />);
+
+    expect(screen.getByText("Sign in to continue to Teacher dashboard.")).toBeInTheDocument();
+    expect(screen.getByText(/open the page from your shared link/i)).toBeInTheDocument();
+    expect(screen.getByText("Teacher signup selected")).toBeInTheDocument();
+  });
+
   it("saves teacher intent and submits email signup details", async () => {
     const user = userEvent.setup();
     signInWithEmail.mockResolvedValue(undefined);

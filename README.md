@@ -16,6 +16,7 @@ For Codex continuity and project handoff notes, see `.codex/project.md` and `PRO
 - Donation and subscription support page using Stripe Payment Links.
 - Firebase Auth account page with Google and Facebook support, plus an Instagram custom-provider placeholder.
 - Firebase Firestore profile, assignment, event, and progress repositories with local storage fallback for development.
+- Shareable app URLs for each main page, including protected-page login redirects.
 - Responsive layout for desktop, tablet, and phone-sized screens.
 
 ## Run It
@@ -72,6 +73,21 @@ Static SEO pages currently live in:
 
 For a larger production site, replace these static pages with prerendered or server-rendered routes.
 
+## App Routes
+
+ReadNest uses hash-based routes so deep links work on GitHub Pages without a server rewrite. These are the current shareable app URLs:
+
+- `#/reading`
+- `#/memory`
+- `#/donate`
+- `#/support`
+- `#/account`
+- `#/progress` for signed-in students
+- `#/find-teacher` for signed-in students
+- `#/teacher` for signed-in teachers and admins
+
+Guest-accessible routes open directly. Protected routes redirect guests to `#/account?next={route}` and then send the user to the requested page after sign-in and role setup when their role is allowed to access it.
+
 ## Architecture
 
 ```text
@@ -87,6 +103,7 @@ src/
   features/support/                Donation and subscription page
   features/teacher/                Teacher insights and assigned-student dashboard
   services/firebase.ts             Firebase runtime configuration
+  services/appRoutes.ts            Shareable hash routes and role-aware access rules
   services/assignmentRepository.ts Teacher-student assignment persistence
   services/classroomRepository.ts  Classroom roster data boundary
   services/learningEventRepository.ts Student interaction event history

@@ -39,6 +39,27 @@ test("account signup choices align cleanly on mobile", async ({ page }) => {
   ).toBe(true);
 });
 
+test("public deep links open directly and navigation updates the URL", async ({ page }) => {
+  await page.goto("/#/donate");
+
+  await expect(page.getByRole("heading", { name: "Help children keep reading practice within reach" })).toBeVisible();
+  await expect(page).toHaveURL(/#\/donate$/);
+
+  await page.getByRole("navigation", { name: "Main navigation" }).getByRole("button", { name: "Support" }).click();
+
+  await expect(page.getByRole("heading", { name: "Support center for families and teachers" })).toBeVisible();
+  await expect(page).toHaveURL(/#\/support$/);
+});
+
+test("protected deep links prompt sign-in and preserve the requested page", async ({ page }) => {
+  await page.goto("/#/teacher");
+
+  await expect(page).toHaveURL(/#\/account\?next=teacher$/);
+  await expect(page.getByText("Sign in to continue to Teacher dashboard.")).toBeVisible();
+  await expect(page.getByText("Teacher signup selected")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Sign up for the right workspace" })).toBeVisible();
+});
+
 test("visitor sees distinct donate and support pages", async ({ page }) => {
   await page.goto("/");
 
@@ -49,6 +70,7 @@ test("visitor sees distinct donate and support pages", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Help children keep reading practice within reach" })).toBeVisible();
   await expect(page.getByText("Where gifts go")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Support center for families and teachers" })).not.toBeVisible();
+  await expect(page).toHaveURL(/#\/donate$/);
 
   await mainNav.getByRole("button", { name: "Support" }).click();
 
@@ -56,4 +78,5 @@ test("visitor sees distinct donate and support pages", async ({ page }) => {
   await expect(page.getByText("Common fixes")).toBeVisible();
   await expect(page.getByRole("region", { name: "Package deals" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Help children keep reading practice within reach" })).not.toBeVisible();
+  await expect(page).toHaveURL(/#\/support$/);
 });

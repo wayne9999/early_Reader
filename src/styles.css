@@ -1001,6 +1001,28 @@ button {
   line-height: 1.4;
 }
 
+.redirect-notice {
+  display: grid;
+  gap: 4px;
+  margin-top: 14px;
+  padding: 13px 14px;
+  border-radius: 8px;
+  border: 2px solid rgba(255, 203, 71, 0.62);
+  background: linear-gradient(135deg, #fff2b8, #fffdf2);
+  color: #4d3500;
+}
+
+.redirect-notice strong,
+.redirect-notice span {
+  display: block;
+}
+
+.redirect-notice span {
+  color: var(--muted);
+  font-weight: 800;
+  line-height: 1.4;
+}
+
 .email-auth-form {
   display: grid;
   gap: 12px;
@@ -1723,6 +1745,7 @@ button {
   }
 
   .selected-signup-path,
+  .redirect-notice,
   .email-auth-form,
   .social-buttons {
     margin-top: 12px;
