@@ -27,14 +27,14 @@ const studentNavItems: Array<{ id: AppView; label: string }> = [
 
 const teacherNavItems: Array<{ id: AppView; label: string }> = [
   { id: "teacher", label: "Teacher" },
-  { id: "support", label: "Plans" },
+  { id: "support", label: "Support" },
   { id: "donate", label: "Donate" },
   { id: "account", label: "Account" }
 ];
 
 const adminNavItems: Array<{ id: AppView; label: string }> = [
   { id: "teacher", label: "Admin View" },
-  { id: "support", label: "Plans" },
+  { id: "support", label: "Support" },
   { id: "donate", label: "Donate" },
   { id: "account", label: "Account" }
 ];

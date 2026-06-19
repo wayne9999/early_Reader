@@ -124,6 +124,10 @@ Required production values:
 - `VITE_STRIPE_FAMILY_PLUS_LINK`
 - `VITE_STRIPE_TEACHER_PRO_LINK`
 
+Optional support value:
+
+- `VITE_SUPPORT_EMAIL` sets the mailbox used by the Support page email link.
+
 Suggested subscriptions:
 
 - Free Reader: core reading and memory practice.
