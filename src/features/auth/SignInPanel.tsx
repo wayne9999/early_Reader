@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { isFirebaseConfigured } from "../../services/firebase";
-import type { SocialProvider } from "../../types";
+import { labelFromSignupPath, saveSignupIntent } from "../../services/signupIntent";
+import type { SignupPath, SocialProvider } from "../../types";
 import { useAuth } from "./AuthProvider";
 
 const providers: Array<{ id: SocialProvider; label: string; className: string }> = [
@@ -10,15 +12,21 @@ const providers: Array<{ id: SocialProvider; label: string; className: string }>
 
 export function SignInPanel() {
   const { isAuthenticated, isLoading, mode, signIn, signOut, user } = useAuth();
+  const [selectedPath, setSelectedPath] = useState<SignupPath>("parentChild");
+
+  async function signInForPath(provider: SocialProvider) {
+    saveSignupIntent(selectedPath);
+    await signIn(provider);
+  }
 
   return (
     <div className="auth-grid">
       <article className="practice-panel auth-panel">
-        <p className="eyebrow">Family account</p>
-        <h2>Save progress across devices</h2>
+        <p className="eyebrow">Choose account type</p>
+        <h2>Sign up for the right workspace</h2>
         <p className="helper-text">
-          Sign in lets caregivers keep reading progress, memory board history, and child practice data
-          connected to the same account.
+          Parents create a child learning account for practice and progress. Teachers create a classroom
+          account for student requests, history, and intervention planning.
         </p>
 
         {isAuthenticated ? (
@@ -33,19 +41,53 @@ export function SignInPanel() {
             </button>
           </div>
         ) : (
-          <div className="social-buttons">
-            {providers.map((provider) => (
+          <>
+            <div className="signup-choice-grid" role="radiogroup" aria-label="Choose account type">
               <button
-                className={`social-button ${provider.className}`}
-                disabled={isLoading}
-                key={provider.id}
+                className={`signup-choice${selectedPath === "parentChild" ? " is-selected" : ""}`}
                 type="button"
-                onClick={() => void signIn(provider.id)}
+                aria-pressed={selectedPath === "parentChild"}
+                onClick={() => setSelectedPath("parentChild")}
               >
-                {provider.label}
+                <span>Parent / Child</span>
+                <strong>Set up a child reader</strong>
+                <small>Practice reading, save progress, and request a teacher later.</small>
               </button>
-            ))}
-          </div>
+              <button
+                className={`signup-choice teacher-choice${selectedPath === "teacher" ? " is-selected" : ""}`}
+                type="button"
+                aria-pressed={selectedPath === "teacher"}
+                onClick={() => setSelectedPath("teacher")}
+              >
+                <span>Teacher</span>
+                <strong>Set up classroom tools</strong>
+                <small>Review assigned students, learning history, and next steps.</small>
+              </button>
+            </div>
+
+            <div className="selected-signup-path" aria-live="polite">
+              <strong>{labelFromSignupPath(selectedPath)} signup selected</strong>
+              <span>
+                {selectedPath === "teacher"
+                  ? "This creates a teacher role after sign-in."
+                  : "This creates a student role for the child learning space after sign-in."}
+              </span>
+            </div>
+
+            <div className="social-buttons">
+              {providers.map((provider) => (
+                <button
+                  className={`social-button ${provider.className}`}
+                  disabled={isLoading}
+                  key={provider.id}
+                  type="button"
+                  onClick={() => void signInForPath(provider.id)}
+                >
+                  {provider.label}
+                </button>
+              ))}
+            </div>
+          </>
         )}
       </article>
 
@@ -67,8 +109,9 @@ export function SignInPanel() {
               ? "Firestore config present; writes require a Firebase-authenticated session"
               : "Local storage fallback until Firebase env values are set"}
           </li>
-          <li>Production storage path: users/{`{userId}`}/learning/progress</li>
-          <li>Social login connections: Google, Facebook, Instagram through Auth0 connection names.</li>
+          <li>Profile path: users/{`{userId}`} stores role and signup path.</li>
+          <li>Progress path: users/{`{userId}`}/learning/progress.</li>
+          <li>Teacher lookup path: teacherProfiles/{`{teacherId}`}.</li>
         </ul>
       </article>
     </div>

@@ -10,6 +10,8 @@ export type AppView =
 
 export type UserRole = "student" | "teacher" | "admin";
 
+export type SignupPath = "parentChild" | "teacher";
+
 export type PhonicsPrompt = {
   title: string;
   sounds: string[];
@@ -58,6 +60,7 @@ export type AppUser = {
 export type UserProfile = {
   uid: string;
   role: UserRole;
+  signupPath?: SignupPath;
   displayName: string;
   email: string | null;
   picture: string | null;

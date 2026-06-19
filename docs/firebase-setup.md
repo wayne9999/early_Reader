@@ -13,6 +13,7 @@ The app is now structured for:
 users/{userId}
   uid
   role
+  signupPath
   displayName
   email
   picture
@@ -136,13 +137,16 @@ In Firebase Console:
 
 Current MVP behavior:
 
-1. A signed-in user chooses `student` or `teacher` once.
-2. Teacher profiles are written to `teacherProfiles/{teacherId}` with a searchable teacher code.
-3. Students search by teacher email or code.
-4. Students create `teacherStudentLinks/{teacherId_studentId}` with `status: "requested"`.
-5. Teachers approve requests, changing the status to `active`.
-6. Student reading and memory actions create history records under `users/{studentId}/learningEvents`.
-7. Active assigned teachers can read that student's event history and latest progress snapshot.
+1. A visitor chooses a signup path before sign-in: `parentChild` or `teacher`.
+2. Parent/child signup creates a `student` role profile for the child learning workspace.
+3. Teacher signup creates a `teacher` role profile and a searchable teacher code.
+4. The selected signup path is stored in `users/{userId}.signupPath`.
+5. Teacher profiles are written to `teacherProfiles/{teacherId}` with a searchable teacher code.
+6. Students search by teacher email or code.
+7. Students create `teacherStudentLinks/{teacherId_studentId}` with `status: "requested"`.
+8. Teachers approve requests, changing the status to `active`.
+9. Student reading and memory actions create history records under `users/{studentId}/learningEvents`.
+10. Active assigned teachers can read that student's event history and latest progress snapshot.
 
 The app prevents role switching after profile creation. Firebase Auth also prevents one Google email from becoming two separate accounts under normal email-provider linking rules. For stricter production enforcement, use Cloud Functions or a backend API to validate role creation, custom claims, paid teacher entitlements, and duplicate-email policies.
 

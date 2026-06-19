@@ -754,6 +754,11 @@ button {
   background: linear-gradient(180deg, #ffffff, #f2eaff);
 }
 
+.role-grid button.is-recommended {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 5px rgba(255, 203, 71, 0.24), 0 10px 24px rgba(54, 74, 102, 0.08);
+}
+
 .role-grid button:disabled {
   cursor: wait;
   opacity: 0.7;
@@ -890,6 +895,85 @@ button {
   display: grid;
   gap: 12px;
   margin-top: 20px;
+}
+
+.signup-choice-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(210px, 1fr));
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.signup-choice {
+  display: grid;
+  gap: 8px;
+  min-height: 170px;
+  padding: 18px;
+  border: 3px solid rgba(47, 128, 237, 0.14);
+  border-radius: 8px;
+  background: linear-gradient(180deg, #ffffff, #eaffec);
+  color: var(--ink);
+  text-align: left;
+  box-shadow: 0 10px 24px rgba(54, 74, 102, 0.08);
+}
+
+.signup-choice.teacher-choice {
+  background: linear-gradient(180deg, #ffffff, #f2eaff);
+}
+
+.signup-choice.is-selected {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 5px rgba(255, 203, 71, 0.24), 0 10px 24px rgba(54, 74, 102, 0.08);
+}
+
+.signup-choice span,
+.signup-choice strong,
+.signup-choice small {
+  display: block;
+}
+
+.signup-choice span {
+  color: var(--blue-dark);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.signup-choice strong {
+  font-size: 1.2rem;
+}
+
+.signup-choice small {
+  color: var(--muted);
+  font-size: 0.94rem;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.selected-signup-path {
+  display: grid;
+  gap: 3px;
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #fff2b8, #eef8ff);
+  color: #3d4961;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+}
+
+.selected-signup-path strong,
+.selected-signup-path span {
+  display: block;
+}
+
+.selected-signup-path strong {
+  color: #1f2b45;
+}
+
+.selected-signup-path span {
+  color: var(--muted);
+  font-weight: 800;
+  line-height: 1.4;
 }
 
 .social-button {
@@ -1219,7 +1303,8 @@ button {
 
   .memory-board,
   .stats-grid,
-  .auth-grid {
+  .auth-grid,
+  .signup-choice-grid {
     grid-template-columns: repeat(2, minmax(120px, 1fr));
   }
 }
@@ -1244,7 +1329,8 @@ button {
 
   .memory-board,
   .stats-grid,
-  .auth-grid {
+  .auth-grid,
+  .signup-choice-grid {
     grid-template-columns: 1fr;
   }
 

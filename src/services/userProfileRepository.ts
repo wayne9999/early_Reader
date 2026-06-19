@@ -1,5 +1,5 @@
 import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
-import type { AppUser, UserProfile, UserRole } from "../types";
+import type { AppUser, SignupPath, UserProfile, UserRole } from "../types";
 import { getFirebaseRuntime } from "./firebase";
 
 const PROFILE_STORAGE_KEY = "readnest-profile-v1";
@@ -18,10 +18,11 @@ function createTeacherCode(name: string, uid: string) {
   return `${prefix}-${uid.slice(0, 5).toUpperCase()}`;
 }
 
-function buildProfile(user: AppUser, role: UserRole): UserProfile {
+function buildProfile(user: AppUser, role: UserRole, signupPath?: SignupPath): UserProfile {
   return {
     uid: user.id,
     role,
+    signupPath,
     displayName: user.name,
     email: user.email ?? null,
     picture: user.picture ?? null,
@@ -47,14 +48,14 @@ export async function loadUserProfile(user: AppUser | null): Promise<UserProfile
   return snapshot.exists() ? (snapshot.data() as UserProfile) : null;
 }
 
-export async function createUserProfile(user: AppUser, role: UserRole): Promise<UserProfile> {
+export async function createUserProfile(user: AppUser, role: UserRole, signupPath?: SignupPath): Promise<UserProfile> {
   const existingProfile = await loadUserProfile(user);
 
   if (existingProfile) {
     return existingProfile;
   }
 
-  const profile = buildProfile(user, role);
+  const profile = buildProfile(user, role, signupPath);
   const runtime = getFirebaseRuntime();
   const firebaseUser = runtime?.auth.currentUser;
 

@@ -11,8 +11,9 @@ import { TeacherDashboard } from "./features/teacher/TeacherDashboard";
 import { syncAssignmentProgress } from "./services/assignmentRepository";
 import { billingConfig } from "./services/billingConfig";
 import { defaultProgress, loadProgress, saveProgress } from "./services/progressRepository";
+import { clearSignupIntent, loadSignupIntent } from "./services/signupIntent";
 import { loadUserProfile } from "./services/userProfileRepository";
-import type { AppUser, AppView, Progress, UserProfile, UserRole } from "./types";
+import type { AppUser, AppView, Progress, SignupPath, UserProfile, UserRole } from "./types";
 
 const studentNavItems: Array<{ id: AppView; label: string }> = [
   { id: "reading", label: "Reading" },
@@ -107,6 +108,7 @@ export function RootApp() {
   const [currentView, setCurrentView] = useState<AppView>("reading");
   const [progress, setProgress] = useState<Progress>(defaultProgress);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [signupIntent, setSignupIntent] = useState<SignupPath | null>(() => loadSignupIntent());
   const [isProfileLoading, setIsProfileLoading] = useState(true);
   const [isProgressLoading, setIsProgressLoading] = useState(true);
   const goalCompleted = Math.min(progress.completedToday, 3);
@@ -138,6 +140,10 @@ export function RootApp() {
     return () => {
       isMounted = false;
     };
+  }, [user]);
+
+  useEffect(() => {
+    setSignupIntent(loadSignupIntent());
   }, [user]);
 
   useEffect(() => {
@@ -180,8 +186,17 @@ export function RootApp() {
       void syncAssignmentProgress(user, nextProgress);
     };
 
+    const handleProfileCreated = (createdProfile: UserProfile) => {
+      setProfile(createdProfile);
+      clearSignupIntent();
+      setSignupIntent(null);
+      if (createdProfile.role === "teacher" || createdProfile.role === "admin") {
+        setCurrentView("teacher");
+      }
+    };
+
     if (user && !profile) {
-      return <RoleSetup user={user} onProfileCreated={setProfile} />;
+      return <RoleSetup user={user} preferredSignupPath={signupIntent} onProfileCreated={handleProfileCreated} />;
     }
 
     if ((profile?.role === "teacher" || profile?.role === "admin") && !["teacher", "support", "donate", "account"].includes(currentView)) {
@@ -221,7 +236,7 @@ export function RootApp() {
     }
 
     return <ReadingPractice progress={progress} user={user} onProgressChange={handleProgressChange} />;
-  }, [currentView, isAuthLoading, isProfileLoading, isProgressLoading, profile, progress, user]);
+  }, [currentView, isAuthLoading, isProfileLoading, isProgressLoading, profile, progress, signupIntent, user]);
 
   return (
     <div className="app-shell">
