@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { RoleSetup } from "./features/account/RoleSetup";
+import { SubscriptionPrompt } from "./features/account/SubscriptionPrompt";
 import { LearningActivityPage } from "./features/activities/LearningActivityPage";
 import { SignInPanel } from "./features/auth/SignInPanel";
 import { useAuth } from "./features/auth/AuthProvider";
@@ -22,6 +23,7 @@ import {
   type AppRouteState
 } from "./services/appRoutes";
 import { billingConfig } from "./services/billingConfig";
+import { paidStudentActivitiesDescription, studentActivityAccess } from "./services/entitlementService";
 import { defaultProgress, loadProgress, saveProgress } from "./services/progressRepository";
 import { clearSignupIntent, loadSignupIntent } from "./services/signupIntent";
 import { loadUserProfile } from "./services/userProfileRepository";
@@ -137,6 +139,8 @@ export function RootApp() {
   const [isProfileLoading, setIsProfileLoading] = useState(true);
   const [isProgressLoading, setIsProgressLoading] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showSubscriptionPrompt, setShowSubscriptionPrompt] = useState(false);
+  const [postSubscriptionView, setPostSubscriptionView] = useState<AppView | null>(null);
   const goalCompleted = Math.min(progress.completedToday, 3);
   const navItems =
     profile?.role === "admin"
@@ -288,6 +292,21 @@ export function RootApp() {
       setSignupIntent(null);
       clearPendingAuthView();
       setPendingAuthView(null);
+
+      if (createdProfile.role === "student" && createdProfile.subscriptionStatus !== "active") {
+        setPostSubscriptionView(nextView);
+        setShowSubscriptionPrompt(true);
+        return;
+      }
+
+      navigateToView(nextView, { replace: true });
+    };
+
+    const continueAfterSubscriptionPrompt = () => {
+      const nextView = postSubscriptionView ?? homeViewForRole(profile?.role ?? "student");
+
+      setShowSubscriptionPrompt(false);
+      setPostSubscriptionView(null);
       navigateToView(nextView, { replace: true });
     };
 
@@ -301,6 +320,17 @@ export function RootApp() {
           user={user}
           preferredSignupPath={signupIntent}
           onProfileCreated={handleProfileCreated}
+        />
+      );
+    }
+
+    if (user && profile && showSubscriptionPrompt) {
+      return (
+        <SubscriptionPrompt
+          user={user}
+          profile={profile}
+          onProfileUpdated={setProfile}
+          onContinue={continueAfterSubscriptionPrompt}
         />
       );
     }
@@ -325,6 +355,35 @@ export function RootApp() {
       currentView === "storyOrder" ||
       currentView === "wordMeaning"
     ) {
+      if (studentActivityAccess(profile, currentView) === "locked") {
+        return (
+          <article className="practice-panel subscription-prompt">
+            <p className="eyebrow">Family Plus activity</p>
+            <h2>Subscribe to unlock this activity</h2>
+            <p className="helper-text">
+              This activity is part of the paid student path. Family Plus unlocks {paidStudentActivitiesDescription()}.
+            </p>
+            <div className="subscription-actions">
+              <button
+                className="primary-button"
+                disabled={!billingConfig.familyPlusLink}
+                type="button"
+                onClick={() => {
+                  if (billingConfig.familyPlusLink) {
+                    window.open(billingConfig.familyPlusLink, "_blank", "noopener,noreferrer");
+                  }
+                }}
+              >
+                Start Family Plus
+              </button>
+              <button className="secondary-button" type="button" onClick={() => navigateToView("rhymes")}>
+                Use free activities
+              </button>
+            </div>
+          </article>
+        );
+      }
+
       return (
         <LearningActivityPage
           activityId={currentView}
@@ -367,9 +426,11 @@ export function RootApp() {
     isProgressLoading,
     navigateToView,
     pendingAuthView,
+    postSubscriptionView,
     profile,
     progress,
     requestedAuthView,
+    showSubscriptionPrompt,
     signupIntent,
     user
   ]);

@@ -14,8 +14,8 @@ export const subscriptionTiers: SubscriptionTier[] = [
     audience: "Families getting started",
     description: "Core reading and memory practice for one learner.",
     perks: [
-      "Sight word, phonics, and sentence practice",
-      "Memory matching activities",
+      "Guest Reading and Memory activities",
+      "Three extra signed-in activities: Rhymes, Sounds, and Sentences",
       "Local progress tracking",
       "Read-aloud support"
     ],
@@ -28,10 +28,10 @@ export const subscriptionTiers: SubscriptionTier[] = [
     audience: "Parents and caregivers",
     description: "Extra support for home practice and multiple children.",
     perks: [
-      "Multiple child profiles",
+      "Unlock Story Steps and Word Garden",
+      "More guided practice packs as the library grows",
       "Cloud progress sync across devices",
       "Printable weekly practice plans",
-      "More word packs and memory themes",
       "Caregiver progress summaries"
     ],
     cta: "Start Family Plus",

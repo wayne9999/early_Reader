@@ -46,6 +46,8 @@ function buildProfile(user: AppUser, role: UserRole, signupPath?: SignupPath): U
     displayName: user.name,
     email: user.email ?? null,
     picture: user.picture ?? null,
+    subscriptionTier: role === "teacher" ? "teacherPro" : "free",
+    subscriptionStatus: "free",
     ...teacherDetails
   };
 }
@@ -142,4 +144,33 @@ export async function createUserProfile(user: AppUser, role: UserRole, signupPat
   }
 
   return profile;
+}
+
+export async function updateUserProfile(
+  user: AppUser,
+  profile: UserProfile,
+  updates: Partial<UserProfile>
+): Promise<UserProfile> {
+  const nextProfile = {
+    ...profile,
+    ...updates
+  };
+  const runtime = getFirebaseRuntime();
+  const firebaseUser = runtime?.auth.currentUser;
+
+  if (!runtime || !firebaseUser) {
+    localStorage.setItem(localProfileKey(user), JSON.stringify(nextProfile));
+    return nextProfile;
+  }
+
+  await setDoc(
+    doc(runtime.db, "users", firebaseUser.uid),
+    {
+      ...removeUndefinedFields(updates),
+      updatedAt: serverTimestamp()
+    },
+    { merge: true }
+  );
+
+  return nextProfile;
 }

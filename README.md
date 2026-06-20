@@ -18,6 +18,7 @@ For Codex continuity and project handoff notes, see `.codex/project.md` and `PRO
 - Downloadable teacher report cards for assigned students with quarter and annual goal comparisons for parent sharing.
 - Student teacher selection with teacher bios, grade fit, specialties, visible workload, and request approval.
 - Donation and subscription support page using Stripe Payment Links.
+- Free vs paid student activity access: free students get Reading, Memory, Rhymes, Sounds, and Sentences; Family Plus is the paid path for Story Steps, Word Garden, and future premium packs.
 - Firebase Auth account page with Google and Facebook support, plus an Instagram custom-provider placeholder.
 - Firebase Firestore profile, assignment, event, and progress repositories with local storage fallback for development.
 - Shareable app URLs for each main page, including protected-page login redirects.
@@ -134,6 +135,7 @@ Current behavior:
 - If Firebase env values are missing, progress is stored in browser local storage.
 - When Firebase is configured and a Firebase-authenticated user is available, progress saves to `users/{userId}/learning/progress`.
 - Signed-in users are assigned one locked app role from the signup path they selected before authentication: `student` for Parent / Child, `teacher` for Teacher.
+- New student signups see a Family Plus subscribe-or-skip prompt. Skipping keeps the account on the free entitlement set.
 - Teacher certification is state-based in the United States. The app stores certification verification as `notSubmitted`, `pendingReview`, `verified`, or `rejected`; production verification should check the teacher's issuing state agency or a trusted background-check workflow.
 - Teacher lookup uses `teacherProfiles/{teacherId}` by email or teacher code.
 - Students can browse or search the limited `teacherDirectory` and review each teacher's bio, grade bands, specialties, load, and pay/load note before requesting.
@@ -148,7 +150,7 @@ Current behavior:
 
 ## Donations And Subscriptions
 
-The app uses Stripe Payment Links for donations and subscriptions so payment details are handled by Stripe-hosted checkout pages.
+The app uses Stripe Payment Links for donations and subscriptions so payment details are handled by Stripe-hosted checkout pages. For production, paid access should be granted by Stripe Checkout/Billing webhook events that update Firebase profile entitlements or custom claims; frontend-only entitlement changes are not sufficient for real paid access enforcement.
 
 Required production values:
 
@@ -162,8 +164,8 @@ Optional support value:
 
 Suggested subscriptions:
 
-- Free Reader: core reading and memory practice.
-- Family Plus: multiple child profiles, cloud sync, printable plans, more content packs.
+- Free Reader: Reading, Memory, Rhymes, Sounds, and Sentences.
+- Family Plus: Story Steps, Word Garden, future premium packs, cloud sync, printable plans.
 - Teacher Pro: classroom dashboard, student analysis, intervention planning, exports, AI-ready recommendations.
 
 ## Product Plan

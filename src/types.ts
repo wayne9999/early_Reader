@@ -17,6 +17,10 @@ export type UserRole = "student" | "teacher" | "admin";
 
 export type SignupPath = "parentChild" | "teacher";
 
+export type SubscriptionTierId = "free" | "familyPlus" | "teacherPro";
+
+export type SubscriptionStatus = "free" | "checkoutStarted" | "active" | "pastDue" | "canceled";
+
 export type PhonicsPrompt = {
   title: string;
   sounds: string[];
@@ -82,6 +86,9 @@ export type UserProfile = {
   certificationId?: string;
   certificationStatus?: "notSubmitted" | "pendingReview" | "verified" | "rejected";
   certificationNote?: string;
+  subscriptionTier?: SubscriptionTierId;
+  subscriptionStatus?: SubscriptionStatus;
+  subscriptionPromptSkippedAt?: string;
   bio?: string;
   gradeBands?: Array<"K" | "1" | "2">;
   specialties?: string[];
@@ -181,7 +188,7 @@ export type TeacherAnalysis = {
 };
 
 export type SubscriptionTier = {
-  id: "free" | "familyPlus" | "teacherPro";
+  id: SubscriptionTierId;
   name: string;
   price: string;
   audience: string;

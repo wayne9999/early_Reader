@@ -20,7 +20,9 @@ describe("userProfileRepository", () => {
     expect(profile).toMatchObject({
       uid: "student-1",
       role: "student",
-      signupPath: "parentChild"
+      signupPath: "parentChild",
+      subscriptionTier: "free",
+      subscriptionStatus: "free"
     });
     expect(Object.prototype.hasOwnProperty.call(profile, "teacherCode")).toBe(false);
   });

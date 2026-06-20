@@ -868,6 +868,40 @@ button {
   display: block;
 }
 
+.subscription-prompt {
+  display: grid;
+  gap: 16px;
+  background: linear-gradient(135deg, #ffffff, #fff5c7 48%, #f2eaff);
+}
+
+.subscription-prompt h2 {
+  margin: 0;
+  font-size: clamp(1.9rem, 3vw, 3rem);
+}
+
+.subscription-compare-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+.subscription-compare-grid section {
+  padding: 18px;
+  border-radius: 8px;
+  border: 3px solid rgba(255, 255, 255, 0.88);
+  background: rgba(255, 255, 255, 0.74);
+}
+
+.subscription-compare-grid h3 {
+  margin: 0;
+}
+
+.subscription-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
 .role-setup h2 {
   margin: 0;
   font-size: clamp(1.8rem, 3vw, 2.7rem);
@@ -1978,6 +2012,7 @@ button {
   .package-panel-heading,
   .package-grid,
   .role-grid,
+  .subscription-compare-grid,
   .teacher-choice-intro,
   .teacher-search,
   .teacher-result,
@@ -2041,6 +2076,7 @@ button {
   }
 
   .donation-actions,
+  .subscription-actions,
   .support-action,
   .donation-button {
     width: 100%;
