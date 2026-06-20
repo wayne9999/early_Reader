@@ -20,6 +20,7 @@ test("visitor can distinguish guest state and choose a teacher signup path", asy
 test("account signup choices align cleanly on mobile", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 900 });
   await page.goto("/");
+  await page.getByRole("button", { name: "Open menu" }).click();
   await page.getByRole("button", { name: "Account" }).click();
 
   const parentChoice = page.getByRole("button", { name: "Choose Parent / Child signup" });
@@ -38,6 +39,21 @@ test("account signup choices align cleanly on mobile", async ({ page }) => {
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)
   ).toBe(true);
+});
+
+test("mobile navigation opens from a hamburger side menu", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 900 });
+  await page.goto("/");
+
+  await expect(page.getByRole("button", { name: "Open menu" })).toBeVisible();
+  await page.getByRole("button", { name: "Open menu" }).click();
+  await expect(page.locator(".mobile-menu-button[aria-label='Close menu']")).toBeVisible();
+
+  await page.getByRole("navigation", { name: "Main navigation" }).getByRole("button", { name: "Support" }).click();
+
+  await expect(page.getByRole("heading", { name: "Support center for families and teachers" })).toBeVisible();
+  await expect(page).toHaveURL(/#\/support$/);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
 });
 
 test("guest deep links to student activities are protected", async ({ page }) => {

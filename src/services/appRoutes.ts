@@ -45,8 +45,32 @@ const viewsByRole: Record<UserRole, Set<AppView>> = {
     "support",
     "account"
   ]),
-  teacher: new Set(["teacher", "donate", "support", "account"]),
-  admin: new Set(["teacher", "donate", "support", "account"])
+  teacher: new Set([
+    "teacher",
+    "reading",
+    "memory",
+    "rhymes",
+    "soundSort",
+    "sentenceBuilder",
+    "storyOrder",
+    "wordMeaning",
+    "donate",
+    "support",
+    "account"
+  ]),
+  admin: new Set([
+    "teacher",
+    "reading",
+    "memory",
+    "rhymes",
+    "soundSort",
+    "sentenceBuilder",
+    "storyOrder",
+    "wordMeaning",
+    "donate",
+    "support",
+    "account"
+  ])
 };
 
 export function hashForView(view: AppView, nextView?: AppView | null) {

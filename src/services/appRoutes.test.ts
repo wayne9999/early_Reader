@@ -54,7 +54,8 @@ describe("appRoutes", () => {
     expect(canAccessView(studentProfile, "wordMeaning")).toBe(true);
     expect(canAccessView(studentProfile, "teacher")).toBe(false);
     expect(canAccessView(teacherProfile, "teacher")).toBe(true);
-    expect(canAccessView(teacherProfile, "storyOrder")).toBe(false);
+    expect(canAccessView(teacherProfile, "storyOrder")).toBe(true);
+    expect(canAccessView(teacherProfile, "memory")).toBe(true);
     expect(canAccessView(teacherProfile, "progress")).toBe(false);
     expect(homeViewForRole("teacher")).toBe("teacher");
     expect(homeViewForRole("student")).toBe("reading");

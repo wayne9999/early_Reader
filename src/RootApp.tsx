@@ -43,7 +43,14 @@ const studentNavItems: Array<{ id: AppView; label: string }> = [
 ];
 
 const teacherNavItems: Array<{ id: AppView; label: string }> = [
-  { id: "teacher", label: "Teacher" },
+  { id: "teacher", label: "Dashboard" },
+  { id: "reading", label: "Reading" },
+  { id: "memory", label: "Memory" },
+  { id: "rhymes", label: "Rhymes" },
+  { id: "soundSort", label: "Sounds" },
+  { id: "sentenceBuilder", label: "Sentences" },
+  { id: "storyOrder", label: "Story" },
+  { id: "wordMeaning", label: "Words" },
   { id: "support", label: "Support" },
   { id: "donate", label: "Donate" },
   { id: "account", label: "Account" }
@@ -129,6 +136,7 @@ export function RootApp() {
   const [signupIntent, setSignupIntent] = useState<SignupPath | null>(() => loadSignupIntent());
   const [isProfileLoading, setIsProfileLoading] = useState(true);
   const [isProgressLoading, setIsProgressLoading] = useState(true);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const goalCompleted = Math.min(progress.completedToday, 3);
   const navItems =
     profile?.role === "admin"
@@ -140,6 +148,7 @@ export function RootApp() {
           : publicNavItems;
   const currentView = routeState.view;
   const requestedAuthView = currentView === "account" ? routeState.nextView ?? pendingAuthView : null;
+  const closeMenu = useCallback(() => setIsMenuOpen(false), []);
 
   const navigateToView = useCallback((view: AppView, options: { nextView?: AppView | null; replace?: boolean } = {}) => {
     const nextHash = hashForView(view, options.nextView ?? null);
@@ -152,6 +161,7 @@ export function RootApp() {
     }
 
     setRouteState(parseAppRoute(nextHash));
+    setIsMenuOpen(false);
   }, []);
 
   useEffect(() => {
@@ -365,8 +375,27 @@ export function RootApp() {
   ]);
 
   return (
-    <div className="app-shell">
-      <aside className="sidebar" aria-label="Learning areas">
+    <div className={`app-shell${isMenuOpen ? " is-menu-open" : ""}`}>
+      <button
+        className="mobile-menu-button"
+        type="button"
+        aria-expanded={isMenuOpen}
+        aria-controls="main-menu"
+        aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+        onClick={() => setIsMenuOpen((current) => !current)}
+      >
+        <span aria-hidden="true" />
+        <span aria-hidden="true" />
+        <span aria-hidden="true" />
+      </button>
+      <button
+        className="mobile-menu-scrim"
+        type="button"
+        aria-label="Close menu"
+        tabIndex={isMenuOpen ? 0 : -1}
+        onClick={closeMenu}
+      />
+      <aside className="sidebar" id="main-menu" aria-label="Learning areas">
         <div className="brand">
           <span className="brand-mark" aria-hidden="true">
             R

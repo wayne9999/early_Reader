@@ -78,6 +78,10 @@ export type UserProfile = {
   email: string | null;
   picture: string | null;
   teacherCode?: string;
+  certificationState?: string;
+  certificationId?: string;
+  certificationStatus?: "notSubmitted" | "pendingReview" | "verified" | "rejected";
+  certificationNote?: string;
   bio?: string;
   gradeBands?: Array<"K" | "1" | "2">;
   specialties?: string[];

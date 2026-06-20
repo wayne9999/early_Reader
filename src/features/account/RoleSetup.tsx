@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createUserProfile } from "../../services/userProfileRepository";
 import { labelFromSignupPath, roleFromSignupPath } from "../../services/signupIntent";
 import type { AppUser, SignupPath, UserProfile, UserRole } from "../../types";
@@ -13,6 +13,7 @@ export function RoleSetup({ user, preferredSignupPath, onProfileCreated }: RoleS
   const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const preferredRole = preferredSignupPath ? roleFromSignupPath(preferredSignupPath) : null;
+  const autoCreateStarted = useRef(false);
 
   async function chooseRole(role: UserRole, signupPath?: SignupPath) {
     if (!user) {
@@ -32,9 +33,18 @@ export function RoleSetup({ user, preferredSignupPath, onProfileCreated }: RoleS
     }
   }
 
+  useEffect(() => {
+    if (!preferredSignupPath || !preferredRole || autoCreateStarted.current) {
+      return;
+    }
+
+    autoCreateStarted.current = true;
+    void chooseRole(preferredRole, preferredSignupPath);
+  }, [preferredRole, preferredSignupPath]);
+
   return (
     <article className="practice-panel role-setup">
-      <p className="eyebrow">Choose your role</p>
+      <p className="eyebrow">{preferredSignupPath ? "Finishing setup" : "Choose your role"}</p>
       <h2>
         {preferredSignupPath
           ? `Finish ${labelFromSignupPath(preferredSignupPath)} setup`
@@ -49,31 +59,40 @@ export function RoleSetup({ user, preferredSignupPath, onProfileCreated }: RoleS
           <strong>{labelFromSignupPath(preferredSignupPath)} path selected</strong>
           <span>
             {preferredRole === "teacher"
-              ? "This will create a teacher profile and searchable teacher code."
-              : "This will create a child learning profile with student permissions."}
+              ? "Creating your teacher profile and searchable teacher code."
+              : "Creating a child learning profile with student permissions."}
           </span>
         </div>
       ) : null}
-      <div className="role-grid">
-        <button
-          className={preferredRole === "student" ? "is-recommended" : ""}
-          type="button"
-          disabled={isSaving}
-          onClick={() => void chooseRole("student", "parentChild")}
-        >
-          <strong>Parent / Child</strong>
-          <span>Create a child reader space for practice, progress tracking, and teacher requests.</span>
-        </button>
-        <button
-          className={preferredRole === "teacher" ? "is-recommended" : ""}
-          type="button"
-          disabled={isSaving}
-          onClick={() => void chooseRole("teacher", "teacher")}
-        >
-          <strong>Teacher</strong>
-          <span>Manage assigned students, review history, and plan next steps.</span>
-        </button>
-      </div>
+      {preferredSignupPath ? (
+        <div className="setup-status-card" role="status">
+          <strong>{isSaving ? "Creating profile..." : error ? "Setup needs attention" : "Profile ready"}</strong>
+          <span>
+            {error
+              ? "Review the message below and try again."
+              : "ReadNest is assigning the role from the path you selected before sign-in."}
+          </span>
+        </div>
+      ) : (
+        <div className="role-grid">
+          <button
+            type="button"
+            disabled={isSaving}
+            onClick={() => void chooseRole("student", "parentChild")}
+          >
+            <strong>Parent / Child</strong>
+            <span>Create a child reader space for practice, progress tracking, and teacher requests.</span>
+          </button>
+          <button
+            type="button"
+            disabled={isSaving}
+            onClick={() => void chooseRole("teacher", "teacher")}
+          >
+            <strong>Teacher</strong>
+            <span>Manage assigned students, review history, and plan next steps.</span>
+          </button>
+        </div>
+      )}
       {error ? <p className="form-error">{error}</p> : null}
     </article>
   );

@@ -18,9 +18,17 @@ function createTeacherCode(name: string, uid: string) {
   return `${prefix}-${uid.slice(0, 5).toUpperCase()}`;
 }
 
+function removeUndefinedFields<T extends Record<string, unknown>>(value: T): T {
+  return Object.fromEntries(Object.entries(value).filter(([, fieldValue]) => fieldValue !== undefined)) as T;
+}
+
 function buildProfile(user: AppUser, role: UserRole, signupPath?: SignupPath): UserProfile {
   const teacherDetails = role === "teacher"
     ? {
+        teacherCode: createTeacherCode(user.name, user.id),
+        certificationStatus: "notSubmitted" as const,
+        certificationNote:
+          "Teacher certification is state-based. Collect state and license details, then verify through the issuing state agency before marking verified.",
         bio:
           "I support early readers with short, calm practice, phonics modeling, and teacher-reviewed next steps.",
         gradeBands: ["K", "1", "2"] as UserProfile["gradeBands"],
@@ -38,7 +46,6 @@ function buildProfile(user: AppUser, role: UserRole, signupPath?: SignupPath): U
     displayName: user.name,
     email: user.email ?? null,
     picture: user.picture ?? null,
-    teacherCode: role === "teacher" ? createTeacherCode(user.name, user.id) : undefined,
     ...teacherDetails
   };
 }
@@ -80,7 +87,7 @@ export async function createUserProfile(user: AppUser, role: UserRole, signupPat
   await setDoc(
     doc(runtime.db, "users", firebaseUser.uid),
     {
-      ...profile,
+      ...removeUndefinedFields(profile),
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     },
@@ -90,12 +97,16 @@ export async function createUserProfile(user: AppUser, role: UserRole, signupPat
   if (role === "teacher") {
     await setDoc(
       doc(runtime.db, "teacherProfiles", firebaseUser.uid),
-      {
+      removeUndefinedFields({
         uid: firebaseUser.uid,
         displayName: profile.displayName,
         email: profile.email,
         picture: profile.picture,
         teacherCode: profile.teacherCode,
+        certificationState: profile.certificationState,
+        certificationId: profile.certificationId,
+        certificationStatus: profile.certificationStatus,
+        certificationNote: profile.certificationNote,
         bio: profile.bio,
         gradeBands: profile.gradeBands,
         specialties: profile.specialties,
@@ -104,17 +115,20 @@ export async function createUserProfile(user: AppUser, role: UserRole, signupPat
         payModelNote: profile.payModelNote,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
-      },
+      }),
       { merge: true }
     );
 
     await setDoc(
       doc(runtime.db, "teacherDirectory", firebaseUser.uid),
-      {
+      removeUndefinedFields({
         uid: firebaseUser.uid,
         displayName: profile.displayName,
         email: profile.email,
         teacherCode: profile.teacherCode,
+        certificationState: profile.certificationState,
+        certificationStatus: profile.certificationStatus,
+        certificationNote: profile.certificationNote,
         bio: profile.bio,
         gradeBands: profile.gradeBands,
         specialties: profile.specialties,
@@ -122,7 +136,7 @@ export async function createUserProfile(user: AppUser, role: UserRole, signupPat
         activeStudentCount: profile.activeStudentCount,
         payModelNote: profile.payModelNote,
         updatedAt: serverTimestamp()
-      },
+      }),
       { merge: true }
     );
   }

@@ -11,9 +11,10 @@ For Codex continuity and project handoff notes, see `.codex/project.md` and `PRO
 - Memory matching using school-ready concepts like healthy habits, kind words, and classroom routines.
 - Five extra logged-in student activities for rhyming, beginning sounds, sentence order, story sequencing, and word meaning.
 - Caregiver progress view with known words, reading sessions, memory boards, and next-step suggestions.
-- Role-aware student and teacher workspaces.
+- Role-aware student and teacher workspaces with signup-path auto assignment after authentication.
 - Student learning-event history for reading, sentence, and memory interactions.
 - Teacher dashboard with assigned-student roster, approval requests, strengths, growth areas, history, and intervention planning.
+- Teacher accounts can also open the student-facing reading, memory, and skill activities so they can review the learner experience.
 - Downloadable teacher report cards for assigned students with quarter and annual goal comparisons for parent sharing.
 - Student teacher selection with teacher bios, grade fit, specialties, visible workload, and request approval.
 - Donation and subscription support page using Stripe Payment Links.
@@ -132,7 +133,8 @@ Current behavior:
 - If Firebase/Auth0 env values are missing, the account page uses demo sign-in.
 - If Firebase env values are missing, progress is stored in browser local storage.
 - When Firebase is configured and a Firebase-authenticated user is available, progress saves to `users/{userId}/learning/progress`.
-- Signed-in users choose one locked app role: `student` or `teacher`.
+- Signed-in users are assigned one locked app role from the signup path they selected before authentication: `student` for Parent / Child, `teacher` for Teacher.
+- Teacher certification is state-based in the United States. The app stores certification verification as `notSubmitted`, `pendingReview`, `verified`, or `rejected`; production verification should check the teacher's issuing state agency or a trusted background-check workflow.
 - Teacher lookup uses `teacherProfiles/{teacherId}` by email or teacher code.
 - Students can browse or search the limited `teacherDirectory` and review each teacher's bio, grade bands, specialties, load, and pay/load note before requesting.
 - Student assignment requests use `teacherStudentLinks/{teacherId_studentId}` and start as `requested`.

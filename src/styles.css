@@ -52,6 +52,11 @@ button {
   min-height: 100vh;
 }
 
+.mobile-menu-button,
+.mobile-menu-scrim {
+  display: none;
+}
+
 .sidebar {
   display: flex;
   flex-direction: column;
@@ -825,6 +830,22 @@ button {
 .role-setup {
   display: grid;
   gap: 16px;
+}
+
+.setup-status-card {
+  display: grid;
+  gap: 6px;
+  padding: 18px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #eef8ff, #eaffec);
+  border: 2px solid rgba(47, 128, 237, 0.14);
+  color: #273348;
+  font-weight: 800;
+}
+
+.setup-status-card strong,
+.setup-status-card span {
+  display: block;
 }
 
 .role-setup h2 {
@@ -1830,12 +1851,62 @@ button {
     grid-template-columns: 1fr;
   }
 
+  .mobile-menu-button {
+    position: fixed;
+    top: 14px;
+    left: 14px;
+    z-index: 70;
+    display: inline-grid;
+    gap: 5px;
+    place-content: center;
+    width: 48px;
+    height: 48px;
+    border: 0;
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--purple), var(--blue));
+    box-shadow: 0 12px 24px rgba(21, 37, 54, 0.22);
+  }
+
+  .mobile-menu-button span {
+    display: block;
+    width: 22px;
+    height: 3px;
+    border-radius: 999px;
+    background: #ffffff;
+  }
+
+  .mobile-menu-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 55;
+    display: block;
+    border: 0;
+    background: rgba(21, 37, 54, 0.34);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 160ms ease;
+  }
+
+  .app-shell.is-menu-open .mobile-menu-scrim {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
   .sidebar {
-    position: static;
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 60;
+    width: min(340px, calc(100vw - 42px));
     gap: 14px;
     padding: 18px;
-    border-right: 0;
-    border-bottom: 4px solid rgba(47, 128, 237, 0.12);
+    overflow-y: auto;
+    border-right: 4px solid rgba(47, 128, 237, 0.12);
+    transform: translateX(-105%);
+    transition: transform 180ms ease;
+  }
+
+  .app-shell.is-menu-open .sidebar {
+    transform: translateX(0);
   }
 
   .donation-card {
@@ -1843,11 +1914,15 @@ button {
   }
 
   .nav-tabs {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: 1fr;
   }
 
   .nav-tab {
-    text-align: center;
+    text-align: left;
+  }
+
+  .main-content {
+    padding-top: 80px;
   }
 
   .daily-goal {
@@ -1925,7 +2000,7 @@ button {
   }
 
   .nav-tabs {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 1fr;
   }
 
   .memory-board,

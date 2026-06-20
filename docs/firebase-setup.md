@@ -18,6 +18,10 @@ users/{userId}
   email
   picture
   teacherCode
+  certificationState
+  certificationId
+  certificationStatus
+  certificationNote
   createdAt
   updatedAt
 
@@ -46,6 +50,10 @@ teacherProfiles/{teacherId}
   email
   picture
   teacherCode
+  certificationState
+  certificationId
+  certificationStatus
+  certificationNote
   bio
   gradeBands
   specialties
@@ -60,6 +68,9 @@ teacherDirectory/{teacherId}
   displayName
   email
   teacherCode
+  certificationState
+  certificationStatus
+  certificationNote
   bio
   gradeBands
   specialties
@@ -157,8 +168,8 @@ In Firebase Console:
 Current MVP behavior:
 
 1. A visitor chooses a signup path before sign-in: `parentChild` or `teacher`.
-2. Parent/child signup creates a `student` role profile for the child learning workspace.
-3. Teacher signup creates a `teacher` role profile, searchable teacher code, public bio, grade bands, specialties, and load settings.
+2. After authentication, the selected path automatically creates the profile role. Parent/child creates a `student`; teacher creates a `teacher`.
+3. Teacher signup creates a `teacher` role profile, searchable teacher code, public bio, grade bands, specialties, load settings, and default certification status.
 4. The selected signup path is stored in `users/{userId}.signupPath`.
 5. Private teacher profiles are written to `teacherProfiles/{teacherId}`.
 6. Searchable teacher lookup data is written to `teacherDirectory/{teacherId}`.
@@ -170,7 +181,9 @@ Current MVP behavior:
 12. Teachers can download a concise parent-facing report card for active assigned students using only the data visible in the dashboard.
 13. Teacher compensation should be calculated from active assignment records in trusted backend code before real payouts are made.
 
-The app prevents role switching after profile creation. Firebase Auth also prevents one Google email from becoming two separate accounts under normal email-provider linking rules. For stricter production enforcement, use Cloud Functions or a backend API to validate role creation, custom claims, paid teacher entitlements, and duplicate-email policies.
+The app prevents role switching after profile creation. Firebase Auth also prevents one Google email from becoming two separate accounts under normal email-provider linking rules. For stricter production enforcement, use Cloud Functions or a backend API to validate role creation, custom claims, paid teacher entitlements, duplicate-email policies, and teacher certification status.
+
+Teacher certification in the United States is state-based, not one universal national teacher ID. Production verification should collect the issuing state and license/certificate number, verify it against the state education agency or a vetted verification provider, then set `certificationStatus` from trusted backend/admin code.
 
 ## Security Rules
 
