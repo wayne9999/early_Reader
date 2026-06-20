@@ -15,9 +15,10 @@ vi.mock("../../services/learningEventRepository", () => ({
 }));
 
 describe("LearningActivityPage", () => {
-  it("coaches wrong choices and records a correct completion once", async () => {
+  it("coaches wrong choices and records one completion after ten rounds", async () => {
     const user = userEvent.setup();
     const onProgressChange = vi.fn();
+    const correctChoices = ["hat", "run", "top", "red", "make", "rug", "night", "dish", "wall", "bee"];
 
     render(
       <LearningActivityPage
@@ -33,16 +34,23 @@ describe("LearningActivityPage", () => {
     expect(screen.getByRole("heading", { name: /listen to the ending sound/i })).toBeInTheDocument();
     expect(onProgressChange).not.toHaveBeenCalled();
 
-    await user.click(screen.getByRole("button", { name: "hat" }));
+    for (let index = 0; index < correctChoices.length; index += 1) {
+      await user.click(screen.getByRole("button", { name: correctChoices[index] }));
 
-    expect(screen.getByRole("heading", { name: /cat and hat both end/i })).toBeInTheDocument();
+      if (index < correctChoices.length - 1) {
+        expect(onProgressChange).not.toHaveBeenCalled();
+        await user.click(screen.getByRole("button", { name: "Next round" }));
+      }
+    }
+
+    expect(screen.getByRole("heading", { name: /tree and bee rhyme/i })).toBeInTheDocument();
     expect(onProgressChange).toHaveBeenCalledTimes(1);
     expect(onProgressChange.mock.calls[0][0]).toMatchObject({
       activityCompletions: 1,
       completedToday: 1
     });
 
-    await user.click(screen.getByRole("button", { name: "hat" }));
+    await user.click(screen.getByRole("button", { name: "bee" }));
 
     expect(onProgressChange).toHaveBeenCalledTimes(1);
   });

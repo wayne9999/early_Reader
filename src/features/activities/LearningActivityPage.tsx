@@ -14,40 +14,61 @@ type LearningActivityPageProps = {
 
 export function LearningActivityPage({ activityId, progress, user, onProgressChange }: LearningActivityPageProps) {
   const activity = learningActivities.find((item) => item.id === activityId) ?? learningActivities[0];
+  const [roundIndex, setRoundIndex] = useState(0);
+  const [correctAnswers, setCorrectAnswers] = useState(0);
+  const [answeredCorrectly, setAnsweredCorrectly] = useState(false);
   const [completedActivities, setCompletedActivities] = useState<Set<LearningActivity["id"]>>(() => new Set());
   const [feedback, setFeedback] = useState("Pick the answer that sounds or makes sense best.");
+  const currentRound = activity.rounds[roundIndex] ?? activity.rounds[0];
   const isCompleted = completedActivities.has(activity.id);
+  const roundCount = activity.rounds.length;
 
   useEffect(() => {
-    setFeedback(
-      completedActivities.has(activity.id)
-        ? activity.successMessage
-        : "Pick the answer that sounds or makes sense best."
-    );
-  }, [activity.id, activity.successMessage, completedActivities]);
+    setRoundIndex(0);
+    setCorrectAnswers(0);
+    setAnsweredCorrectly(false);
+    setFeedback("Pick the answer that sounds or makes sense best.");
+  }, [activity.id]);
 
   function chooseAnswer(choice: string) {
-    if (isCompleted) {
+    if (isCompleted || answeredCorrectly) {
       return;
     }
 
-    const isCorrect = choice === activity.correctChoice;
+    const isCorrect = choice === currentRound.correctChoice;
 
     if (!isCorrect) {
-      setFeedback(activity.coachMessage);
-      speak(activity.coachMessage, { rate: 0.9, pitch: 1.14 });
+      setFeedback(currentRound.coachMessage);
+      speak(currentRound.coachMessage, { rate: 0.9, pitch: 1.14 });
+      return;
+    }
+
+    const nextCorrectAnswers = correctAnswers + 1;
+    setCorrectAnswers(nextCorrectAnswers);
+    setAnsweredCorrectly(true);
+    setFeedback(currentRound.successMessage);
+
+    if (roundIndex < roundCount - 1) {
+      speak(currentRound.successMessage, { rate: 0.92, pitch: 1.16 });
       return;
     }
 
     setCompletedActivities((current) => new Set(current).add(activity.id));
-    setFeedback(activity.successMessage);
     onProgressChange(recordActivityCompletion(progress));
     void recordLearningEvent(user, "activity_completed", activity.title, activity.skill, {
       activityId: activity.id,
-      target: activity.target,
-      correctChoice: activity.correctChoice
+      rounds: roundCount,
+      correctAnswers: nextCorrectAnswers,
+      target: currentRound.target,
+      correctChoice: currentRound.correctChoice
     });
-    celebrate(activity.successMessage);
+    celebrate(`You finished ${activity.title}. ${nextCorrectAnswers} of ${roundCount} rounds complete.`);
+  }
+
+  function goToNextRound() {
+    setRoundIndex((current) => Math.min(current + 1, roundCount - 1));
+    setAnsweredCorrectly(false);
+    setFeedback("Pick the answer that sounds or makes sense best.");
   }
 
   return (
@@ -57,27 +78,35 @@ export function LearningActivityPage({ activityId, progress, user, onProgressCha
           <p className="eyebrow">{activity.eyebrow}</p>
           <h2>{activity.title}</h2>
         </div>
-        <button className="secondary-button" type="button" onClick={() => speakSentence(activity.prompt)}>
+        <button className="secondary-button" type="button" onClick={() => speakSentence(currentRound.prompt)}>
           Hear prompt
         </button>
       </div>
 
       <section className={`activity-hero practice-panel activity-${activity.id}`}>
         <div>
-          <p className="eyebrow">Logged-in activity</p>
-          <h3>{activity.prompt}</h3>
+          <p className="eyebrow">Round {roundIndex + 1} of {roundCount}</p>
+          <h3>{currentRound.prompt}</h3>
           <p className="helper-text">{activity.intro}</p>
+          <div className="activity-round-meter" aria-label={`${roundIndex + 1} of ${roundCount} rounds`}>
+            {activity.rounds.map((round, index) => (
+              <span
+                className={index < roundIndex || (index === roundIndex && answeredCorrectly) ? "is-done" : ""}
+                key={`${round.prompt}-${index}`}
+              />
+            ))}
+          </div>
         </div>
-        <div className="activity-target" aria-label={`Target: ${activity.target}`}>
-          {activity.target}
+        <div className="activity-target" aria-label={`Target: ${currentRound.target}`}>
+          {currentRound.target}
         </div>
       </section>
 
       <section className="activity-choice-grid" aria-label={`${activity.title} choices`}>
-        {activity.choices.map((choice) => (
+        {currentRound.choices.map((choice) => (
           <button
-            className={`activity-choice${isCompleted && choice === activity.correctChoice ? " is-correct" : ""}`}
-            disabled={isCompleted}
+            className={`activity-choice${answeredCorrectly && choice === currentRound.correctChoice ? " is-correct" : ""}`}
+            disabled={isCompleted || answeredCorrectly}
             key={choice}
             type="button"
             onClick={() => chooseAnswer(choice)}
@@ -88,13 +117,20 @@ export function LearningActivityPage({ activityId, progress, user, onProgressCha
       </section>
 
       <article className="practice-panel activity-coach-panel">
-        <p className="eyebrow">{isCompleted ? "Activity complete" : "Teacher tip"}</p>
+        <p className="eyebrow">{isCompleted ? "Activity complete" : answeredCorrectly ? "Nice work" : "Teacher tip"}</p>
         <h3>{feedback}</h3>
         <p className="helper-text">
           {isCompleted
-            ? "Nice work. Choose another activity from the menu when you are ready."
-            : "Try the answer that matches the sound, meaning, or story clue."}
+            ? `Nice work. You completed ${correctAnswers} of ${roundCount} rounds. Choose another activity from the menu when you are ready.`
+            : answeredCorrectly
+              ? "Move to the next round when you are ready."
+              : "Try the answer that matches the sound, meaning, or story clue."}
         </p>
+        {!isCompleted && answeredCorrectly ? (
+          <button className="primary-button" type="button" onClick={goToNextRound}>
+            Next round
+          </button>
+        ) : null}
       </article>
     </>
   );

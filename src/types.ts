@@ -139,6 +139,10 @@ export type LearningActivity = {
   eyebrow: string;
   skill: SkillArea;
   intro: string;
+  rounds: LearningActivityRound[];
+};
+
+export type LearningActivityRound = {
   prompt: string;
   target: string;
   choices: string[];

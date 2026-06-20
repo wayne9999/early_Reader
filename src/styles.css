@@ -714,6 +714,26 @@ button {
   transform: rotate(2deg);
 }
 
+.activity-round-meter {
+  display: grid;
+  grid-template-columns: repeat(10, minmax(12px, 1fr));
+  gap: 6px;
+  max-width: 360px;
+  margin-top: 18px;
+}
+
+.activity-round-meter span {
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 2px solid rgba(47, 128, 237, 0.12);
+}
+
+.activity-round-meter span.is-done {
+  background: linear-gradient(90deg, var(--green), var(--gold));
+  border-color: rgba(255, 255, 255, 0.84);
+}
+
 .activity-choice-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(180px, 1fr));
