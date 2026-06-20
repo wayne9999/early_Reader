@@ -3,7 +3,8 @@ import type { SubscriptionTier } from "../types";
 export const billingConfig = {
   donationLink: import.meta.env.VITE_STRIPE_DONATION_LINK || "",
   familyPlusLink: import.meta.env.VITE_STRIPE_FAMILY_PLUS_LINK || "",
-  teacherProLink: import.meta.env.VITE_STRIPE_TEACHER_PRO_LINK || ""
+  teacherProLink: import.meta.env.VITE_STRIPE_TEACHER_PRO_LINK || "",
+  customerPortalLink: import.meta.env.VITE_STRIPE_CUSTOMER_PORTAL_LINK || ""
 };
 
 export const subscriptionTiers: SubscriptionTier[] = [

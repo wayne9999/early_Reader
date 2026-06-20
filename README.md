@@ -136,6 +136,7 @@ Current behavior:
 - When Firebase is configured and a Firebase-authenticated user is available, progress saves to `users/{userId}/learning/progress`.
 - Signed-in users are assigned one locked app role from the signup path they selected before authentication: `student` for Parent / Child, `teacher` for Teacher.
 - New student signups see a Family Plus subscribe-or-skip prompt. Skipping keeps the account on the free entitlement set.
+- Student accounts can open Stripe Customer Portal from Account to update payment details or cancel monthly billing.
 - Teacher certification is state-based in the United States. The app stores certification verification as `notSubmitted`, `pendingReview`, `verified`, or `rejected`; production verification should check the teacher's issuing state agency or a trusted background-check workflow.
 - Teacher lookup uses `teacherProfiles/{teacherId}` by email or teacher code.
 - Students can browse or search the limited `teacherDirectory` and review each teacher's bio, grade bands, specialties, load, and pay/load note before requesting.
@@ -150,13 +151,14 @@ Current behavior:
 
 ## Donations And Subscriptions
 
-The app uses Stripe Payment Links for donations and subscriptions so payment details are handled by Stripe-hosted checkout pages. For production, paid access should be granted by Stripe Checkout/Billing webhook events that update Firebase profile entitlements or custom claims; frontend-only entitlement changes are not sufficient for real paid access enforcement.
+The app uses Stripe Payment Links for donations and subscriptions so payment details are handled by Stripe-hosted checkout pages. Student cancellation should use Stripe Customer Portal so families can stop monthly billing, update cards, and view invoices. For production, paid access and cancellation should be granted or removed by Stripe Checkout/Billing webhook events that update Firebase profile entitlements or custom claims; frontend-only entitlement changes are not sufficient for real paid access enforcement.
 
 Required production values:
 
 - `VITE_STRIPE_DONATION_LINK`
 - `VITE_STRIPE_FAMILY_PLUS_LINK`
 - `VITE_STRIPE_TEACHER_PRO_LINK`
+- `VITE_STRIPE_CUSTOMER_PORTAL_LINK`
 
 Optional support value:
 

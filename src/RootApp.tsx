@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { RoleSetup } from "./features/account/RoleSetup";
+import { SubscriptionManagement } from "./features/account/SubscriptionManagement";
 import { SubscriptionPrompt } from "./features/account/SubscriptionPrompt";
 import { LearningActivityPage } from "./features/activities/LearningActivityPage";
 import { SignInPanel } from "./features/auth/SignInPanel";
@@ -415,7 +416,12 @@ export function RootApp() {
     }
 
     if (currentView === "account") {
-      return <SignInPanel redirectView={requestedAuthView} />;
+      return (
+        <>
+          <SignInPanel redirectView={requestedAuthView} />
+          {profile ? <SubscriptionManagement profile={profile} /> : null}
+        </>
+      );
     }
 
     return <ReadingPractice progress={progress} user={user} onProgressChange={handleProgressChange} />;
