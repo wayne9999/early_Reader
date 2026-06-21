@@ -64,6 +64,11 @@ jobs:
         working-directory: functions
         run: npm run check
 
+      - name: Build functions
+        if: ${{ inputs.target == 'functions' || inputs.target == 'all' }}
+        working-directory: functions
+        run: npm run build
+
       - name: Write functions runtime env
         if: ${{ inputs.target == 'functions' || inputs.target == 'all' }}
         working-directory: functions
