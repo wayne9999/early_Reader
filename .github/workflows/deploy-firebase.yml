@@ -93,4 +93,4 @@ jobs:
 
       - name: Deploy Functions
         if: ${{ inputs.target == 'functions' || inputs.target == 'all' }}
-        run: firebase deploy --only functions --project "$FIREBASE_PROJECT_ID" --non-interactive
+        run: firebase deploy --only functions --project "$FIREBASE_PROJECT_ID" --non-interactive --force
