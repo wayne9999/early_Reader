@@ -5,6 +5,7 @@ import { SubscriptionPrompt } from "./features/account/SubscriptionPrompt";
 import { LearningActivityPage } from "./features/activities/LearningActivityPage";
 import { SignInPanel } from "./features/auth/SignInPanel";
 import { useAuth } from "./features/auth/AuthProvider";
+import { LegalPage } from "./features/legal/LegalPage";
 import { MemoryGame } from "./features/memory/MemoryGame";
 import { ProgressDashboard } from "./features/progress/ProgressDashboard";
 import { ReadingPractice } from "./features/reading/ReadingPractice";
@@ -24,11 +25,12 @@ import {
   type AppRouteState
 } from "./services/appRoutes";
 import { billingConfig } from "./services/billingConfig";
-import { paidStudentActivitiesDescription, studentActivityAccess } from "./services/entitlementService";
+import { paidStudentActivitiesDescription, studentActivityAccess, teacherDashboardAccess } from "./services/entitlementService";
 import { defaultProgress, loadProgress, saveProgress } from "./services/progressRepository";
 import { clearSignupIntent, loadSignupIntent } from "./services/signupIntent";
+import { loadTrustedSubscription } from "./services/subscriptionRepository";
 import { loadUserProfile } from "./services/userProfileRepository";
-import type { AppUser, AppView, Progress, SignupPath, UserProfile, UserRole } from "./types";
+import type { AppUser, AppView, Progress, SignupPath, SubscriptionRecord, UserProfile, UserRole } from "./types";
 
 type NavItem = { id: AppView; label: string };
 type NavGroup = { title: string; items: NavItem[]; defaultOpen?: boolean };
@@ -41,6 +43,13 @@ const activityNavItems: NavItem[] = [
   { id: "sentenceBuilder", label: "Sentences" },
   { id: "storyOrder", label: "Story" },
   { id: "wordMeaning", label: "Words" }
+];
+
+const legalNavItems: NavItem[] = [
+  { id: "privacy", label: "Privacy" },
+  { id: "terms", label: "Terms" },
+  { id: "childrenPrivacy", label: "Children" },
+  { id: "refundPolicy", label: "Refunds" }
 ];
 
 const studentNavGroups: NavGroup[] = [
@@ -61,7 +70,8 @@ const studentNavGroups: NavGroup[] = [
       { id: "account", label: "Account" }
     ],
     defaultOpen: true
-  }
+  },
+  { title: "Legal", items: legalNavItems }
 ];
 
 const teacherNavGroups: NavGroup[] = [
@@ -75,7 +85,8 @@ const teacherNavGroups: NavGroup[] = [
       { id: "account", label: "Account" }
     ],
     defaultOpen: true
-  }
+  },
+  { title: "Legal", items: legalNavItems }
 ];
 
 const adminNavGroups: NavGroup[] = [
@@ -88,7 +99,8 @@ const adminNavGroups: NavGroup[] = [
       { id: "account", label: "Account" }
     ],
     defaultOpen: true
-  }
+  },
+  { title: "Legal", items: legalNavItems }
 ];
 
 const publicNavGroups: NavGroup[] = [
@@ -108,7 +120,8 @@ const publicNavGroups: NavGroup[] = [
       { id: "account", label: "Account" }
     ],
     defaultOpen: true
-  }
+  },
+  { title: "Legal", items: legalNavItems }
 ];
 
 const roleIndicatorMeta: Record<UserRole, { label: string; shortLabel: string; detail: string }> = {
@@ -172,10 +185,12 @@ export function RootApp() {
   const [routeState, setRouteState] = useState<AppRouteState>(() => parseAppRoute(window.location.hash));
   const [progress, setProgress] = useState<Progress>(defaultProgress);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [subscription, setSubscription] = useState<SubscriptionRecord | null>(null);
   const [pendingAuthView, setPendingAuthView] = useState<AppView | null>(() => loadPendingAuthView());
   const [signupIntent, setSignupIntent] = useState<SignupPath | null>(() => loadSignupIntent());
   const [isProfileLoading, setIsProfileLoading] = useState(true);
   const [isProgressLoading, setIsProgressLoading] = useState(true);
+  const [isSubscriptionLoading, setIsSubscriptionLoading] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showSubscriptionPrompt, setShowSubscriptionPrompt] = useState(false);
   const [postSubscriptionView, setPostSubscriptionView] = useState<AppView | null>(null);
@@ -269,6 +284,27 @@ export function RootApp() {
   }, [user]);
 
   useEffect(() => {
+    let isMounted = true;
+
+    setIsSubscriptionLoading(true);
+    loadTrustedSubscription(user, profile)
+      .then((loadedSubscription) => {
+        if (isMounted) {
+          setSubscription(loadedSubscription);
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsSubscriptionLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [profile, user]);
+
+  useEffect(() => {
     if (isAuthLoading || isProfileLoading) {
       return;
     }
@@ -306,7 +342,7 @@ export function RootApp() {
   }, [currentView, isAuthLoading, isProfileLoading, navigateToView, pendingAuthView, profile, requestedAuthView, user]);
 
   const view = useMemo(() => {
-    if (isAuthLoading || isProgressLoading || isProfileLoading) {
+    if (isAuthLoading || isProgressLoading || isProfileLoading || isSubscriptionLoading) {
       return (
         <article className="practice-panel">
           <p className="eyebrow">Loading</p>
@@ -393,7 +429,7 @@ export function RootApp() {
       currentView === "storyOrder" ||
       currentView === "wordMeaning"
     ) {
-      if (studentActivityAccess(profile, currentView) === "locked") {
+      if (studentActivityAccess(profile, currentView, subscription) === "locked") {
         return (
           <article className="practice-panel subscription-prompt">
             <p className="eyebrow">Family Plus activity</p>
@@ -437,7 +473,37 @@ export function RootApp() {
     }
 
     if (currentView === "teacher") {
-      return <TeacherDashboard progress={progress} user={user} />;
+      if (teacherDashboardAccess(profile, subscription) === "locked") {
+        return (
+          <article className="practice-panel subscription-prompt">
+            <p className="eyebrow">Teacher Pro required</p>
+            <h2>Upgrade to unlock classroom tools</h2>
+            <p className="helper-text">
+              Teacher Pro unlocks the classroom dashboard, assigned-student analysis, report exports,
+              intervention planning, and future AI-assisted recommendations.
+            </p>
+            <div className="subscription-actions">
+              <button
+                className="primary-button"
+                disabled={!billingConfig.teacherProLink}
+                type="button"
+                onClick={() => {
+                  if (billingConfig.teacherProLink) {
+                    window.open(billingConfig.teacherProLink, "_blank", "noopener,noreferrer");
+                  }
+                }}
+              >
+                Start Teacher Pro
+              </button>
+              <button className="secondary-button" type="button" onClick={() => navigateToView("support")}>
+                Billing help
+              </button>
+            </div>
+          </article>
+        );
+      }
+
+      return <TeacherDashboard progress={progress} user={user} profile={profile} />;
     }
 
     if (currentView === "findTeacher" && profile?.role === "student") {
@@ -452,11 +518,22 @@ export function RootApp() {
       return <SupportPage />;
     }
 
+    if (
+      currentView === "privacy" ||
+      currentView === "terms" ||
+      currentView === "childrenPrivacy" ||
+      currentView === "parentConsent" ||
+      currentView === "teacherTerms" ||
+      currentView === "refundPolicy"
+    ) {
+      return <LegalPage page={currentView} />;
+    }
+
     if (currentView === "account") {
       return (
         <>
           <SignInPanel redirectView={requestedAuthView} />
-          {profile ? <SubscriptionManagement profile={profile} /> : null}
+          {profile ? <SubscriptionManagement profile={profile} subscription={subscription} /> : null}
         </>
       );
     }
@@ -467,6 +544,7 @@ export function RootApp() {
     isAuthLoading,
     isProfileLoading,
     isProgressLoading,
+    isSubscriptionLoading,
     navigateToView,
     pendingAuthView,
     postSubscriptionView,
@@ -475,6 +553,7 @@ export function RootApp() {
     requestedAuthView,
     showSubscriptionPrompt,
     signupIntent,
+    subscription,
     user
   ]);
 
@@ -580,6 +659,16 @@ export function RootApp() {
         <section className="view-root" aria-live="polite">
           {view}
         </section>
+        <footer className="site-footer" aria-label="Legal and support links">
+          {legalNavItems.map((item) => (
+            <button key={item.id} type="button" onClick={() => navigateToView(item.id)}>
+              {item.label}
+            </button>
+          ))}
+          <button type="button" onClick={() => navigateToView("parentConsent")}>Parent consent</button>
+          <button type="button" onClick={() => navigateToView("teacherTerms")}>Teacher terms</button>
+          <button type="button" onClick={() => navigateToView("support")}>Support</button>
+        </footer>
       </main>
     </div>
   );

@@ -11,6 +11,12 @@ export type AppView =
   | "teacher"
   | "donate"
   | "support"
+  | "privacy"
+  | "terms"
+  | "childrenPrivacy"
+  | "parentConsent"
+  | "teacherTerms"
+  | "refundPolicy"
   | "account";
 
 export type UserRole = "student" | "teacher" | "admin";
@@ -20,6 +26,25 @@ export type SignupPath = "parentChild" | "teacher";
 export type SubscriptionTierId = "free" | "familyPlus" | "teacherPro";
 
 export type SubscriptionStatus = "free" | "checkoutStarted" | "active" | "pastDue" | "canceled";
+
+export type SubscriptionSource = "demo" | "stripe" | "adminGrant";
+
+export type SubscriptionRecord = {
+  userId: string;
+  tier: SubscriptionTierId;
+  status: SubscriptionStatus;
+  source: SubscriptionSource;
+  currentPeriodEnd?: string | number | null;
+  cancelAtPeriodEnd?: boolean;
+  stripeCustomerId?: string | null;
+  stripeSubscriptionId?: string | null;
+  lastStripeEventId?: string | null;
+  lastPaymentError?: string | null;
+  createdAt?: unknown;
+  updatedAt?: unknown;
+  createdBy?: string;
+  updatedBy?: string;
+};
 
 export type PhonicsPrompt = {
   title: string;
@@ -132,6 +157,24 @@ export type TeacherStudentLink = {
   latestProgressSnapshot: Progress;
   requestedAt?: unknown;
   updatedAt?: unknown;
+  createdBy?: string;
+  updatedBy?: string;
+  archivedAt?: unknown;
+};
+
+export type TeacherInvite = {
+  id: string;
+  teacherId: string;
+  teacherName: string;
+  code: string;
+  status: "active" | "revoked" | "expired" | "accepted";
+  autoApprove: boolean;
+  expiresAt: string;
+  acceptedBy?: string | null;
+  createdAt?: unknown;
+  updatedAt?: unknown;
+  createdBy?: string;
+  updatedBy?: string;
 };
 
 export type TeacherLoadStatus = "open" | "nearlyFull" | "full";

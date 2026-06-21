@@ -55,6 +55,18 @@ const supportTopics = [
   {
     title: "Billing and packages",
     text: "Review family and teacher plans, donation checkout, and what is included before upgrading."
+  },
+  {
+    title: "Cancel or update billing",
+    text: "Use Account > Manage monthly billing to open Stripe Customer Portal, update cards, view invoices, or cancel monthly billing."
+  },
+  {
+    title: "Parent data deletion",
+    text: "Parents can request deletion of account, child profile, assignment, or learning history data through support."
+  },
+  {
+    title: "Teacher verification help",
+    text: "Teachers can prepare state/license information for admin review before being marked verified."
   }
 ];
 
@@ -62,7 +74,8 @@ const quickFixes = [
   "Confirm whether you are signed in as a guest, student, teacher, or admin.",
   "Open Account if the wrong role appears, then finish the parent or teacher setup flow.",
   "For missing student history, have the student sign in and request the teacher again from Find Teacher.",
-  "For package or donation questions, use the Stripe checkout button tied to the plan you want."
+  "For failed payment or cancellation questions, open Account and choose Manage monthly billing.",
+  "For data deletion, email support from the parent account email and include the request type."
 ];
 
 const faqs = [
@@ -77,6 +90,14 @@ const faqs = [
   {
     question: "Where do donations and subscriptions happen?",
     answer: "Checkout opens on Stripe-hosted pages so payment details stay with Stripe instead of this app."
+  },
+  {
+    question: "How do I cancel a monthly subscription?",
+    answer: "Open Account, choose Manage monthly billing, and cancel through Stripe Customer Portal. Free activities remain available."
+  },
+  {
+    question: "Is ReadNest a diagnosis tool?",
+    answer: "No. ReadNest is educational practice support, not a medical, clinical, or diagnostic service."
   }
 ];
 

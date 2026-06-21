@@ -14,6 +14,10 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
     }
 
+    function isAdmin() {
+      return isSignedIn() && userRole() == "admin";
+    }
+
     function isTeacherAssignedTo(studentId) {
       return isSignedIn()
         && exists(/databases/$(database)/documents/teacherStudentLinks/$(request.auth.uid + "_" + studentId))
@@ -50,6 +54,19 @@ service cloud.firestore {
         allow read: if ownsUserDocument(userId) || isTeacherAssignedTo(userId);
         allow update, delete: if false;
       }
+    }
+
+    match /subscriptions/{userId} {
+      allow read: if ownsUserDocument(userId) || isAdmin();
+      allow create, update, delete: if false;
+    }
+
+    match /childProfiles/{childId} {
+      allow read: if isSignedIn()
+        && resource.data.parentUid == request.auth.uid;
+      allow create, update: if isSignedIn()
+        && request.resource.data.parentUid == request.auth.uid;
+      allow delete: if false;
     }
 
     match /teacherProfiles/{teacherId} {
@@ -96,6 +113,58 @@ service cloud.firestore {
           )
         );
       allow delete: if false;
+    }
+
+    match /teacherInvites/{inviteId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn()
+        && request.query.limit <= 20;
+      allow create: if isSignedIn()
+        && userRole() == "teacher"
+        && request.resource.data.teacherId == request.auth.uid
+        && request.resource.data.status == "active"
+        && request.resource.data.code is string
+        && request.resource.data.autoApprove is bool;
+      allow update: if isSignedIn()
+        && (
+          (
+            resource.data.teacherId == request.auth.uid
+            && request.resource.data.teacherId == resource.data.teacherId
+            && request.resource.data.status in ["active", "revoked", "expired"]
+          )
+          || (
+            userRole() == "student"
+            && resource.data.status == "active"
+            && request.resource.data.teacherId == resource.data.teacherId
+            && request.resource.data.status == "accepted"
+            && request.resource.data.acceptedBy == request.auth.uid
+          )
+        );
+      allow delete: if false;
+    }
+
+    match /analyticsEvents/{eventId} {
+      allow create: if isSignedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.eventName is string
+        && request.resource.data.createdAt != null;
+      allow read, update, delete: if false;
+    }
+
+    match /supportCases/{caseId} {
+      allow create: if isSignedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.status == "open";
+      allow read: if isSignedIn()
+        && (resource.data.userId == request.auth.uid || isAdmin());
+      allow update: if isAdmin();
+      allow delete: if false;
+    }
+
+    match /aiRecommendationRequests/{requestId} {
+      allow read: if isSignedIn()
+        && (resource.data.requestedBy == request.auth.uid || isAdmin());
+      allow create, update, delete: if false;
     }
 
     match /classrooms/{classroomId} {

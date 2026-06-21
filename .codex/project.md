@@ -26,6 +26,7 @@ Branch:     main
 - Firebase Auth and Firestore-ready data layer
 - Auth0-ready fallback/social login boundary
 - Stripe Payment Links for donations/subscriptions
+- Firebase Functions scaffold for Stripe webhooks and billing portal sessions
 - GitHub Pages deployment through GitHub Actions
 
 ## Key Commands
@@ -56,6 +57,12 @@ VITE_FIREBASE_APP_ID=
 VITE_STRIPE_DONATION_LINK=
 VITE_STRIPE_FAMILY_PLUS_LINK=
 VITE_STRIPE_TEACHER_PRO_LINK=
+VITE_STRIPE_CUSTOMER_PORTAL_LINK=
+
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
+STRIPE_FAMILY_PLUS_PRICE_ID=
+STRIPE_TEACHER_PRO_PRICE_ID=
 ```
 
 ## Current Product Areas
@@ -76,10 +83,12 @@ VITE_STRIPE_TEACHER_PRO_LINK=
 - Users choose either `student` or `teacher` after sign-in. The frontend locks that profile after creation.
 - Progress and learning events fall back to browser `localStorage` until Firebase and a Firebase-authenticated user are available.
 - Firestore paths in active use: `users/{uid}`, `users/{uid}/learning/progress`, `users/{uid}/learningEvents/{eventId}`, `teacherProfiles/{teacherId}`, and `teacherStudentLinks/{teacherId_studentId}`.
+- Trusted paid access belongs in `subscriptions/{uid}` and is written by Stripe webhook/backend code, not by the frontend.
 - Students search teacher profiles by email or teacher code, then request assignment. Teachers approve requests in their dashboard.
+- Teachers can create invite codes through `teacherInvites`.
 - Auth0 UI exists, but production Firestore writes require Firebase Auth or an Auth0-to-Firebase custom-token bridge.
 - AI analysis is currently rule-based in the browser. Production AI should run only from a backend or Cloud Function.
-- Stripe Payment Links are configured, but paid subscription enforcement still needs a backend webhook and trusted entitlement storage.
+- Firebase Functions scaffold includes Stripe webhook, Customer Portal session creation, and an AI recommendation request placeholder.
 
 ## Deployment
 
@@ -100,9 +109,9 @@ VITE_BASE_PATH=/early_Reader/
 ## Best Next Steps
 
 1. Deploy updated Firestore rules after every rules change.
-2. Add Stripe webhook handling for Family Plus and Teacher Pro entitlements.
-3. Add teacher-created student invitations in addition to student-initiated requests.
-4. Add a backend AI endpoint for teacher analysis.
+2. Deploy and test Stripe webhook handling for Family Plus and Teacher Pro entitlements.
+3. Complete student invite-code acceptance and admin invite revocation.
+4. Connect backend AI recommendation worker after consent/legal review.
 5. Replace remaining demo teacher fallback data with live Firestore records.
 6. Add route-level navigation and possibly prerendering/SSR for better SEO at scale.
 7. Add automated tests for reading, memory, progress, support, role, assignment, and teacher flows.

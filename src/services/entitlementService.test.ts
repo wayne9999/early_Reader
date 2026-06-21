@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { studentActivityAccess } from "./entitlementService";
-import type { UserProfile } from "../types";
+import { studentActivityAccess, teacherDashboardAccess } from "./entitlementService";
+import type { SubscriptionRecord, UserProfile } from "../types";
 
 const freeStudent: UserProfile = {
   uid: "student-1",
@@ -10,6 +10,13 @@ const freeStudent: UserProfile = {
   picture: null,
   subscriptionTier: "free",
   subscriptionStatus: "free"
+};
+
+const activeFamilyPlus: SubscriptionRecord = {
+  userId: "student-1",
+  tier: "familyPlus",
+  status: "active",
+  source: "stripe"
 };
 
 describe("entitlementService", () => {
@@ -23,16 +30,7 @@ describe("entitlementService", () => {
     expect(studentActivityAccess(freeStudent, "storyOrder")).toBe("locked");
     expect(studentActivityAccess(freeStudent, "wordMeaning")).toBe("locked");
 
-    expect(
-      studentActivityAccess(
-        {
-          ...freeStudent,
-          subscriptionTier: "familyPlus",
-          subscriptionStatus: "active"
-        },
-        "wordMeaning"
-      )
-    ).toBe("allowed");
+    expect(studentActivityAccess(freeStudent, "wordMeaning", activeFamilyPlus)).toBe("allowed");
   });
 
   it("lets teachers review all activities", () => {
@@ -47,6 +45,26 @@ describe("entitlementService", () => {
         },
         "storyOrder"
       )
+    ).toBe("allowed");
+  });
+
+  it("locks teacher dashboard unless Teacher Pro is trusted active", () => {
+    const teacher: UserProfile = {
+      uid: "teacher-1",
+      role: "teacher",
+      displayName: "Teacher",
+      email: "teacher@example.com",
+      picture: null
+    };
+
+    expect(teacherDashboardAccess(teacher, { userId: "teacher-1", tier: "free", status: "free", source: "stripe" })).toBe("locked");
+    expect(
+      teacherDashboardAccess(teacher, {
+        userId: "teacher-1",
+        tier: "teacherPro",
+        status: "active",
+        source: "stripe"
+      })
     ).toBe("allowed");
   });
 });

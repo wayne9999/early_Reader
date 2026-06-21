@@ -4,12 +4,15 @@ import { analyzeClassroom, analyzeStudent } from "../../services/learningAnalysi
 import { loadTeacherAssignments, updateTeacherAssignmentStatus } from "../../services/assignmentRepository";
 import { loadLearningEvents } from "../../services/learningEventRepository";
 import { recentNeeds, summarizeByArea, summarizeEvents } from "../../services/learningEventSummary";
+import { trackProductEvent } from "../../services/productAnalytics";
 import { downloadStudentReportCard } from "../../services/reportCardService";
-import type { AppUser, LearningEvent, Progress, SkillInsight, StudentSummary, TeacherStudentLink } from "../../types";
+import { createTeacherInvite, loadTeacherInvites } from "../../services/teacherInviteRepository";
+import type { AppUser, LearningEvent, Progress, SkillInsight, StudentSummary, TeacherInvite, TeacherStudentLink, UserProfile } from "../../types";
 
 type TeacherDashboardProps = {
   progress: Progress;
   user: AppUser | null;
+  profile: UserProfile | null;
 };
 
 function scoreLabel(insight: SkillInsight) {
@@ -24,10 +27,12 @@ function scoreLabel(insight: SkillInsight) {
   return "Needs support";
 }
 
-export function TeacherDashboard({ progress, user }: TeacherDashboardProps) {
+export function TeacherDashboard({ progress, user, profile }: TeacherDashboardProps) {
   const [assignments, setAssignments] = useState<TeacherStudentLink[]>([]);
+  const [invites, setInvites] = useState<TeacherInvite[]>([]);
   const [studentHistories, setStudentHistories] = useState<Record<string, LearningEvent[]>>({});
   const [isLoadingRoster, setIsLoadingRoster] = useState(true);
+  const [isCreatingInvite, setIsCreatingInvite] = useState(false);
   const demoStudents = useMemo(() => getClassroomStudents(progress, user), [progress, user]);
   const assignedStudents = useMemo<StudentSummary[]>(
     () =>
@@ -93,6 +98,20 @@ export function TeacherDashboard({ progress, user }: TeacherDashboardProps) {
   }, [user]);
 
   useEffect(() => {
+    let isMounted = true;
+
+    loadTeacherInvites(user).then((loadedInvites) => {
+      if (isMounted) {
+        setInvites(loadedInvites);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user]);
+
+  useEffect(() => {
     if (students.length && !students.some((student) => student.id === selectedStudentId)) {
       setSelectedStudentId(students[0].id);
     }
@@ -109,6 +128,19 @@ export function TeacherDashboard({ progress, user }: TeacherDashboardProps) {
     }
 
     downloadStudentReportCard(selectedStudent, selectedAnalysis, user?.name);
+    void trackProductEvent(user, "report_downloaded", { studentId: selectedStudent.id });
+  }
+
+  async function createInvite() {
+    if (!user || !profile) {
+      return;
+    }
+
+    setIsCreatingInvite(true);
+    const invite = await createTeacherInvite(user, profile);
+    setInvites((current) => [invite, ...current].slice(0, 10));
+    void trackProductEvent(user, "teacher_invite_sent", { autoApprove: invite.autoApprove });
+    setIsCreatingInvite(false);
   }
 
   return (
@@ -134,6 +166,29 @@ export function TeacherDashboard({ progress, user }: TeacherDashboardProps) {
           {!assignments.length && !isLoadingRoster ? (
             <p className="helper-text">Showing demo data until students request this teacher account.</p>
           ) : null}
+        </article>
+
+        <article className="practice-panel">
+          <p className="eyebrow">Invite families</p>
+          <h3>Create a student invite code</h3>
+          <p className="helper-text">
+            Share a code with a parent. Invites expire after 30 days and can be revoked from the backend/admin workflow.
+          </p>
+          <button className="primary-button" type="button" disabled={isCreatingInvite || !user || !profile} onClick={() => void createInvite()}>
+            Create invite
+          </button>
+          {invites.length ? (
+            <ul className="history-list">
+              {invites.slice(0, 3).map((invite) => (
+                <li key={invite.id}>
+                  <strong>{invite.code}</strong>
+                  <span>{invite.status} - expires {typeof invite.expiresAt === "string" ? invite.expiresAt.slice(0, 10) : "soon"}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="helper-text">No invite codes yet.</p>
+          )}
         </article>
 
         <article className="practice-panel">

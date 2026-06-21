@@ -33,8 +33,14 @@ jobs:
       - name: TypeScript check
         run: npm run check
 
+      - name: Content validation
+        run: npm run validate:content
+
       - name: Unit and integration tests
         run: npm run test
+
+      - name: Dependency audit
+        run: npm audit --audit-level=moderate
 
       - name: Coverage report
         run: npm run test:coverage

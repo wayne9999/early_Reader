@@ -1,24 +1,52 @@
 import { billingConfig, isCustomerPortalConfigured, isTemporaryStripePortalSession } from "../../services/billingConfig";
 import { freeStudentActivitiesDescription, paidStudentActivitiesDescription } from "../../services/entitlementService";
-import type { UserProfile } from "../../types";
+import type { SubscriptionRecord, UserProfile } from "../../types";
 
 type SubscriptionManagementProps = {
   profile: UserProfile;
+  subscription: SubscriptionRecord | null;
 };
 
-function subscriptionLabel(profile: UserProfile) {
-  if (profile.subscriptionTier === "familyPlus" && profile.subscriptionStatus === "active") {
+function subscriptionLabel(profile: UserProfile, subscription: SubscriptionRecord | null) {
+  const tier = subscription?.tier ?? profile.subscriptionTier;
+  const status = subscription?.status ?? profile.subscriptionStatus;
+
+  if (tier === "familyPlus" && status === "active") {
     return "Family Plus active";
   }
 
-  if (profile.subscriptionStatus === "checkoutStarted") {
+  if (status === "pastDue") {
+    return "Payment needs attention";
+  }
+
+  if (status === "canceled") {
+    return "Subscription canceled";
+  }
+
+  if (status === "checkoutStarted") {
     return "Checkout started";
   }
 
   return "Free plan";
 }
 
-export function SubscriptionManagement({ profile }: SubscriptionManagementProps) {
+function subscriptionHelpText(subscription: SubscriptionRecord | null) {
+  if (subscription?.status === "pastDue") {
+    return "Your last payment did not complete. Use billing management to update the payment method and restore premium access.";
+  }
+
+  if (subscription?.status === "canceled") {
+    return "Monthly billing is canceled. Free activities remain available, and premium activities can be reactivated from the support page.";
+  }
+
+  if (subscription?.source === "demo") {
+    return "Production paid access is confirmed from the secure subscriptions collection after Stripe webhooks run.";
+  }
+
+  return "Stripe Customer Portal lets families update cards, view invoices, and cancel monthly billing.";
+}
+
+export function SubscriptionManagement({ profile, subscription }: SubscriptionManagementProps) {
   const isStudent = profile.role === "student";
   const hasUsablePortalLink = isCustomerPortalConfigured();
   const hasTemporaryPortalSession = isTemporaryStripePortalSession(billingConfig.customerPortalLink);
@@ -33,8 +61,9 @@ export function SubscriptionManagement({ profile }: SubscriptionManagementProps)
         <p className="eyebrow">Subscription</p>
         <h2>Manage monthly billing</h2>
         <p className="helper-text">
-          Current access: <strong>{subscriptionLabel(profile)}</strong>
+          Current access: <strong>{subscriptionLabel(profile, subscription)}</strong>
         </p>
+        <p className="helper-text">{subscriptionHelpText(subscription)}</p>
       </div>
 
       <div className="subscription-compare-grid">

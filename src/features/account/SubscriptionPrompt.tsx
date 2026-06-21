@@ -4,6 +4,7 @@ import {
   paidStudentActivitiesDescription
 } from "../../services/entitlementService";
 import { updateUserProfile } from "../../services/userProfileRepository";
+import { trackProductEvent } from "../../services/productAnalytics";
 import type { AppUser, UserProfile } from "../../types";
 
 type SubscriptionPromptProps = {
@@ -21,6 +22,7 @@ export function SubscriptionPrompt({ user, profile, onProfileUpdated, onContinue
     });
 
     onProfileUpdated(nextProfile);
+    void trackProductEvent(user, "checkout_clicked", { tier: "familyPlus" });
 
     if (billingConfig.familyPlusLink) {
       window.open(billingConfig.familyPlusLink, "_blank", "noopener,noreferrer");

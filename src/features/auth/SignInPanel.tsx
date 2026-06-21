@@ -4,10 +4,10 @@ import { labelFromSignupPath, saveSignupIntent } from "../../services/signupInte
 import type { AppView, SignupPath, SocialProvider } from "../../types";
 import { useAuth } from "./AuthProvider";
 
-const providers: Array<{ id: SocialProvider; label: string; className: string }> = [
-  { id: "google", label: "Continue with Google", className: "google-button" },
-  { id: "facebook", label: "Continue with Facebook", className: "facebook-button" },
-  { id: "instagram", label: "Continue with Instagram", className: "instagram-button" }
+const providers: Array<{ id: SocialProvider; label: string; className: string; productionReady: boolean }> = [
+  { id: "google", label: "Continue with Google", className: "google-button", productionReady: true },
+  { id: "facebook", label: "Continue with Facebook", className: "facebook-button", productionReady: true },
+  { id: "instagram", label: "Instagram sign-in coming later", className: "instagram-button", productionReady: false }
 ];
 
 type SignInPanelProps = {
@@ -177,7 +177,7 @@ export function SignInPanel({ redirectView = null }: SignInPanelProps) {
               {providers.map((provider) => (
                 <button
                   className={`social-button ${provider.className}`}
-                  disabled={isLoading}
+                  disabled={isLoading || (mode === "firebase" && !provider.productionReady)}
                   key={provider.id}
                   type="button"
                   onClick={() => void signInForPath(provider.id)}

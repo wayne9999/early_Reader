@@ -32,4 +32,15 @@ describe("firestore privacy rules", () => {
     expect(rules).toContain("function isClassroomMember(classroomId)");
     expect(rules).toContain("userRole() == \"admin\" || isClassroomMember(classroomId)");
   });
+
+  it("keeps subscription authority backend-only", () => {
+    expect(rules).toContain("match /subscriptions/{userId}");
+    expect(rules).toContain("allow create, update, delete: if false;");
+  });
+
+  it("supports teacher invite codes without allowing client deletes", () => {
+    expect(rules).toContain("match /teacherInvites/{inviteId}");
+    expect(rules).toContain("request.resource.data.teacherId == request.auth.uid");
+    expect(rules).toContain("allow delete: if false;");
+  });
 });

@@ -20,6 +20,12 @@ export const routePathByView: Record<AppView, string> = {
   teacher: "teacher",
   donate: "donate",
   support: "support",
+  privacy: "privacy",
+  terms: "terms",
+  childrenPrivacy: "children-privacy",
+  parentConsent: "parent-consent",
+  teacherTerms: "teacher-terms",
+  refundPolicy: "refund-policy",
   account: "account"
 };
 
@@ -27,7 +33,19 @@ const viewByRoutePath = Object.fromEntries(
   Object.entries(routePathByView).map(([view, path]) => [path, view])
 ) as Record<string, AppView>;
 
-const guestViews = new Set<AppView>(["reading", "memory", "donate", "support", "account"]);
+const guestViews = new Set<AppView>([
+  "reading",
+  "memory",
+  "donate",
+  "support",
+  "privacy",
+  "terms",
+  "childrenPrivacy",
+  "parentConsent",
+  "teacherTerms",
+  "refundPolicy",
+  "account"
+]);
 const pendingAuthRouteKey = "readnest-pending-auth-route-v1";
 
 const viewsByRole: Record<UserRole, Set<AppView>> = {
@@ -43,6 +61,12 @@ const viewsByRole: Record<UserRole, Set<AppView>> = {
     "wordMeaning",
     "donate",
     "support",
+    "privacy",
+    "terms",
+    "childrenPrivacy",
+    "parentConsent",
+    "teacherTerms",
+    "refundPolicy",
     "account"
   ]),
   teacher: new Set([
@@ -56,6 +80,12 @@ const viewsByRole: Record<UserRole, Set<AppView>> = {
     "wordMeaning",
     "donate",
     "support",
+    "privacy",
+    "terms",
+    "childrenPrivacy",
+    "parentConsent",
+    "teacherTerms",
+    "refundPolicy",
     "account"
   ]),
   admin: new Set([
@@ -69,6 +99,12 @@ const viewsByRole: Record<UserRole, Set<AppView>> = {
     "wordMeaning",
     "donate",
     "support",
+    "privacy",
+    "terms",
+    "childrenPrivacy",
+    "parentConsent",
+    "teacherTerms",
+    "refundPolicy",
     "account"
   ])
 };

@@ -35,6 +35,7 @@ describe("appRoutes", () => {
   it("parses shareable hash routes and account return targets", () => {
     expect(parseAppRoute("#/donate")).toEqual({ view: "donate", nextView: null });
     expect(parseAppRoute("#/find-teacher")).toEqual({ view: "findTeacher", nextView: null });
+    expect(parseAppRoute("#/children-privacy")).toEqual({ view: "childrenPrivacy", nextView: null });
     expect(parseAppRoute("#/sentence-builder")).toEqual({ view: "sentenceBuilder", nextView: null });
     expect(parseAppRoute("#/account?next=teacher")).toEqual({ view: "account", nextView: "teacher" });
     expect(parseAppRoute("")).toEqual({ view: "reading", nextView: null });
@@ -42,12 +43,14 @@ describe("appRoutes", () => {
 
   it("builds hash routes that work on static hosting", () => {
     expect(hashForView("support")).toBe("#/support");
+    expect(hashForView("refundPolicy")).toBe("#/refund-policy");
     expect(hashForView("soundSort")).toBe("#/sound-sort");
     expect(hashForView("account", "progress")).toBe("#/account?next=progress");
   });
 
   it("identifies protected and role-specific pages", () => {
     expect(requiresAuthentication("reading")).toBe(false);
+    expect(requiresAuthentication("privacy")).toBe(false);
     expect(requiresAuthentication("teacher")).toBe(true);
     expect(requiresAuthentication("rhymes")).toBe(true);
     expect(canAccessView(studentProfile, "progress")).toBe(true);

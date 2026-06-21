@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { learningActivities } from "../../data/content";
 import { recordLearningEvent } from "../../services/learningEventRepository";
+import { trackProductEvent } from "../../services/productAnalytics";
 import { recordActivityCompletion } from "../../services/progressRepository";
 import { celebrate, speak, speakSentence } from "../../shared/speech";
 import type { AppUser, LearningActivity, Progress } from "../../types";
@@ -70,6 +71,11 @@ export function LearningActivityPage({ activityId, progress, user, onProgressCha
       correctAnswers: nextCorrectAnswers,
       target: currentRound.target,
       correctChoice: currentRound.correctChoice
+    });
+    void trackProductEvent(user, "activity_completed", {
+      activityId: activity.id,
+      rounds: roundCount,
+      correctAnswers: nextCorrectAnswers
     });
     celebrate(`You finished ${activity.title}. ${nextCorrectAnswers} of ${roundCount} rounds complete.`);
   }

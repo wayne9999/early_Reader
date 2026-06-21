@@ -18,7 +18,11 @@ For Codex continuity and project handoff notes, see `.codex/project.md` and `PRO
 - Downloadable teacher report cards for assigned students with quarter and annual goal comparisons for parent sharing.
 - Student teacher selection with teacher bios, grade fit, specialties, visible workload, and request approval.
 - Donation and subscription support page using Stripe Payment Links.
-- Free vs paid student activity access: free students get Reading, Memory, Rhymes, Sounds, and Sentences; Family Plus is the paid path for Story Steps, Word Garden, and future premium packs.
+- Trusted subscription architecture using `subscriptions/{userId}` as the production paid-access source of truth.
+- Free vs paid student activity access: free students get Reading, Memory, Rhymes, Sounds, and Sentences; Family Plus is the paid path for Story Steps, Word Garden, printable plans, and future premium packs.
+- Teacher Pro gating for classroom dashboard, student analysis, reports, intervention planning, and future AI recommendations.
+- Teacher-created invite-code scaffold for families.
+- Legal/support pages for privacy, terms, children's privacy, parent consent, teacher terms, refunds, billing help, and data deletion requests.
 - Firebase Auth account page with Google and Facebook support, plus an Instagram custom-provider placeholder.
 - Firebase Firestore profile, assignment, event, and progress repositories with local storage fallback for development.
 - Shareable app URLs for each main page, including protected-page login redirects.
@@ -46,6 +50,7 @@ npm run test:coverage
 npm run test:e2e
 npm run build
 npm audit --audit-level=moderate
+npm run validate:content
 ```
 
 The project uses Node 24.17+ so local development, Vitest, jsdom, Playwright, Firebase tooling, and GitHub Actions stay on the same LTS runtime.
@@ -111,13 +116,18 @@ src/
   features/progress/               Caregiver-facing progress view
   features/student/                Student teacher-search and assignment request flow
   features/support/                Donation and subscription page
+  features/legal/                  Privacy, terms, children privacy, consent, refunds
   features/teacher/                Teacher insights and assigned-student dashboard
+  functions/                       Firebase Functions backend for Stripe and AI placeholders
   services/firebase.ts             Firebase runtime configuration
   services/appRoutes.ts            Shareable hash routes and role-aware access rules
   services/assignmentRepository.ts Teacher-student assignment persistence
   services/classroomRepository.ts  Classroom roster data boundary
   services/learningEventRepository.ts Student interaction event history
   services/learningAnalysisService.ts Rule-based analysis and AI handoff boundary
+  services/productAnalytics.ts     Privacy-conscious product event tracking
+  services/subscriptionRepository.ts Trusted subscription state reader
+  services/teacherInviteRepository.ts Teacher invite-code persistence
   services/progressRepository.ts   Firestore/local progress persistence
   services/userProfileRepository.ts Student/teacher profile persistence
   shared/speech.ts                 Read-aloud adapter
@@ -147,12 +157,13 @@ Current behavior:
 - Student dashboard summarizes their own progress, recent activity, practiced skill areas, accuracy, and a next practice suggestion.
 - Active assigned teachers can read assigned student event history through Firestore rules and see richer evaluation data: interactions, accuracy, review moments, practiced areas, reading, memory, and logged-in activity completions.
 - Teachers can download a concise HTML report card for each active assigned student. The report is generated in-browser from the teacher-visible data and escapes report text before writing the file.
+- Production paid access reads `subscriptions/{userId}`. Firestore rules prevent client writes to subscription authority.
 - Teacher compensation should be calculated on trusted backend data from active assignments before real payouts are made.
-- Production role and paid-entitlement enforcement should move to trusted backend logic or Firebase custom claims before handling real classrooms at scale.
+- Firebase Functions scaffold in `functions/` handles Stripe webhooks, billing portal sessions, and future AI recommendation requests; it still must be deployed and tested before paid launch.
 
 ## Donations And Subscriptions
 
-The app uses Stripe Payment Links for donations and subscriptions so payment details are handled by Stripe-hosted checkout pages. Student cancellation should use Stripe Customer Portal so families can stop monthly billing, update cards, and view invoices. `VITE_STRIPE_CUSTOMER_PORTAL_LINK` must be a durable Stripe portal login link or an app backend endpoint that creates a fresh portal session; do not store a short-lived `billing.stripe.com/p/session/...` URL because Stripe portal sessions expire. For production, paid access and cancellation should be granted or removed by Stripe Checkout/Billing webhook events that update Firebase profile entitlements or custom claims; frontend-only entitlement changes are not sufficient for real paid access enforcement.
+The app uses Stripe Payment Links for donations and subscriptions so payment details are handled by Stripe-hosted checkout pages. Student cancellation should use Stripe Customer Portal so families can stop monthly billing, update cards, and view invoices. `VITE_STRIPE_CUSTOMER_PORTAL_LINK` must be a durable Stripe portal login link or an app backend endpoint that creates a fresh portal session; do not store a short-lived `billing.stripe.com/p/session/...` URL because Stripe portal sessions expire. Production paid access and cancellation are designed to be granted or removed by Stripe Checkout/Billing webhook events that update `subscriptions/{userId}` and Firebase custom claims; frontend-only entitlement changes are not sufficient for real paid access enforcement.
 
 Required production values:
 
@@ -160,6 +171,16 @@ Required production values:
 - `VITE_STRIPE_FAMILY_PLUS_LINK`
 - `VITE_STRIPE_TEACHER_PRO_LINK`
 - `VITE_STRIPE_CUSTOMER_PORTAL_LINK`: durable Stripe portal login link or backend billing endpoint, not a temporary portal session URL
+
+Backend-only production values are documented in `docs/production-env.md` and `docs/stripe-setup.md`.
+
+## Launch Docs
+
+- `docs/go-live-readiness.md`
+- `docs/production-env.md`
+- `docs/stripe-setup.md`
+- `docs/deployment.md`
+- `docs/firebase-setup.md`
 
 Optional support value:
 
@@ -182,10 +203,11 @@ Suggested subscriptions:
 
 ### Next Milestone
 
-- Add child profiles.
+- Add full multi-child parent profile UI.
+- Deploy and test Firebase Functions for Stripe webhooks and billing portal sessions.
 - Finish Firebase Auth provider setup in Firebase Console.
 - Add Instagram through a custom provider or Auth0 bridge if that remains a requirement.
-- Add teacher-created student invitations and Stripe webhook entitlement checks for Teacher Pro.
+- Complete invite acceptance/revocation UI.
 - Add backend payout reporting for teachers based on active assigned students and approved pay rules.
 - Replace remaining demo classroom fallback data with fully live Firestore enrollment data.
 - Add backend AI analysis endpoint for evidence-based teacher recommendations.

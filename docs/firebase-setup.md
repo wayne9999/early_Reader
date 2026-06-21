@@ -3,7 +3,7 @@
 The app is now structured for:
 
 - Firebase Authentication for Google and Facebook sign-in.
-- Firebase Firestore for user profile, role, progress, event history, and teacher assignment storage.
+- Firebase Firestore for user profile, role, subscription authority, progress, event history, invites, and teacher assignment storage.
 - Auth0/custom-provider path for Instagram if that remains a product requirement.
 - Local storage fallback when Firebase/Auth0 environment values are missing.
 
@@ -27,6 +27,21 @@ users/{userId}
   subscriptionPromptSkippedAt
   createdAt
   updatedAt
+
+subscriptions/{userId}
+  userId
+  tier
+  status
+  source
+  currentPeriodEnd
+  cancelAtPeriodEnd
+  stripeCustomerId
+  stripeSubscriptionId
+  lastStripeEventId
+  lastPaymentError
+  createdAt
+  updatedAt
+  updatedBy
 
 users/{userId}/learning/progress
   knownWords
@@ -92,6 +107,33 @@ teacherStudentLinks/{teacherId_studentId}
   status
   latestProgressSnapshot
   requestedAt
+  updatedAt
+
+teacherInvites/{inviteId}
+  teacherId
+  teacherName
+  code
+  status
+  autoApprove
+  expiresAt
+  acceptedBy
+  createdAt
+  updatedAt
+  createdBy
+  updatedBy
+
+analyticsEvents/{eventId}
+  userId
+  eventName
+  metadata
+  createdAt
+
+supportCases/{caseId}
+  userId
+  status
+  category
+  message
+  createdAt
   updatedAt
 
 classrooms/{classroomId}
@@ -186,8 +228,10 @@ Current MVP behavior:
 14. Teachers can download a concise parent-facing report card for active assigned students using only the data visible in the dashboard.
 15. Student signup shows a Family Plus subscribe-or-skip prompt. Skipping keeps `subscriptionTier: "free"` and `subscriptionStatus: "free"`.
 16. Stripe Customer Portal should be available from Account so families can update payment details, view invoices, or cancel monthly billing. Use a durable portal login link or backend-created portal session, not a short-lived `billing.stripe.com/p/session/...` URL.
-17. Stripe Checkout/Billing webhook handling should update `subscriptionTier` and `subscriptionStatus` from trusted backend code after payment succeeds, renews, fails, or is canceled.
-18. Teacher compensation should be calculated from active assignment records in trusted backend code before real payouts are made.
+17. Stripe Checkout/Billing webhook handling updates `subscriptions/{userId}` from trusted backend code after payment succeeds, renews, fails, refunds, disputes, or is canceled.
+18. Premium access checks should use `subscriptions/{userId}` or backend custom claims. Profile subscription fields are development/display fallback only.
+19. Teacher-created invite codes are stored in `teacherInvites`; invite acceptance and revocation should be completed with backend validation before broad launch.
+20. Teacher compensation should be calculated from active assignment records in trusted backend code before real payouts are made.
 
 The app prevents role switching after profile creation. Firebase Auth also prevents one Google email from becoming two separate accounts under normal email-provider linking rules. For stricter production enforcement, use Cloud Functions or a backend API to validate role creation, custom claims, paid teacher entitlements, duplicate-email policies, and teacher certification status.
 
@@ -201,6 +245,7 @@ Rules live in `firestore.rules`. They currently allow each signed-in Firebase us
 users/{theirUserId}
 users/{theirUserId}/learning/progress
 users/{theirUserId}/learningEvents
+subscriptions/{theirUserId} read-only
 ```
 
 They also allow:
@@ -211,6 +256,8 @@ They also allow:
 - Students to update only the latest progress snapshot on their own requested or active assignment links.
 - Teachers to approve or decline only their own assignment links.
 - Active assigned teachers to read assigned student learning events.
+- Clients to read but never write subscription authority.
+- Teachers to create invite codes for themselves.
 
 Deletes are denied by default.
 
