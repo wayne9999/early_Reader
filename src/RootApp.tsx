@@ -30,48 +30,85 @@ import { clearSignupIntent, loadSignupIntent } from "./services/signupIntent";
 import { loadUserProfile } from "./services/userProfileRepository";
 import type { AppUser, AppView, Progress, SignupPath, UserProfile, UserRole } from "./types";
 
-const studentNavItems: Array<{ id: AppView; label: string }> = [
+type NavItem = { id: AppView; label: string };
+type NavGroup = { title: string; items: NavItem[]; defaultOpen?: boolean };
+
+const activityNavItems: NavItem[] = [
   { id: "reading", label: "Reading" },
   { id: "memory", label: "Memory" },
   { id: "rhymes", label: "Rhymes" },
   { id: "soundSort", label: "Sounds" },
   { id: "sentenceBuilder", label: "Sentences" },
   { id: "storyOrder", label: "Story" },
-  { id: "wordMeaning", label: "Words" },
-  { id: "progress", label: "Progress" },
-  { id: "findTeacher", label: "Find Teacher" },
-  { id: "donate", label: "Donate" },
-  { id: "support", label: "Support" },
-  { id: "account", label: "Account" }
+  { id: "wordMeaning", label: "Words" }
 ];
 
-const teacherNavItems: Array<{ id: AppView; label: string }> = [
-  { id: "teacher", label: "Dashboard" },
-  { id: "reading", label: "Reading" },
-  { id: "memory", label: "Memory" },
-  { id: "rhymes", label: "Rhymes" },
-  { id: "soundSort", label: "Sounds" },
-  { id: "sentenceBuilder", label: "Sentences" },
-  { id: "storyOrder", label: "Story" },
-  { id: "wordMeaning", label: "Words" },
-  { id: "support", label: "Support" },
-  { id: "donate", label: "Donate" },
-  { id: "account", label: "Account" }
+const studentNavGroups: NavGroup[] = [
+  {
+    title: "My space",
+    items: [
+      { id: "progress", label: "Dashboard" },
+      { id: "findTeacher", label: "Find Teacher" }
+    ],
+    defaultOpen: true
+  },
+  { title: "Activities", items: activityNavItems, defaultOpen: true },
+  {
+    title: "Help",
+    items: [
+      { id: "donate", label: "Donate" },
+      { id: "support", label: "Support" },
+      { id: "account", label: "Account" }
+    ],
+    defaultOpen: true
+  }
 ];
 
-const adminNavItems: Array<{ id: AppView; label: string }> = [
-  { id: "teacher", label: "Admin View" },
-  { id: "support", label: "Support" },
-  { id: "donate", label: "Donate" },
-  { id: "account", label: "Account" }
+const teacherNavGroups: NavGroup[] = [
+  { title: "Workspace", items: [{ id: "teacher", label: "Dashboard" }], defaultOpen: true },
+  { title: "Activities", items: activityNavItems, defaultOpen: true },
+  {
+    title: "Help",
+    items: [
+      { id: "support", label: "Support" },
+      { id: "donate", label: "Donate" },
+      { id: "account", label: "Account" }
+    ],
+    defaultOpen: true
+  }
 ];
 
-const publicNavItems: Array<{ id: AppView; label: string }> = [
-  { id: "reading", label: "Reading" },
-  { id: "memory", label: "Memory" },
-  { id: "donate", label: "Donate" },
-  { id: "support", label: "Support" },
-  { id: "account", label: "Account" }
+const adminNavGroups: NavGroup[] = [
+  { title: "Workspace", items: [{ id: "teacher", label: "Admin View" }], defaultOpen: true },
+  {
+    title: "Help",
+    items: [
+      { id: "support", label: "Support" },
+      { id: "donate", label: "Donate" },
+      { id: "account", label: "Account" }
+    ],
+    defaultOpen: true
+  }
+];
+
+const publicNavGroups: NavGroup[] = [
+  {
+    title: "Try now",
+    items: [
+      { id: "reading", label: "Reading" },
+      { id: "memory", label: "Memory" }
+    ],
+    defaultOpen: true
+  },
+  {
+    title: "Help",
+    items: [
+      { id: "donate", label: "Donate" },
+      { id: "support", label: "Support" },
+      { id: "account", label: "Account" }
+    ],
+    defaultOpen: true
+  }
 ];
 
 const roleIndicatorMeta: Record<UserRole, { label: string; shortLabel: string; detail: string }> = {
@@ -143,14 +180,14 @@ export function RootApp() {
   const [showSubscriptionPrompt, setShowSubscriptionPrompt] = useState(false);
   const [postSubscriptionView, setPostSubscriptionView] = useState<AppView | null>(null);
   const goalCompleted = Math.min(progress.completedToday, 3);
-  const navItems =
+  const navGroups =
     profile?.role === "admin"
-      ? adminNavItems
+      ? adminNavGroups
       : profile?.role === "teacher"
-        ? teacherNavItems
+        ? teacherNavGroups
         : profile?.role === "student"
-          ? studentNavItems
-          : publicNavItems;
+          ? studentNavGroups
+          : publicNavGroups;
   const currentView = routeState.view;
   const requestedAuthView = currentView === "account" ? routeState.nextView ?? pendingAuthView : null;
   const closeMenu = useCallback(() => setIsMenuOpen(false), []);
@@ -478,16 +515,27 @@ export function RootApp() {
         </div>
 
         <nav className="nav-tabs" aria-label="Main navigation">
-          {navItems.map((item) => (
-            <button
-              className={`nav-tab${item.id === "donate" ? " nav-donate" : ""}${currentView === item.id ? " is-active" : ""}`}
-              key={item.id}
-              type="button"
-              onClick={() => navigateToView(item.id)}
-            >
-              {item.label}
-            </button>
-          ))}
+          {navGroups.map((group) => {
+            const isGroupActive = group.items.some((item) => item.id === currentView);
+
+            return (
+              <details className="nav-group" key={group.title} open={group.defaultOpen || isGroupActive}>
+                <summary className="nav-group-title">{group.title}</summary>
+                <div className="nav-subtabs">
+                  {group.items.map((item) => (
+                    <button
+                      className={`nav-tab${item.id === "donate" ? " nav-donate" : ""}${currentView === item.id ? " is-active" : ""}`}
+                      key={item.id}
+                      type="button"
+                      onClick={() => navigateToView(item.id)}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+              </details>
+            );
+          })}
         </nav>
 
         <section className="donation-card" aria-labelledby="donation-title">

@@ -105,7 +105,9 @@ export type LearningEventType =
   | "sound_listened"
   | "sentence_listened"
   | "memory_match"
+  | "memory_attempt"
   | "memory_completed"
+  | "activity_answer"
   | "activity_completed";
 
 export type LearningEvent = {

@@ -3,6 +3,7 @@ import { getClassroomStudents } from "../../services/classroomRepository";
 import { analyzeClassroom, analyzeStudent } from "../../services/learningAnalysisService";
 import { loadTeacherAssignments, updateTeacherAssignmentStatus } from "../../services/assignmentRepository";
 import { loadLearningEvents } from "../../services/learningEventRepository";
+import { recentNeeds, summarizeByArea, summarizeEvents } from "../../services/learningEventSummary";
 import { downloadStudentReportCard } from "../../services/reportCardService";
 import type { AppUser, LearningEvent, Progress, SkillInsight, StudentSummary, TeacherStudentLink } from "../../types";
 
@@ -49,6 +50,10 @@ export function TeacherDashboard({ progress, user }: TeacherDashboardProps) {
   const [selectedStudentId, setSelectedStudentId] = useState(students[0]?.id ?? "");
   const selectedStudent = students.find((student) => student.id === selectedStudentId) ?? students[0];
   const selectedAnalysis = selectedStudent ? analyzeStudent(selectedStudent) : null;
+  const selectedEvents = selectedStudent?.history ?? [];
+  const selectedEventSummary = useMemo(() => summarizeEvents(selectedEvents), [selectedEvents]);
+  const selectedAreaSummaries = useMemo(() => summarizeByArea(selectedEvents), [selectedEvents]);
+  const selectedNeeds = useMemo(() => recentNeeds(selectedEvents), [selectedEvents]);
   const selectedActivityEvents = selectedStudent?.history?.filter((event) => event.type === "activity_completed") ?? [];
   const activeAssignments = assignments.filter((assignment) => assignment.status === "active");
   const requestedAssignments = assignments.filter((assignment) => assignment.status === "requested");
@@ -241,12 +246,24 @@ export function TeacherDashboard({ progress, user }: TeacherDashboardProps) {
                 <small>Total skill activities</small>
               </span>
               <span>
-                <strong>{selectedActivityEvents.length}</strong>
-                <small>Recent logged activity events</small>
+                <strong>{selectedEventSummary.totalInteractions}</strong>
+                <small>Recent interactions</small>
               </span>
               <span>
                 <strong>{selectedStudent?.progress.completedToday ?? 0}/3</strong>
                 <small>Daily practice progress</small>
+              </span>
+              <span>
+                <strong>{selectedEventSummary.accuracy === null ? "New" : `${selectedEventSummary.accuracy}%`}</strong>
+                <small>Attempt accuracy</small>
+              </span>
+              <span>
+                <strong>{selectedEventSummary.incorrectAnswers}</strong>
+                <small>Needs review</small>
+              </span>
+              <span>
+                <strong>{selectedEventSummary.areasPracticed}</strong>
+                <small>Skill areas practiced</small>
               </span>
             </div>
             {selectedActivityEvents.length ? (
@@ -260,6 +277,41 @@ export function TeacherDashboard({ progress, user }: TeacherDashboardProps) {
               </ul>
             ) : (
               <p className="helper-text">Logged-in activities will appear here after this student completes them.</p>
+            )}
+          </article>
+
+          <article className="practice-panel">
+            <p className="eyebrow">Teacher assessment details</p>
+            <div className="area-summary-list">
+              {selectedAreaSummaries.map((area) => (
+                <div className="area-summary-row" key={area.area}>
+                  <span>
+                    <strong>{area.label}</strong>
+                    <small>{area.interactions} interactions - {area.incorrect} review moments</small>
+                  </span>
+                  <em>{area.accuracy === null ? "No attempts" : `${area.accuracy}%`}</em>
+                </div>
+              ))}
+            </div>
+            {selectedNeeds.length ? (
+              <>
+                <p className="helper-text">Most recent items to review with this learner:</p>
+                <ul className="history-list">
+                  {selectedNeeds.map((need) => (
+                    <li key={need.id}>
+                      <strong>{need.label}</strong>
+                      <span>
+                        {need.area}
+                        {need.selectedChoice && need.correctChoice
+                          ? ` - chose ${need.selectedChoice}, target ${need.correctChoice}`
+                          : ""}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            ) : (
+              <p className="helper-text">No incorrect activity attempts are logged for this student yet.</p>
             )}
           </article>
 

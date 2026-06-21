@@ -37,6 +37,15 @@ export function LearningActivityPage({ activityId, progress, user, onProgressCha
 
     const isCorrect = choice === currentRound.correctChoice;
 
+    void recordLearningEvent(user, "activity_answer", `${activity.title}: ${currentRound.target}`, activity.skill, {
+      activityId: activity.id,
+      round: roundIndex + 1,
+      target: currentRound.target,
+      selectedChoice: choice,
+      correctChoice: currentRound.correctChoice,
+      correct: isCorrect
+    });
+
     if (!isCorrect) {
       setFeedback(currentRound.coachMessage);
       speak(currentRound.coachMessage, { rate: 0.9, pitch: 1.14 });

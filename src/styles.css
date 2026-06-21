@@ -225,6 +225,50 @@ button {
   gap: 10px;
 }
 
+.nav-group {
+  display: grid;
+  gap: 8px;
+}
+
+.nav-group-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 36px;
+  padding: 0 4px;
+  color: var(--blue-dark);
+  font-size: 0.74rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  list-style: none;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.nav-group-title::-webkit-details-marker {
+  display: none;
+}
+
+.nav-group-title::after {
+  content: "+";
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: rgba(47, 128, 237, 0.1);
+  color: var(--blue-dark);
+}
+
+.nav-group[open] .nav-group-title::after {
+  content: "-";
+}
+
+.nav-subtabs {
+  display: grid;
+  gap: 8px;
+}
+
 .nav-tab,
 .primary-button,
 .secondary-button,
@@ -780,7 +824,7 @@ button {
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 14px;
 }
 
@@ -812,6 +856,14 @@ button {
   background: linear-gradient(180deg, #ffffff, #fffdf2);
 }
 
+.stat-card:nth-child(7) {
+  background: linear-gradient(180deg, #ffffff, #e9fbff);
+}
+
+.stat-card:nth-child(8) {
+  background: linear-gradient(180deg, #ffffff, #fff0f0);
+}
+
 .stat-card strong {
   display: block;
   font-size: 2.2rem;
@@ -834,6 +886,54 @@ button {
   padding-left: 22px;
   color: var(--muted);
   line-height: 1.7;
+}
+
+.student-dashboard-grid {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.9fr) minmax(280px, 1.1fr);
+  gap: 18px;
+}
+
+.area-summary-list {
+  display: grid;
+  gap: 10px;
+}
+
+.area-summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.76);
+  box-shadow: inset 0 0 0 2px rgba(47, 128, 237, 0.08);
+}
+
+.area-summary-row span {
+  display: grid;
+  gap: 3px;
+}
+
+.area-summary-row strong {
+  color: var(--ink);
+}
+
+.area-summary-row small {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.area-summary-row em {
+  flex: 0 0 auto;
+  min-width: 80px;
+  padding: 8px 10px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--gold), var(--pink));
+  color: #321b00;
+  font-style: normal;
+  font-weight: 900;
+  text-align: center;
 }
 
 .auth-grid {
@@ -2000,6 +2100,7 @@ button {
 
   .hero,
   .learning-grid,
+  .student-dashboard-grid,
   .teacher-summary,
   .teacher-grid,
   .insight-columns,

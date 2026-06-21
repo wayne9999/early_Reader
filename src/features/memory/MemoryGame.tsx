@@ -73,6 +73,13 @@ export function MemoryGame({ progress, user, onProgressChange }: MemoryGameProps
     setTurns(nextTurns);
 
     const [first, second] = nextSelected;
+    void recordLearningEvent(user, "memory_attempt", `${first.label} + ${second.label}`, "workingMemory", {
+      turns: nextTurns,
+      firstCard: first.label,
+      secondCard: second.label,
+      correct: first.id === second.id
+    });
+
     if (first.id === second.id) {
       const nextMatchedIds = new Set(matchedIds).add(first.id);
       setMatchedIds(nextMatchedIds);
