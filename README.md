@@ -152,14 +152,14 @@ Current behavior:
 
 ## Donations And Subscriptions
 
-The app uses Stripe Payment Links for donations and subscriptions so payment details are handled by Stripe-hosted checkout pages. Student cancellation should use Stripe Customer Portal so families can stop monthly billing, update cards, and view invoices. For production, paid access and cancellation should be granted or removed by Stripe Checkout/Billing webhook events that update Firebase profile entitlements or custom claims; frontend-only entitlement changes are not sufficient for real paid access enforcement.
+The app uses Stripe Payment Links for donations and subscriptions so payment details are handled by Stripe-hosted checkout pages. Student cancellation should use Stripe Customer Portal so families can stop monthly billing, update cards, and view invoices. `VITE_STRIPE_CUSTOMER_PORTAL_LINK` must be a durable Stripe portal login link or an app backend endpoint that creates a fresh portal session; do not store a short-lived `billing.stripe.com/p/session/...` URL because Stripe portal sessions expire. For production, paid access and cancellation should be granted or removed by Stripe Checkout/Billing webhook events that update Firebase profile entitlements or custom claims; frontend-only entitlement changes are not sufficient for real paid access enforcement.
 
 Required production values:
 
 - `VITE_STRIPE_DONATION_LINK`
 - `VITE_STRIPE_FAMILY_PLUS_LINK`
 - `VITE_STRIPE_TEACHER_PRO_LINK`
-- `VITE_STRIPE_CUSTOMER_PORTAL_LINK`
+- `VITE_STRIPE_CUSTOMER_PORTAL_LINK`: durable Stripe portal login link or backend billing endpoint, not a temporary portal session URL
 
 Optional support value:
 

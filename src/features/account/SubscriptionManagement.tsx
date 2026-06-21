@@ -1,4 +1,4 @@
-import { billingConfig } from "../../services/billingConfig";
+import { billingConfig, isCustomerPortalConfigured, isTemporaryStripePortalSession } from "../../services/billingConfig";
 import { freeStudentActivitiesDescription, paidStudentActivitiesDescription } from "../../services/entitlementService";
 import type { UserProfile } from "../../types";
 
@@ -20,6 +20,8 @@ function subscriptionLabel(profile: UserProfile) {
 
 export function SubscriptionManagement({ profile }: SubscriptionManagementProps) {
   const isStudent = profile.role === "student";
+  const hasUsablePortalLink = isCustomerPortalConfigured();
+  const hasTemporaryPortalSession = isTemporaryStripePortalSession(billingConfig.customerPortalLink);
 
   if (!isStudent) {
     return null;
@@ -51,10 +53,10 @@ export function SubscriptionManagement({ profile }: SubscriptionManagementProps)
       <div className="subscription-actions">
         <button
           className="primary-button"
-          disabled={!billingConfig.customerPortalLink}
+          disabled={!hasUsablePortalLink}
           type="button"
           onClick={() => {
-            if (billingConfig.customerPortalLink) {
+            if (hasUsablePortalLink) {
               window.open(billingConfig.customerPortalLink, "_blank", "noopener,noreferrer");
             }
           }}
@@ -64,8 +66,10 @@ export function SubscriptionManagement({ profile }: SubscriptionManagementProps)
       </div>
 
       <p className="helper-text">
-        Stripe Customer Portal lets families update cards, view invoices, and cancel monthly billing.
-        If this button is disabled, the portal link still needs to be configured.
+        Stripe Customer Portal lets families update cards, view invoices, and cancel monthly billing.{" "}
+        {hasTemporaryPortalSession
+          ? "The configured portal link looks temporary, so use a durable portal login link or backend-generated session before enabling this button."
+          : "If this button is disabled, the portal link still needs to be configured."}
       </p>
     </article>
   );

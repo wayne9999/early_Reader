@@ -185,7 +185,7 @@ Current MVP behavior:
 13. Active assigned teachers can read that student's event history, latest progress snapshot, activity-completion summary, accuracy, and recent needs.
 14. Teachers can download a concise parent-facing report card for active assigned students using only the data visible in the dashboard.
 15. Student signup shows a Family Plus subscribe-or-skip prompt. Skipping keeps `subscriptionTier: "free"` and `subscriptionStatus: "free"`.
-16. Stripe Customer Portal should be available from Account so families can update payment details, view invoices, or cancel monthly billing.
+16. Stripe Customer Portal should be available from Account so families can update payment details, view invoices, or cancel monthly billing. Use a durable portal login link or backend-created portal session, not a short-lived `billing.stripe.com/p/session/...` URL.
 17. Stripe Checkout/Billing webhook handling should update `subscriptionTier` and `subscriptionStatus` from trusted backend code after payment succeeds, renews, fails, or is canceled.
 18. Teacher compensation should be calculated from active assignment records in trusted backend code before real payouts are made.
 

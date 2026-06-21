@@ -7,6 +7,24 @@ export const billingConfig = {
   customerPortalLink: import.meta.env.VITE_STRIPE_CUSTOMER_PORTAL_LINK || ""
 };
 
+export function isTemporaryStripePortalSession(link: string) {
+  if (!link) {
+    return false;
+  }
+
+  try {
+    const url = new URL(link);
+
+    return url.hostname.endsWith("billing.stripe.com") && url.pathname.includes("/session");
+  } catch {
+    return false;
+  }
+}
+
+export function isCustomerPortalConfigured() {
+  return Boolean(billingConfig.customerPortalLink) && !isTemporaryStripePortalSession(billingConfig.customerPortalLink);
+}
+
 export const subscriptionTiers: SubscriptionTier[] = [
   {
     id: "free",
