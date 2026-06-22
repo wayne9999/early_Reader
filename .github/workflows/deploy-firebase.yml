@@ -100,4 +100,9 @@ jobs:
 
       - name: Deploy Functions
         if: ${{ inputs.target == 'functions' || inputs.target == 'all' }}
-        run: firebase deploy --only functions --project "$FIREBASE_PROJECT_ID" --non-interactive --force
+        run: >
+          firebase deploy
+          --only functions:stripeWebhook,functions:createBillingPortalSession,functions:createLearningRecommendation,functions:requestStudentInsight,functions:processAiAnalysisJob
+          --project "$FIREBASE_PROJECT_ID"
+          --non-interactive
+          --force
