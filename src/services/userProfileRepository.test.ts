@@ -14,7 +14,8 @@ describe("userProfileRepository", () => {
     const profile = await createUserProfile(
       { id: "student-1", name: "Jayden", email: "jayden@example.com" },
       "student",
-      "parentChild"
+      "parentChild",
+      { parentConsentAccepted: true }
     );
 
     expect(profile).toMatchObject({
@@ -22,9 +23,19 @@ describe("userProfileRepository", () => {
       role: "student",
       signupPath: "parentChild",
       subscriptionTier: "free",
-      subscriptionStatus: "free"
+      subscriptionStatus: "free",
+      parentConsentAccepted: true,
+      parentConsentVersion: "parent-consent-v1"
     });
     expect(Object.prototype.hasOwnProperty.call(profile, "teacherCode")).toBe(false);
+  });
+
+  it("refuses to create student profiles without parent consent", async () => {
+    await expect(createUserProfile(
+      { id: "student-1", name: "Jayden", email: "jayden@example.com" },
+      "student",
+      "parentChild"
+    )).rejects.toThrow(/consent is required/i);
   });
 
   it("adds teacher certification defaults for teacher profiles", async () => {

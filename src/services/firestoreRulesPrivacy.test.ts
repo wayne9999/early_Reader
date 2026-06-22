@@ -69,4 +69,11 @@ describe("firestore privacy rules", () => {
     expect(rules).toContain("request.resource.data.teacherId == request.auth.uid");
     expect(rules).toContain("allow delete: if false;");
   });
+
+  it("validates support cases for signed-in users", () => {
+    expect(rules).toContain("match /supportCases/{caseId}");
+    expect(rules).toContain("request.resource.data.userId == request.auth.uid");
+    expect(rules).toContain("request.resource.data.type in [\"general\", \"billing\", \"dataDeletion\", \"teacherVerification\", \"technical\"]");
+    expect(rules).toContain("request.resource.data.status == \"open\"");
+  });
 });

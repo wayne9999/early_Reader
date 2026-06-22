@@ -26,7 +26,7 @@ Branch:     main
 - Firebase Auth and Firestore-ready data layer
 - Auth0-ready fallback/social login boundary
 - Stripe Payment Links for donations/subscriptions
-- Firebase Functions scaffold for Stripe webhooks and billing portal sessions
+- Firebase Functions for Stripe webhooks, billing portal sessions, AI insights, scheduled jobs, and OpenAI budget guarding
 - GitHub Pages deployment through GitHub Actions
 
 ## Key Commands
@@ -88,7 +88,9 @@ STRIPE_TEACHER_PRO_PRICE_ID=
 - Teachers can create invite codes through `teacherInvites`.
 - Auth0 UI exists, but production Firestore writes require Firebase Auth or an Auth0-to-Firebase custom-token bridge.
 - AI analysis is currently rule-based in the browser. Production AI should run only from a backend or Cloud Function.
-- Firebase Functions scaffold includes Stripe webhook, Customer Portal session creation, and an AI recommendation request placeholder.
+- Firebase Functions include Stripe webhook handling, Customer Portal session creation, AI insight jobs, scheduled insight enqueueing, OpenAI provider calls, monthly budget guarding, and rule-based fallback.
+- Parent / Child profile creation requires parent/caregiver consent and stores consent metadata on the user profile.
+- Signed-in support cases are stored in `supportCases` for billing, deletion, teacher verification, technical, and general requests.
 
 ## Deployment
 
@@ -109,9 +111,9 @@ VITE_BASE_PATH=/early_Reader/
 ## Best Next Steps
 
 1. Deploy updated Firestore rules after every rules change.
-2. Deploy and test Stripe webhook handling for Family Plus and Teacher Pro entitlements.
+2. Register and verify Stripe webhook handling for Family Plus and Teacher Pro entitlements with Stripe test events.
 3. Complete student invite-code acceptance and admin invite revocation.
-4. Connect backend AI recommendation worker after consent/legal review.
+4. Add production monitoring and prompt evaluation for the backend AI recommendation worker after legal review.
 5. Replace remaining demo teacher fallback data with live Firestore records.
 6. Add route-level navigation and possibly prerendering/SSR for better SEO at scale.
 7. Add automated tests for reading, memory, progress, support, role, assignment, and teacher flows.

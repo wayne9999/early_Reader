@@ -3,6 +3,7 @@ import type { AppUser, SignupPath, UserProfile, UserRole } from "../types";
 import { getFirebaseRuntime } from "./firebase";
 
 const PROFILE_STORAGE_KEY = "readnest-profile-v1";
+const PARENT_CONSENT_VERSION = "parent-consent-v1";
 
 function localProfileKey(user: AppUser) {
   return `${PROFILE_STORAGE_KEY}:${user.id}`;
@@ -22,7 +23,7 @@ function removeUndefinedFields<T extends Record<string, unknown>>(value: T): T {
   return Object.fromEntries(Object.entries(value).filter(([, fieldValue]) => fieldValue !== undefined)) as T;
 }
 
-function buildProfile(user: AppUser, role: UserRole, signupPath?: SignupPath): UserProfile {
+function buildProfile(user: AppUser, role: UserRole, signupPath?: SignupPath, parentConsentAccepted = false): UserProfile {
   const teacherDetails = role === "teacher"
     ? {
         teacherCode: createTeacherCode(user.name, user.id),
@@ -48,6 +49,13 @@ function buildProfile(user: AppUser, role: UserRole, signupPath?: SignupPath): U
     picture: user.picture ?? null,
     subscriptionTier: role === "teacher" ? "teacherPro" : "free",
     subscriptionStatus: "free",
+    ...(role === "student"
+      ? {
+          parentConsentAccepted,
+          parentConsentAcceptedAt: parentConsentAccepted ? new Date().toISOString() : null,
+          parentConsentVersion: PARENT_CONSENT_VERSION
+        }
+      : {}),
     ...teacherDetails
   };
 }
@@ -70,14 +78,23 @@ export async function loadUserProfile(user: AppUser | null): Promise<UserProfile
   return snapshot.exists() ? (snapshot.data() as UserProfile) : null;
 }
 
-export async function createUserProfile(user: AppUser, role: UserRole, signupPath?: SignupPath): Promise<UserProfile> {
+export async function createUserProfile(
+  user: AppUser,
+  role: UserRole,
+  signupPath?: SignupPath,
+  options: { parentConsentAccepted?: boolean } = {}
+): Promise<UserProfile> {
   const existingProfile = await loadUserProfile(user);
 
   if (existingProfile) {
     return existingProfile;
   }
 
-  const profile = buildProfile(user, role, signupPath);
+  if (role === "student" && options.parentConsentAccepted !== true) {
+    throw new Error("Parent or caregiver consent is required before creating a child learning profile.");
+  }
+
+  const profile = buildProfile(user, role, signupPath, options.parentConsentAccepted === true);
   const runtime = getFirebaseRuntime();
   const firebaseUser = runtime?.auth.currentUser;
 
@@ -91,6 +108,11 @@ export async function createUserProfile(user: AppUser, role: UserRole, signupPat
     {
       ...removeUndefinedFields(profile),
       createdAt: serverTimestamp(),
+      ...(role === "student" && profile.parentConsentAccepted
+        ? {
+            parentConsentAcceptedAt: serverTimestamp()
+          }
+        : {}),
       updatedAt: serverTimestamp()
     },
     { merge: true }

@@ -1447,6 +1447,28 @@ button {
   outline: 3px solid rgba(47, 128, 237, 0.18);
 }
 
+.consent-check {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: flex-start;
+  margin-top: 14px;
+  padding: 14px;
+  border: 2px solid rgba(255, 203, 71, 0.62);
+  border-radius: 8px;
+  background: linear-gradient(135deg, #fffdf2, #eef8ff);
+  color: var(--muted);
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.consent-check input {
+  width: 22px;
+  height: 22px;
+  margin-top: 2px;
+  accent-color: var(--teal);
+}
+
 .email-mode-toggle {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -1978,8 +2000,51 @@ button {
 
 .support-help-grid {
   display: grid;
-  grid-template-columns: minmax(280px, 0.92fr) minmax(280px, 1.08fr);
+  grid-template-columns: repeat(3, minmax(260px, 1fr));
   gap: 18px;
+}
+
+.support-request-panel {
+  background: linear-gradient(180deg, #ffffff, #eef8ff);
+}
+
+.support-case-form {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.support-case-form label {
+  display: grid;
+  gap: 7px;
+  color: var(--muted);
+  font-weight: 900;
+}
+
+.support-case-form input,
+.support-case-form select,
+.support-case-form textarea {
+  width: 100%;
+  min-height: 50px;
+  padding: 11px 13px;
+  border: 2px solid rgba(47, 128, 237, 0.2);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 800;
+}
+
+.support-case-form textarea {
+  resize: vertical;
+  line-height: 1.45;
+}
+
+.support-case-form input:focus,
+.support-case-form select:focus,
+.support-case-form textarea:focus {
+  border-color: var(--blue);
+  outline: 3px solid rgba(47, 128, 237, 0.18);
 }
 
 .support-steps-panel {

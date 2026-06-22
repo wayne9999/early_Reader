@@ -1,5 +1,8 @@
+import { useState, type FormEvent } from "react";
 import { billingConfig, linkForTier, subscriptionTiers } from "../../services/billingConfig";
+import { createSupportCase } from "../../services/supportCaseRepository";
 import { supportMailtoHref } from "../../services/supportConfig";
+import type { AppUser, SupportCaseType } from "../../types";
 
 function openPaymentLink(url: string) {
   if (!url) {
@@ -11,14 +14,15 @@ function openPaymentLink(url: string) {
 
 type SupportPageProps = {
   initialFocus?: "donation" | "plans";
+  user?: AppUser | null;
 };
 
-export function SupportPage({ initialFocus = "plans" }: SupportPageProps) {
+export function SupportPage({ initialFocus = "plans", user = null }: SupportPageProps) {
   if (initialFocus === "donation") {
     return <DonationPage />;
   }
 
-  return <SupportCenterPage />;
+  return <SupportCenterPage user={user} />;
 }
 
 const donationImpact = [
@@ -169,8 +173,41 @@ function DonationPage() {
   );
 }
 
-function SupportCenterPage() {
+function SupportCenterPage({ user }: { user: AppUser | null }) {
   const paidTiers = subscriptionTiers.filter((tier) => tier.id !== "free");
+  const [caseType, setCaseType] = useState<SupportCaseType>("general");
+  const [subject, setSubject] = useState("");
+  const [message, setMessage] = useState("");
+  const [caseStatus, setCaseStatus] = useState("");
+  const [isSending, setIsSending] = useState(false);
+
+  async function submitSupportCase(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setCaseStatus("");
+
+    if (!user) {
+      setCaseStatus("Sign in first so ReadNest can attach the request to the right account.");
+      return;
+    }
+
+    setIsSending(true);
+
+    try {
+      await createSupportCase(user, {
+        type: caseType,
+        subject,
+        message,
+        contactEmail: user.email ?? null
+      });
+      setSubject("");
+      setMessage("");
+      setCaseStatus("Support request saved. A ReadNest admin can review it from Firestore supportCases.");
+    } catch (error) {
+      setCaseStatus(error instanceof Error ? error.message : "Could not save the support request.");
+    } finally {
+      setIsSending(false);
+    }
+  }
 
   return (
     <>
@@ -205,6 +242,56 @@ function SupportCenterPage() {
       </section>
 
       <section className="support-help-grid">
+        <article className="practice-panel support-request-panel">
+          <p className="eyebrow">Send a request</p>
+          <h3>Ask for help inside ReadNest</h3>
+          <p className="helper-text">
+            Signed-in families and teachers can create a support case for billing, deletion, teacher verification, or technical help.
+          </p>
+          <form className="support-case-form" onSubmit={(event) => void submitSupportCase(event)}>
+            <label>
+              <span>Request type</span>
+              <select value={caseType} onChange={(event) => setCaseType(event.target.value as SupportCaseType)}>
+                <option value="general">General help</option>
+                <option value="billing">Billing or cancellation</option>
+                <option value="dataDeletion">Parent data deletion</option>
+                <option value="teacherVerification">Teacher verification</option>
+                <option value="technical">Technical issue</option>
+              </select>
+            </label>
+            <label>
+              <span>Subject</span>
+              <input
+                maxLength={120}
+                placeholder="Example: Delete child practice history"
+                required
+                value={subject}
+                onChange={(event) => setSubject(event.target.value)}
+              />
+            </label>
+            <label>
+              <span>Message</span>
+              <textarea
+                maxLength={1200}
+                placeholder="Share the account, request type, and what you need help with. Do not include payment card details."
+                required
+                rows={5}
+                value={message}
+                onChange={(event) => setMessage(event.target.value)}
+              />
+            </label>
+            <button className="primary-button" disabled={isSending || !user} type="submit">
+              {user ? isSending ? "Sending..." : "Send support request" : "Sign in to send"}
+            </button>
+          </form>
+          {caseStatus ? <p className="helper-text" role="status">{caseStatus}</p> : null}
+          {!user ? (
+            <p className="helper-text">
+              Guests can still email support, but data deletion and billing requests need a signed-in account for verification.
+            </p>
+          ) : null}
+        </article>
+
         <article className="practice-panel support-steps-panel">
           <p className="eyebrow">Common fixes</p>
           <h3>Before sending a request</h3>

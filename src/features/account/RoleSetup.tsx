@@ -12,6 +12,7 @@ type RoleSetupProps = {
 export function RoleSetup({ user, preferredSignupPath, onProfileCreated }: RoleSetupProps) {
   const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [parentConsentAccepted, setParentConsentAccepted] = useState(false);
   const preferredRole = preferredSignupPath ? roleFromSignupPath(preferredSignupPath) : null;
   const autoCreateStarted = useRef(false);
 
@@ -25,7 +26,9 @@ export function RoleSetup({ user, preferredSignupPath, onProfileCreated }: RoleS
     setError("");
 
     try {
-      onProfileCreated(await createUserProfile(user, role, signupPath));
+      onProfileCreated(await createUserProfile(user, role, signupPath, {
+        parentConsentAccepted: role === "student" ? parentConsentAccepted : undefined
+      }));
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "Could not create profile.");
     } finally {
@@ -35,6 +38,10 @@ export function RoleSetup({ user, preferredSignupPath, onProfileCreated }: RoleS
 
   useEffect(() => {
     if (!preferredSignupPath || !preferredRole || autoCreateStarted.current) {
+      return;
+    }
+
+    if (preferredRole === "student") {
       return;
     }
 
@@ -66,18 +73,28 @@ export function RoleSetup({ user, preferredSignupPath, onProfileCreated }: RoleS
       ) : null}
       {preferredSignupPath ? (
         <div className="setup-status-card" role="status">
-          <strong>{isSaving ? "Creating profile..." : error ? "Setup needs attention" : "Profile ready"}</strong>
+          <strong>
+            {preferredRole === "student" && !parentConsentAccepted
+              ? "Parent consent needed"
+              : isSaving
+                ? "Creating profile..."
+                : error
+                  ? "Setup needs attention"
+                  : "Profile ready"}
+          </strong>
           <span>
             {error
               ? "Review the message below and try again."
-              : "ReadNest is assigning the role from the path you selected before sign-in."}
+              : preferredRole === "student"
+                ? "A parent or caregiver must approve child learning history, teacher requests, and progress tracking before the profile is created."
+                : "ReadNest is assigning the role from the path you selected before sign-in."}
           </span>
         </div>
       ) : (
         <div className="role-grid">
           <button
             type="button"
-            disabled={isSaving}
+            disabled={isSaving || !parentConsentAccepted}
             onClick={() => void chooseRole("student", "parentChild")}
           >
             <strong>Parent / Child</strong>
@@ -93,6 +110,29 @@ export function RoleSetup({ user, preferredSignupPath, onProfileCreated }: RoleS
           </button>
         </div>
       )}
+      {preferredRole === "student" || !preferredSignupPath ? (
+        <label className="consent-check">
+          <input
+            checked={parentConsentAccepted}
+            type="checkbox"
+            onChange={(event) => setParentConsentAccepted(event.target.checked)}
+          />
+          <span>
+            I am the parent/caregiver or have permission to create this child learning profile. I agree
+            ReadNest can save reading practice, progress, teacher requests, and non-diagnostic learning insights.
+          </span>
+        </label>
+      ) : null}
+      {preferredRole === "student" ? (
+        <button
+          className="primary-button"
+          disabled={isSaving || !parentConsentAccepted}
+          type="button"
+          onClick={() => void chooseRole("student", preferredSignupPath ?? undefined)}
+        >
+          Create Parent / Child profile
+        </button>
+      ) : null}
       {error ? <p className="form-error">{error}</p> : null}
     </article>
   );

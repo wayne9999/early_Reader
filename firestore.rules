@@ -187,7 +187,11 @@ service cloud.firestore {
     match /supportCases/{caseId} {
       allow create: if isSignedIn()
         && request.resource.data.userId == request.auth.uid
-        && request.resource.data.status == "open";
+        && request.resource.data.status == "open"
+        && request.resource.data.type in ["general", "billing", "dataDeletion", "teacherVerification", "technical"]
+        && request.resource.data.subject is string
+        && request.resource.data.message is string
+        && request.resource.data.createdAt != null;
       allow read: if isSignedIn()
         && (resource.data.userId == request.auth.uid || isAdmin());
       allow update: if isAdmin();

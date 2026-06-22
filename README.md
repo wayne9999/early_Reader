@@ -145,6 +145,7 @@ Current behavior:
 - If Firebase env values are missing, progress is stored in browser local storage.
 - When Firebase is configured and a Firebase-authenticated user is available, progress saves to `users/{userId}/learning/progress`.
 - Signed-in users are assigned one locked app role from the signup path they selected before authentication: `student` for Parent / Child, `teacher` for Teacher.
+- Parent / Child setup requires parent or caregiver consent before the student profile is created. Consent metadata is stored on `users/{userId}`.
 - New student signups see a Family Plus subscribe-or-skip prompt. Skipping keeps the account on the free entitlement set.
 - Student accounts can open Stripe Customer Portal from Account to update payment details or cancel monthly billing.
 - Teacher certification is state-based in the United States. The app stores certification verification as `notSubmitted`, `pendingReview`, `verified`, or `rejected`; production verification should check the teacher's issuing state agency or a trusted background-check workflow.
@@ -159,7 +160,8 @@ Current behavior:
 - Teachers can download a concise HTML report card for each active assigned student. The report is generated in-browser from the teacher-visible data and escapes report text before writing the file.
 - Production paid access reads `subscriptions/{userId}`. Firestore rules prevent client writes to subscription authority.
 - Teacher compensation should be calculated on trusted backend data from active assignments before real payouts are made.
-- Firebase Functions scaffold in `functions/` handles Stripe webhooks, billing portal sessions, and future AI recommendation requests; it still must be deployed and tested before paid launch.
+- Firebase Functions in `functions/` handle Stripe webhooks, billing portal sessions, AI insight jobs, scheduled processing, OpenAI budget guarding, and rule-based fallback.
+- Signed-in support requests are stored in `supportCases`, including billing, data deletion, teacher verification, technical, and general help. Backend deletion/export fulfillment still needs an operations process.
 
 ## Donations And Subscriptions
 
@@ -204,13 +206,13 @@ Suggested subscriptions:
 ### Next Milestone
 
 - Add full multi-child parent profile UI.
-- Deploy and test Firebase Functions for Stripe webhooks and billing portal sessions.
+- Register and verify the Stripe webhook endpoint with test events.
 - Finish Firebase Auth provider setup in Firebase Console.
 - Add Instagram through a custom provider or Auth0 bridge if that remains a requirement.
 - Complete invite acceptance/revocation UI.
 - Add backend payout reporting for teachers based on active assigned students and approved pay rules.
 - Replace remaining demo classroom fallback data with fully live Firestore enrollment data.
-- Add backend AI analysis endpoint for evidence-based teacher recommendations.
+- Add production monitoring and prompt evaluation for AI-assisted teacher recommendations.
 - Add a content editor for caregivers or teachers.
 - Track accuracy separately from completion.
 - Add printable practice sheets.

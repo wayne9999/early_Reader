@@ -120,6 +120,9 @@ export type UserProfile = {
   maxStudentLoad?: number;
   activeStudentCount?: number;
   payModelNote?: string;
+  parentConsentAccepted?: boolean;
+  parentConsentAcceptedAt?: unknown;
+  parentConsentVersion?: string;
   createdAt?: unknown;
   updatedAt?: unknown;
 };
@@ -314,4 +317,20 @@ export type SubscriptionTier = {
   perks: string[];
   cta: string;
   paymentEnvKey?: string;
+};
+
+export type SupportCaseType = "general" | "billing" | "dataDeletion" | "teacherVerification" | "technical";
+
+export type SupportCase = {
+  id?: string;
+  userId: string;
+  type: SupportCaseType;
+  subject: string;
+  message: string;
+  status: "open" | "inReview" | "resolved";
+  contactEmail?: string | null;
+  createdAt?: unknown;
+  updatedAt?: unknown;
+  createdBy?: string;
+  updatedBy?: string;
 };
