@@ -139,6 +139,14 @@ export function TeacherDashboard({ progress, user, profile }: TeacherDashboardPr
   const selectedAiStatus = aiJobLabel(selectedAiJob, selectedAiInsight);
   const activeAssignments = assignments.filter((assignment) => assignment.status === "active");
   const requestedAssignments = assignments.filter((assignment) => assignment.status === "requested");
+  const attentionCount = classroomAnalysis.analyses.filter((analysis) => analysis.growthAreas.length > 0).length;
+  const strengthCount = classroomAnalysis.analyses.filter((analysis) => analysis.strengths.length > 0).length;
+  const teacherStats = [
+    { label: "Students", value: students.length, tone: "blue" },
+    { label: "Active", value: activeAssignments.length, tone: "green" },
+    { label: "Requests", value: requestedAssignments.length, tone: "gold" },
+    { label: "Need focus", value: attentionCount, tone: "coral" }
+  ];
 
   useEffect(() => {
     let isMounted = true;
@@ -302,24 +310,28 @@ export function TeacherDashboard({ progress, user, profile }: TeacherDashboardPr
 
   return (
     <>
-      <div className="section-heading">
+      <div className="section-heading dashboard-heading teacher-dashboard-heading">
         <div>
           <p className="eyebrow">Teacher workspace</p>
           <h2>Classroom insight center</h2>
+          <p className="helper-text">Live learning signals, assignment requests, reports, and next steps in one calm workspace.</p>
         </div>
+        <span className="live-pill" aria-label="Live classroom tracking active">● Live tracking</span>
       </div>
 
       <section className="teacher-summary">
-        <article className="practice-panel teacher-hero-card">
+        <article className="practice-panel teacher-hero-card teacher-command-card">
           <p className="eyebrow">Class snapshot</p>
           <h3>{classroomAnalysis.headline}</h3>
-          <div className="teacher-metrics">
-            <span>{students.length} students</span>
-            <span>{activeAssignments.length} active assignments</span>
-            <span>{requestedAssignments.length} pending requests</span>
-            <span>{classroomAnalysis.analyses.filter((analysis) => analysis.growthAreas.length > 0).length} need follow-up</span>
-            <span>{classroomAnalysis.analyses.filter((analysis) => analysis.strengths.length > 0).length} showing strengths</span>
+          <div className="teacher-command-grid">
+            {teacherStats.map((stat) => (
+              <span className={`teacher-command-stat is-${stat.tone}`} key={stat.label}>
+                <strong>{stat.value}</strong>
+                <small>{stat.label}</small>
+              </span>
+            ))}
           </div>
+          <p className="helper-text">{strengthCount} learners are showing clear strengths. {attentionCount} need a follow-up plan.</p>
           {!assignments.length && !isLoadingRoster ? (
             <p className="helper-text">Showing demo data until students request this teacher account.</p>
           ) : null}
@@ -359,7 +371,7 @@ export function TeacherDashboard({ progress, user, profile }: TeacherDashboardPr
       </section>
 
       <section className="teacher-grid">
-        <aside className="practice-panel roster-panel" aria-label="Student roster">
+        <aside className="practice-panel roster-panel teacher-roster-panel" aria-label="Student roster">
           <p className="eyebrow">Roster</p>
           {requestedAssignments.length ? (
             <div className="request-list">
@@ -394,7 +406,7 @@ export function TeacherDashboard({ progress, user, profile }: TeacherDashboardPr
                     <strong>{student.name}</strong>
                     <small>Grade {student.gradeBand} - {student.lastActive}</small>
                   </span>
-                  <em>{supportCount} focus</em>
+                  <em className={supportCount ? "needs-focus" : "on-track"}>{supportCount ? `${supportCount} focus` : "On track"}</em>
                 </button>
               );
             })}
@@ -402,7 +414,7 @@ export function TeacherDashboard({ progress, user, profile }: TeacherDashboardPr
         </aside>
 
         <div className="student-insight-stack">
-          <article className="practice-panel">
+          <article className="practice-panel selected-student-card">
             <div className="student-analysis-header">
               <div>
                 <p className="eyebrow">Student analysis</p>
@@ -441,7 +453,7 @@ export function TeacherDashboard({ progress, user, profile }: TeacherDashboardPr
             </article>
           </div>
 
-          <article className="practice-panel">
+          <article className="practice-panel teacher-signal-panel">
             <p className="eyebrow">Intervention plan</p>
             <ol className="teacher-plan">
               {selectedAnalysis?.recommendedPlan.map((step) => (
@@ -450,7 +462,7 @@ export function TeacherDashboard({ progress, user, profile }: TeacherDashboardPr
             </ol>
           </article>
 
-          <article className="practice-panel">
+          <article className="practice-panel heatmap-panel">
             <p className="eyebrow">Skill activity review</p>
             <div className="activity-review-grid">
               <span>
@@ -527,10 +539,10 @@ export function TeacherDashboard({ progress, user, profile }: TeacherDashboardPr
             )}
           </article>
 
-          <article className="practice-panel">
+          <article className="practice-panel live-activity-panel">
             <p className="eyebrow">Recent learning history</p>
             {selectedStudent?.history?.length ? (
-              <ul className="history-list">
+              <ul className="history-list live-history">
                 {selectedStudent.history.slice(0, 10).map((event) => (
                   <li key={event.id ?? `${event.type}-${event.label}`}>
                     <strong>{event.label}</strong>

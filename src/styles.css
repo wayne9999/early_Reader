@@ -2,9 +2,11 @@
   color-scheme: light;
   --ink: #202238;
   --muted: #586174;
-  --paper: #fff7d7;
+  --paper: #faf7f1;
   --surface: #ffffff;
   --line: #dbe4ef;
+  --navy: #1b2038;
+  --navy-muted: #aeb5ca;
   --blue: #2f80ed;
   --blue-dark: #1d5dbb;
   --teal: #12a8a0;
@@ -27,13 +29,7 @@ body {
   margin: 0;
   min-height: 100vh;
   overflow-x: hidden;
-  background:
-    radial-gradient(circle at 12px 12px, rgba(255, 255, 255, 0.78) 0 3px, transparent 4px),
-    linear-gradient(135deg, rgba(255, 122, 182, 0.22), transparent 30%),
-    linear-gradient(315deg, rgba(47, 128, 237, 0.16), transparent 34%),
-    linear-gradient(180deg, #fffdf2 0%, #fff7d7 50%, #edf9ff 100%),
-    var(--paper);
-  background-size: 28px 28px, auto, auto, auto;
+  background: linear-gradient(180deg, #fffdfa 0%, #faf7f1 55%, #eef8ff 100%), var(--paper);
   color: var(--ink);
 }
 
@@ -48,7 +44,7 @@ button {
 
 .app-shell {
   display: grid;
-  grid-template-columns: 300px minmax(0, 1fr);
+  grid-template-columns: 292px minmax(0, 1fr);
   min-height: 100vh;
 }
 
@@ -61,12 +57,11 @@ button {
   display: flex;
   flex-direction: column;
   gap: 24px;
-  padding: 28px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(255, 253, 242, 0.92)),
-    var(--surface);
-  border-right: 4px solid rgba(47, 128, 237, 0.12);
-  backdrop-filter: blur(16px);
+  padding: 20px;
+  background: var(--navy);
+  border-right: 0;
+  color: white;
+  box-shadow: 18px 0 40px rgba(27, 32, 56, 0.12);
 }
 
 .brand {
@@ -81,7 +76,7 @@ button {
   width: 64px;
   height: 64px;
   border-radius: 8px;
-  background: linear-gradient(135deg, var(--blue), var(--teal));
+  background: linear-gradient(135deg, var(--coral), #ff7d4f);
   color: white;
   font-size: 2rem;
   font-weight: 900;
@@ -220,6 +215,16 @@ button {
   text-transform: uppercase;
 }
 
+.sidebar .eyebrow,
+.sidebar .nav-group-title {
+  color: rgba(255, 255, 255, 0.52);
+}
+
+.sidebar .brand h1,
+.sidebar .daily-goal h2 {
+  color: #ffffff;
+}
+
 .nav-tabs {
   display: grid;
   gap: 10px;
@@ -256,8 +261,8 @@ button {
   width: 24px;
   height: 24px;
   border-radius: 999px;
-  background: rgba(47, 128, 237, 0.1);
-  color: var(--blue-dark);
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.78);
 }
 
 .nav-group[open] .nav-group-title::after {
@@ -282,16 +287,16 @@ button {
 
 .nav-tab {
   padding: 13px 16px;
-  background: rgba(255, 255, 255, 0.72);
-  color: #3c4257;
+  background: transparent;
+  color: var(--navy-muted);
   text-align: left;
-  box-shadow: inset 0 0 0 2px rgba(47, 128, 237, 0.08);
+  box-shadow: none;
 }
 
 .nav-tab.is-active {
-  background: linear-gradient(135deg, var(--purple), var(--blue));
+  background: linear-gradient(135deg, var(--coral), #ff7d4f);
   color: white;
-  box-shadow: 0 12px 22px rgba(47, 128, 237, 0.24);
+  box-shadow: 0 14px 26px rgba(255, 107, 107, 0.24);
 }
 
 .nav-tab:nth-child(2).is-active {
@@ -303,9 +308,19 @@ button {
 }
 
 .nav-tab.nav-donate {
-  background: linear-gradient(135deg, rgba(255, 203, 71, 0.9), rgba(255, 122, 182, 0.75));
-  color: #3c2540;
-  box-shadow: 0 9px 0 rgba(255, 122, 182, 0.18);
+  color: #ffffff;
+  background: transparent;
+  position: relative;
+}
+
+.nav-tab.nav-donate::after {
+  content: "Mission";
+  float: right;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: var(--coral);
+  color: white;
+  font-size: 0.68rem;
 }
 
 .nav-tab.nav-donate.is-active {
@@ -354,10 +369,10 @@ button {
 .daily-goal {
   margin-top: auto;
   padding: 18px;
-  border: 2px solid rgba(92, 200, 95, 0.24);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
-  background: linear-gradient(180deg, #ffffff, #f4fff0);
-  box-shadow: 0 12px 25px rgba(92, 200, 95, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: none;
 }
 
 .daily-goal h2,
@@ -366,7 +381,7 @@ button {
 }
 
 .daily-goal p {
-  color: var(--muted);
+  color: var(--navy-muted);
   line-height: 1.45;
 }
 
@@ -389,6 +404,11 @@ button {
 .daily-goal strong {
   display: block;
   margin-top: 10px;
+}
+
+.sidebar .goal-meter {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 .main-content {
@@ -487,6 +507,37 @@ button {
   font-size: 1.65rem;
 }
 
+.dashboard-heading {
+  align-items: center;
+}
+
+.dashboard-heading h2 {
+  font-size: clamp(2rem, 4vw, 3.4rem);
+  line-height: 1;
+}
+
+.streak-pill,
+.live-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: #fff2d5;
+  color: #6f4700;
+  font-weight: 1000;
+  box-shadow: 0 10px 24px rgba(255, 203, 71, 0.16);
+}
+
+.live-pill {
+  background: #eaffec;
+  color: #206e38;
+}
+
+.live-pill::first-letter {
+  color: var(--green);
+}
+
 .level-select {
   width: min(100%, 360px);
   min-height: 50px;
@@ -507,10 +558,10 @@ button {
 .practice-panel {
   min-width: 0;
   padding: 24px;
-  border: 3px solid rgba(255, 255, 255, 0.86);
-  border-radius: 8px;
+  border: 1px solid rgba(27, 32, 56, 0.08);
+  border-radius: 24px;
   background: linear-gradient(180deg, #ffffff, #fffdf2);
-  box-shadow: 0 10px 30px rgba(21, 37, 54, 0.08);
+  box-shadow: 0 18px 44px rgba(21, 37, 54, 0.07);
 }
 
 .word-panel {
@@ -890,8 +941,261 @@ button {
 
 .student-dashboard-grid {
   display: grid;
-  grid-template-columns: minmax(260px, 0.9fr) minmax(280px, 1.1fr);
+  grid-template-columns: repeat(3, minmax(240px, 1fr));
   gap: 18px;
+}
+
+.student-hero-grid {
+  display: grid;
+  grid-template-columns: minmax(320px, 1.6fr) minmax(280px, 0.8fr);
+  gap: 18px;
+}
+
+.goal-spotlight {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 22px;
+  align-items: center;
+  background: #ffffff;
+}
+
+.goal-ring {
+  --goal-progress: 0%;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  width: 140px;
+  height: 140px;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at center, #ffffff 0 54%, transparent 56%),
+    conic-gradient(var(--coral) var(--goal-progress), #f0ece6 0);
+  box-shadow: inset 0 0 0 14px rgba(255, 255, 255, 0.74), 0 12px 30px rgba(255, 107, 107, 0.12);
+}
+
+.goal-ring strong {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.goal-ring span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.next-best-card {
+  display: grid;
+  align-content: space-between;
+  min-height: 196px;
+  background: linear-gradient(135deg, var(--coral), #ff9a38 58%, var(--gold));
+  color: #ffffff;
+  overflow: hidden;
+}
+
+.next-best-card .eyebrow,
+.next-best-card p {
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.next-best-card h3 {
+  color: #ffffff;
+  font-size: clamp(1.6rem, 3vw, 2.25rem);
+}
+
+.dashboard-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(160px, 1fr));
+  gap: 16px;
+}
+
+.dashboard-stat-card {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  min-height: 92px;
+  padding: 20px;
+  border: 1px solid rgba(27, 32, 56, 0.08);
+  border-radius: 24px;
+  background: #ffffff;
+  box-shadow: 0 18px 44px rgba(21, 37, 54, 0.07);
+}
+
+.dashboard-stat-card > span {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+  background: var(--gold);
+  color: #5a3f00;
+  font-size: 1.35rem;
+  font-weight: 1000;
+}
+
+.dashboard-stat-card:nth-child(2) > span {
+  background: var(--green);
+  color: white;
+}
+
+.dashboard-stat-card:nth-child(3) > span {
+  background: #31aee8;
+  color: white;
+}
+
+.dashboard-stat-card:nth-child(4) > span {
+  background: var(--coral);
+  color: white;
+}
+
+.dashboard-stat-card small,
+.dashboard-stat-card strong {
+  display: block;
+}
+
+.dashboard-stat-card small {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.dashboard-stat-card strong {
+  color: var(--ink);
+  font-size: 1.65rem;
+}
+
+.skill-garden-panel {
+  background: #ffffff;
+}
+
+.skill-garden-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.skill-sprout {
+  display: grid;
+  place-items: center;
+  gap: 6px;
+  min-height: 98px;
+  padding: 14px;
+  border-radius: 20px;
+  background: #f5f2ec;
+  text-align: center;
+  animation: sprout-bob 3.8s ease-in-out infinite;
+}
+
+.skill-sprout span {
+  color: var(--teal);
+  font-size: 1.7rem;
+}
+
+.skill-sprout strong {
+  font-size: 0.86rem;
+}
+
+.skill-sprout small {
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+.skill-sprout.sprout-1 span {
+  color: var(--green);
+}
+
+.skill-sprout.sprout-2 span {
+  color: var(--gold);
+}
+
+.skill-sprout.sprout-3 span {
+  color: var(--purple);
+}
+
+.strength-panel,
+.practice-path-panel,
+.weekly-panel {
+  background: #ffffff;
+}
+
+.strength-row,
+.practice-path-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 48px;
+  margin-top: 10px;
+  padding: 12px 16px;
+  border-radius: 999px;
+  font-weight: 900;
+}
+
+.strength-row {
+  background: #ddf6e6;
+}
+
+.strength-row span {
+  color: var(--green);
+}
+
+.practice-path-row {
+  background: #ffe6e1;
+}
+
+.practice-path-row span {
+  color: var(--coral);
+  font-size: 1.45rem;
+}
+
+.weekly-bars {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10px;
+  align-items: end;
+  min-height: 132px;
+  margin-top: 18px;
+}
+
+.weekly-bars span {
+  display: grid;
+  gap: 8px;
+  align-items: end;
+  justify-items: center;
+}
+
+.weekly-bars i {
+  display: block;
+  width: 100%;
+  max-width: 38px;
+  height: var(--bar-height);
+  min-height: 24px;
+  border-radius: 14px 14px 4px 4px;
+  background: linear-gradient(180deg, var(--teal), #32c2b7);
+}
+
+.weekly-bars small {
+  color: var(--muted);
+  font-weight: 900;
+}
+
+.live-activity-panel {
+  background: linear-gradient(180deg, #ffffff, #eef8ff);
+}
+
+.live-history li {
+  position: relative;
+}
+
+.live-history li::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--green);
+  box-shadow: 0 0 0 8px rgba(92, 200, 95, 0.14);
+  animation: pulse-dot 1.8s ease-in-out infinite;
 }
 
 .area-summary-list {
@@ -1588,6 +1892,62 @@ button {
   background: linear-gradient(180deg, #ffffff, #eef8ff);
 }
 
+.teacher-dashboard-heading .helper-text {
+  max-width: 720px;
+  margin: 8px 0 0;
+}
+
+.teacher-command-card {
+  background: linear-gradient(135deg, #ffffff, #eef8ff 58%, #eaffec);
+}
+
+.teacher-command-card h3 {
+  font-size: clamp(1.7rem, 3vw, 2.8rem);
+}
+
+.teacher-command-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(110px, 1fr));
+  gap: 12px;
+  margin: 20px 0 12px;
+}
+
+.teacher-command-stat {
+  display: grid;
+  gap: 4px;
+  min-height: 88px;
+  padding: 14px;
+  border-radius: 20px;
+  background: #ffffff;
+  border: 1px solid rgba(27, 32, 56, 0.08);
+}
+
+.teacher-command-stat strong {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.teacher-command-stat small {
+  color: var(--muted);
+  font-weight: 900;
+}
+
+.teacher-command-stat.is-blue {
+  box-shadow: inset 0 -5px 0 rgba(47, 128, 237, 0.2);
+}
+
+.teacher-command-stat.is-green {
+  box-shadow: inset 0 -5px 0 rgba(92, 200, 95, 0.24);
+}
+
+.teacher-command-stat.is-gold {
+  box-shadow: inset 0 -5px 0 rgba(255, 203, 71, 0.34);
+}
+
+.teacher-command-stat.is-coral {
+  box-shadow: inset 0 -5px 0 rgba(255, 107, 107, 0.24);
+}
+
 .teacher-metrics {
   display: flex;
   flex-wrap: wrap;
@@ -1607,6 +1967,10 @@ button {
 .roster-panel {
   position: sticky;
   top: 20px;
+}
+
+.teacher-roster-panel {
+  background: #ffffff;
 }
 
 .student-list,
@@ -1635,16 +1999,16 @@ button {
   min-height: 68px;
   padding: 12px;
   border: 2px solid rgba(47, 128, 237, 0.12);
-  border-radius: 8px;
+  border-radius: 18px;
   background: #ffffff;
   color: var(--ink);
   text-align: left;
 }
 
 .student-row.is-active {
-  border-color: var(--purple);
-  background: linear-gradient(180deg, #ffffff, #f2eaff);
-  box-shadow: 0 8px 0 rgba(139, 92, 246, 0.12);
+  border-color: var(--coral);
+  background: linear-gradient(180deg, #ffffff, #fff0f0);
+  box-shadow: 0 12px 24px rgba(255, 107, 107, 0.12);
 }
 
 .student-row strong,
@@ -1657,6 +2021,27 @@ button {
   color: var(--muted);
   font-style: normal;
   font-weight: 800;
+}
+
+.student-row em {
+  min-width: 78px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  text-align: center;
+}
+
+.student-row em.needs-focus {
+  background: #ffe6e1;
+  color: #963c32;
+}
+
+.student-row em.on-track {
+  background: #ddf6e6;
+  color: #206e38;
+}
+
+.selected-student-card {
+  background: linear-gradient(135deg, #ffffff, #fff2d5 58%, #eef8ff);
 }
 
 .insight-columns {
@@ -1767,9 +2152,22 @@ button {
   gap: 4px;
   min-height: 82px;
   padding: 12px;
-  border-radius: 8px;
+  border-radius: 18px;
   background: linear-gradient(180deg, #ffffff, #eef8ff);
   border: 2px solid rgba(47, 128, 237, 0.14);
+}
+
+.teacher-signal-panel .activity-review-grid span {
+  background: #ffffff;
+  animation: signal-rise 3.8s ease-in-out infinite;
+}
+
+.heatmap-panel {
+  background: linear-gradient(180deg, #ffffff, #f7fff3);
+}
+
+.heatmap-panel .area-summary-row {
+  background: linear-gradient(90deg, rgba(92, 200, 95, 0.18), rgba(255, 255, 255, 0.84));
 }
 
 .activity-review-grid strong {
@@ -1792,6 +2190,38 @@ button {
   background: #fff0f0;
   color: #7a2d2d;
   font-weight: 900;
+}
+
+@keyframes sprout-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.18);
+    opacity: 0.72;
+  }
+}
+
+@keyframes signal-rise {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
 }
 
 .donation-hero {
@@ -2252,6 +2682,7 @@ button {
   .hero,
   .learning-grid,
   .student-dashboard-grid,
+  .student-hero-grid,
   .teacher-summary,
   .teacher-grid,
   .insight-columns,
@@ -2282,6 +2713,8 @@ button {
 
   .memory-board,
   .stats-grid,
+  .dashboard-stat-grid,
+  .teacher-command-grid,
   .activity-choice-grid,
   .signup-choice-grid {
     grid-template-columns: repeat(2, minmax(120px, 1fr));
@@ -2318,10 +2751,18 @@ button {
 
   .memory-board,
   .stats-grid,
+  .dashboard-stat-grid,
+  .teacher-command-grid,
   .activity-choice-grid,
   .auth-grid,
   .signup-choice-grid {
     grid-template-columns: 1fr;
+  }
+
+  .goal-spotlight {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
   }
 
   .button-row {
@@ -2381,5 +2822,16 @@ button {
   .email-auth-form,
   .social-buttons {
     margin-top: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
   }
 }
