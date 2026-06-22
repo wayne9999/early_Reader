@@ -1684,6 +1684,48 @@ button {
   background: linear-gradient(180deg, #ffffff, #fff0f0);
 }
 
+.insight-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.ai-status-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: #ffffff;
+  border: 2px solid rgba(47, 128, 237, 0.16);
+  color: var(--ink);
+  font-size: 0.82rem;
+  font-weight: 1000;
+  text-transform: uppercase;
+}
+
+.ai-status-pill.queued,
+.ai-status-pill.running {
+  border-color: rgba(255, 203, 71, 0.68);
+  background: #fff6cf;
+}
+
+.ai-status-pill.ready,
+.ai-status-pill.succeeded {
+  border-color: rgba(92, 200, 95, 0.5);
+  background: #efffeb;
+}
+
+.ai-status-pill.failed {
+  border-color: rgba(255, 107, 107, 0.55);
+  background: #fff0f0;
+}
+
+.subtle-button {
+  background: #ffffff;
+}
+
 .teacher-plan {
   margin: 12px 0 0;
   padding-left: 24px;
@@ -2186,6 +2228,12 @@ button {
   }
 
   .section-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .student-analysis-header,
+  .insight-actions {
     align-items: stretch;
     flex-direction: column;
   }

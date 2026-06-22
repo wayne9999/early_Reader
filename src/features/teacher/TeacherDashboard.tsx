@@ -2,13 +2,13 @@ import { useEffect, useMemo, useState } from "react";
 import { getClassroomStudents } from "../../services/classroomRepository";
 import { analyzeClassroom, analyzeStudent } from "../../services/learningAnalysisService";
 import { loadTeacherAssignments, updateTeacherAssignmentStatus } from "../../services/assignmentRepository";
-import { loadLatestStudentInsight, requestStudentInsight } from "../../services/aiInsightRepository";
+import { loadLatestStudentInsight, loadLatestStudentInsightJob, requestStudentInsight } from "../../services/aiInsightRepository";
 import { loadLearningEvents } from "../../services/learningEventRepository";
 import { recentNeeds, summarizeByArea, summarizeEvents } from "../../services/learningEventSummary";
 import { trackProductEvent } from "../../services/productAnalytics";
 import { downloadStudentReportCard } from "../../services/reportCardService";
 import { createTeacherInvite, loadTeacherInvites } from "../../services/teacherInviteRepository";
-import type { AppUser, LearningEvent, Progress, SkillInsight, StudentAiInsight, StudentSummary, TeacherInvite, TeacherStudentLink, UserProfile } from "../../types";
+import type { AiAnalysisJob, AppUser, LearningEvent, Progress, SkillInsight, StudentAiInsight, StudentSummary, TeacherInvite, TeacherStudentLink, UserProfile } from "../../types";
 
 type TeacherDashboardProps = {
   progress: Progress;
@@ -28,11 +28,59 @@ function scoreLabel(insight: SkillInsight) {
   return "Needs support";
 }
 
+function formatInsightDate(value: unknown) {
+  if (!value) {
+    return "Not generated yet";
+  }
+
+  const date =
+    typeof value === "string"
+      ? new Date(value)
+      : value && typeof value === "object" && "toDate" in value && typeof value.toDate === "function"
+        ? value.toDate()
+        : null;
+
+  if (!date || Number.isNaN(date.getTime())) {
+    return "Recently";
+  }
+
+  return date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+}
+
+function aiJobLabel(job: AiAnalysisJob | null, insight: StudentAiInsight | null) {
+  if (!job) {
+    return insight ? "ready" : "not requested";
+  }
+
+  return job.status;
+}
+
+function aiJobHelp(job: AiAnalysisJob | null, insight: StudentAiInsight | null) {
+  if (job?.status === "queued") {
+    return "Queued for backend processing.";
+  }
+
+  if (job?.status === "running") {
+    return "Analyzing recent practice now.";
+  }
+
+  if (job?.status === "failed") {
+    return job.error ?? "The backend could not generate this insight. Try again after more practice is logged.";
+  }
+
+  if (insight) {
+    return "Ready for teacher review.";
+  }
+
+  return "Generate the first insight after this student has learning history.";
+}
+
 export function TeacherDashboard({ progress, user, profile }: TeacherDashboardProps) {
   const [assignments, setAssignments] = useState<TeacherStudentLink[]>([]);
   const [invites, setInvites] = useState<TeacherInvite[]>([]);
   const [studentHistories, setStudentHistories] = useState<Record<string, LearningEvent[]>>({});
   const [studentInsights, setStudentInsights] = useState<Record<string, StudentAiInsight | null>>({});
+  const [studentInsightJobs, setStudentInsightJobs] = useState<Record<string, AiAnalysisJob | null>>({});
   const [isLoadingRoster, setIsLoadingRoster] = useState(true);
   const [isCreatingInvite, setIsCreatingInvite] = useState(false);
   const [isRequestingInsight, setIsRequestingInsight] = useState(false);
@@ -65,6 +113,8 @@ export function TeacherDashboard({ progress, user, profile }: TeacherDashboardPr
   const selectedNeeds = useMemo(() => recentNeeds(selectedEvents), [selectedEvents]);
   const selectedActivityEvents = selectedStudent?.history?.filter((event) => event.type === "activity_completed") ?? [];
   const selectedAiInsight = selectedStudent ? studentInsights[selectedStudent.id] ?? null : null;
+  const selectedAiJob = selectedStudent ? studentInsightJobs[selectedStudent.id] ?? null : null;
+  const selectedAiStatus = aiJobLabel(selectedAiJob, selectedAiInsight);
   const activeAssignments = assignments.filter((assignment) => assignment.status === "active");
   const requestedAssignments = assignments.filter((assignment) => assignment.status === "requested");
 
@@ -99,6 +149,17 @@ export function TeacherDashboard({ progress, user, profile }: TeacherDashboardPr
           if (isMounted) {
             setStudentInsights(Object.fromEntries(insightEntries));
           }
+
+          const jobEntries = await Promise.all(
+            activeAssignments.map(async (assignment) => [
+              assignment.studentId,
+              await loadLatestStudentInsightJob(assignment.studentId)
+            ] as const)
+          );
+
+          if (isMounted) {
+            setStudentInsightJobs(Object.fromEntries(jobEntries));
+          }
         }
       })
       .finally(() => {
@@ -132,6 +193,18 @@ export function TeacherDashboard({ progress, user, profile }: TeacherDashboardPr
     }
   }, [selectedStudentId, students]);
 
+  useEffect(() => {
+    if (!selectedStudent || !["queued", "running"].includes(selectedAiJob?.status ?? "")) {
+      return;
+    }
+
+    const pollId = window.setInterval(() => {
+      void refreshSelectedInsight();
+    }, 5000);
+
+    return () => window.clearInterval(pollId);
+  }, [selectedAiJob?.status, selectedStudent?.id]);
+
   async function changeAssignmentStatus(linkId: string, status: TeacherStudentLink["status"]) {
     await updateTeacherAssignmentStatus(linkId, status);
     setAssignments(await loadTeacherAssignments(user));
@@ -158,21 +231,45 @@ export function TeacherDashboard({ progress, user, profile }: TeacherDashboardPr
     setIsCreatingInvite(false);
   }
 
+  async function refreshSelectedInsight() {
+    if (!selectedStudent) {
+      return;
+    }
+
+    const [insight, job] = await Promise.all([
+      loadLatestStudentInsight(selectedStudent.id),
+      loadLatestStudentInsightJob(selectedStudent.id)
+    ]);
+    setStudentInsights((current) => ({ ...current, [selectedStudent.id]: insight }));
+    setStudentInsightJobs((current) => ({ ...current, [selectedStudent.id]: job }));
+  }
+
   async function requestSelectedInsight() {
     if (!user || !selectedStudent) {
       return;
     }
 
     setIsRequestingInsight(true);
-    setInsightStatus("Insight queued. Refresh this panel in a few moments after the backend worker finishes.");
+    setInsightStatus("Insight queued. This panel will refresh while the backend worker finishes.");
 
     try {
-      await requestStudentInsight(user, selectedStudent.id);
+      const queuedJob = await requestStudentInsight(user, selectedStudent.id);
+      setStudentInsightJobs((current) => ({
+        ...current,
+        [selectedStudent.id]: {
+          id: queuedJob.id,
+          studentId: selectedStudent.id,
+          requestedBy: user.id,
+          requestKind: "teacherRequested",
+          status: queuedJob.status,
+          consentAccepted: true,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }
+      }));
       void trackProductEvent(user, "ai_insight_requested", { studentId: selectedStudent.id });
       window.setTimeout(() => {
-        void loadLatestStudentInsight(selectedStudent.id).then((insight) => {
-          setStudentInsights((current) => ({ ...current, [selectedStudent.id]: insight }));
-        });
+        void refreshSelectedInsight();
       }, 3500);
     } catch (error) {
       setInsightStatus(error instanceof Error ? error.message : "Unable to queue insight right now.");
@@ -430,17 +527,26 @@ export function TeacherDashboard({ progress, user, profile }: TeacherDashboardPr
                 <p className="eyebrow">AI-assisted teacher insight</p>
                 <h3>{selectedAiInsight ? "Latest backend insight" : "Queue a secure insight"}</h3>
               </div>
-              <button
-                className="secondary-button"
-                type="button"
-                disabled={!selectedStudent || isRequestingInsight}
-                onClick={() => void requestSelectedInsight()}
-              >
-                {isRequestingInsight ? "Queueing..." : "Generate insight"}
-              </button>
+              <div className="insight-actions">
+                <span className={`ai-status-pill ${selectedAiStatus.replace(" ", "-")}`}>{selectedAiStatus}</span>
+                <button
+                  className="secondary-button"
+                  type="button"
+                  disabled={!selectedStudent || isRequestingInsight || ["queued", "running"].includes(selectedAiJob?.status ?? "")}
+                  onClick={() => void requestSelectedInsight()}
+                >
+                  {isRequestingInsight ? "Queueing..." : "Generate insight"}
+                </button>
+                <button className="secondary-button subtle-button" type="button" disabled={!selectedStudent} onClick={() => void refreshSelectedInsight()}>
+                  Refresh
+                </button>
+              </div>
             </div>
             <p className="helper-text">
               {selectedAiInsight?.summary ?? selectedAnalysis?.aiReadinessNote ?? "Collect assigned-student activity before generating AI summaries."}
+            </p>
+            <p className="helper-text">
+              {aiJobHelp(selectedAiJob, selectedAiInsight)} Last generated: {formatInsightDate(selectedAiInsight?.createdAt)}.
             </p>
             {insightStatus ? <p className="helper-text">{insightStatus}</p> : null}
             {selectedAiInsight ? (

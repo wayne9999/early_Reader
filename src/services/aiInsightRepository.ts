@@ -1,4 +1,4 @@
-import { collection, getDocs, limit, orderBy, query } from "firebase/firestore";
+import { collection, getDocs, limit, orderBy, query, where } from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
 import type { AiAnalysisJob, AppUser, StudentAiInsight } from "../types";
 import { getFirebaseRuntime } from "./firebase";
@@ -34,6 +34,40 @@ export async function loadLatestStudentInsight(studentId: string): Promise<Stude
     id: latest.id,
     ...(latest.data() as StudentAiInsight)
   };
+}
+
+export async function loadLatestStudentInsightJob(studentId: string): Promise<AiAnalysisJob | null> {
+  const runtime = getFirebaseRuntime();
+  const firebaseUser = runtime?.auth.currentUser;
+
+  if (!runtime || !firebaseUser) {
+    return null;
+  }
+
+  const jobsQuery = query(
+    collection(runtime.db, "aiAnalysisJobs"),
+    where("studentId", "==", studentId),
+    limit(10)
+  );
+  const snapshot = await getDocs(jobsQuery);
+  const jobs = snapshot.docs.map((jobDoc) => ({
+    id: jobDoc.id,
+    ...(jobDoc.data() as AiAnalysisJob)
+  }));
+
+  return jobs.sort((left, right) => timestampMillis(right.createdAt) - timestampMillis(left.createdAt))[0] ?? null;
+}
+
+function timestampMillis(value: unknown) {
+  if (typeof value === "string") {
+    return Date.parse(value) || 0;
+  }
+
+  if (value && typeof value === "object" && "toMillis" in value && typeof value.toMillis === "function") {
+    return value.toMillis();
+  }
+
+  return 0;
 }
 
 export async function requestStudentInsight(user: AppUser | null, studentId: string): Promise<Pick<AiAnalysisJob, "id" | "status">> {

@@ -39,6 +39,10 @@ Future AI provider secret, only when model-backed insights are enabled:
 firebase functions:secrets:set OPENAI_API_KEY
 ```
 
+Future AI provider runtime value:
+
+- `READNEST_AI_MODEL`
+
 Runtime environment values:
 
 - `STRIPE_FAMILY_PLUS_PRICE_ID`
