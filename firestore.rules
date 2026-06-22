@@ -77,6 +77,16 @@ service cloud.firestore {
         allow read: if ownsUserDocument(userId) || isTeacherAssignedTo(userId);
         allow update, delete: if false;
       }
+
+      match /learningSummaries/{summaryId} {
+        allow read: if ownsUserDocument(userId) || isTeacherAssignedTo(userId);
+        allow create, update, delete: if false;
+      }
+
+      match /aiInsights/{insightId} {
+        allow read: if ownsUserDocument(userId) || isTeacherAssignedTo(userId);
+        allow create, update, delete: if false;
+      }
     }
 
     match /subscriptions/{userId} {
@@ -187,6 +197,17 @@ service cloud.firestore {
     match /aiRecommendationRequests/{requestId} {
       allow read: if isSignedIn()
         && (resource.data.requestedBy == request.auth.uid || isAdmin());
+      allow create, update, delete: if false;
+    }
+
+    match /aiAnalysisJobs/{jobId} {
+      allow read: if isSignedIn()
+        && (
+          resource.data.requestedBy == request.auth.uid
+          || resource.data.studentId == request.auth.uid
+          || isTeacherAssignedTo(resource.data.studentId)
+          || isAdmin()
+        );
       allow create, update, delete: if false;
     }
 

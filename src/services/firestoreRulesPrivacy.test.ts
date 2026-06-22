@@ -45,6 +45,20 @@ describe("firestore privacy rules", () => {
     expect(rules).toContain("allow create, update, delete: if false;");
   });
 
+  it("keeps AI summaries and insights backend-authored but readable to assigned teachers", () => {
+    expect(rules).toContain("match /learningSummaries/{summaryId}");
+    expect(rules).toContain("match /aiInsights/{insightId}");
+    expect(rules).toContain("allow read: if ownsUserDocument(userId) || isTeacherAssignedTo(userId);");
+    expect(rules).toContain("allow create, update, delete: if false;");
+  });
+
+  it("keeps AI analysis jobs backend-only while allowing scoped status reads", () => {
+    expect(rules).toContain("match /aiAnalysisJobs/{jobId}");
+    expect(rules).toContain("resource.data.studentId == request.auth.uid");
+    expect(rules).toContain("isTeacherAssignedTo(resource.data.studentId)");
+    expect(rules).toContain("allow create, update, delete: if false;");
+  });
+
   it("supports teacher invite codes without allowing client deletes", () => {
     expect(rules).toContain("match /teacherInvites/{inviteId}");
     expect(rules).toContain("request.resource.data.teacherId == request.auth.uid");

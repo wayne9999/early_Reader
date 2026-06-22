@@ -2,12 +2,13 @@ import { useEffect, useMemo, useState } from "react";
 import { getClassroomStudents } from "../../services/classroomRepository";
 import { analyzeClassroom, analyzeStudent } from "../../services/learningAnalysisService";
 import { loadTeacherAssignments, updateTeacherAssignmentStatus } from "../../services/assignmentRepository";
+import { loadLatestStudentInsight, requestStudentInsight } from "../../services/aiInsightRepository";
 import { loadLearningEvents } from "../../services/learningEventRepository";
 import { recentNeeds, summarizeByArea, summarizeEvents } from "../../services/learningEventSummary";
 import { trackProductEvent } from "../../services/productAnalytics";
 import { downloadStudentReportCard } from "../../services/reportCardService";
 import { createTeacherInvite, loadTeacherInvites } from "../../services/teacherInviteRepository";
-import type { AppUser, LearningEvent, Progress, SkillInsight, StudentSummary, TeacherInvite, TeacherStudentLink, UserProfile } from "../../types";
+import type { AppUser, LearningEvent, Progress, SkillInsight, StudentAiInsight, StudentSummary, TeacherInvite, TeacherStudentLink, UserProfile } from "../../types";
 
 type TeacherDashboardProps = {
   progress: Progress;
@@ -31,8 +32,11 @@ export function TeacherDashboard({ progress, user, profile }: TeacherDashboardPr
   const [assignments, setAssignments] = useState<TeacherStudentLink[]>([]);
   const [invites, setInvites] = useState<TeacherInvite[]>([]);
   const [studentHistories, setStudentHistories] = useState<Record<string, LearningEvent[]>>({});
+  const [studentInsights, setStudentInsights] = useState<Record<string, StudentAiInsight | null>>({});
   const [isLoadingRoster, setIsLoadingRoster] = useState(true);
   const [isCreatingInvite, setIsCreatingInvite] = useState(false);
+  const [isRequestingInsight, setIsRequestingInsight] = useState(false);
+  const [insightStatus, setInsightStatus] = useState<string>("");
   const demoStudents = useMemo(() => getClassroomStudents(progress, user), [progress, user]);
   const assignedStudents = useMemo<StudentSummary[]>(
     () =>
@@ -60,6 +64,7 @@ export function TeacherDashboard({ progress, user, profile }: TeacherDashboardPr
   const selectedAreaSummaries = useMemo(() => summarizeByArea(selectedEvents), [selectedEvents]);
   const selectedNeeds = useMemo(() => recentNeeds(selectedEvents), [selectedEvents]);
   const selectedActivityEvents = selectedStudent?.history?.filter((event) => event.type === "activity_completed") ?? [];
+  const selectedAiInsight = selectedStudent ? studentInsights[selectedStudent.id] ?? null : null;
   const activeAssignments = assignments.filter((assignment) => assignment.status === "active");
   const requestedAssignments = assignments.filter((assignment) => assignment.status === "requested");
 
@@ -84,6 +89,16 @@ export function TeacherDashboard({ progress, user, profile }: TeacherDashboardPr
 
         if (isMounted) {
           setStudentHistories(Object.fromEntries(historyEntries));
+          const insightEntries = await Promise.all(
+            activeAssignments.map(async (assignment) => [
+              assignment.studentId,
+              await loadLatestStudentInsight(assignment.studentId)
+            ] as const)
+          );
+
+          if (isMounted) {
+            setStudentInsights(Object.fromEntries(insightEntries));
+          }
         }
       })
       .finally(() => {
@@ -141,6 +156,29 @@ export function TeacherDashboard({ progress, user, profile }: TeacherDashboardPr
     setInvites((current) => [invite, ...current].slice(0, 10));
     void trackProductEvent(user, "teacher_invite_sent", { autoApprove: invite.autoApprove });
     setIsCreatingInvite(false);
+  }
+
+  async function requestSelectedInsight() {
+    if (!user || !selectedStudent) {
+      return;
+    }
+
+    setIsRequestingInsight(true);
+    setInsightStatus("Insight queued. Refresh this panel in a few moments after the backend worker finishes.");
+
+    try {
+      await requestStudentInsight(user, selectedStudent.id);
+      void trackProductEvent(user, "ai_insight_requested", { studentId: selectedStudent.id });
+      window.setTimeout(() => {
+        void loadLatestStudentInsight(selectedStudent.id).then((insight) => {
+          setStudentInsights((current) => ({ ...current, [selectedStudent.id]: insight }));
+        });
+      }, 3500);
+    } catch (error) {
+      setInsightStatus(error instanceof Error ? error.message : "Unable to queue insight right now.");
+    } finally {
+      setIsRequestingInsight(false);
+    }
   }
 
   return (
@@ -387,16 +425,67 @@ export function TeacherDashboard({ progress, user, profile }: TeacherDashboardPr
           </article>
 
           <article className="practice-panel ai-boundary">
-            <p className="eyebrow">AI analysis boundary</p>
-            <h3>Ready for backend AI, not browser-side secrets</h3>
+            <div className="student-analysis-header">
+              <div>
+                <p className="eyebrow">AI-assisted teacher insight</p>
+                <h3>{selectedAiInsight ? "Latest backend insight" : "Queue a secure insight"}</h3>
+              </div>
+              <button
+                className="secondary-button"
+                type="button"
+                disabled={!selectedStudent || isRequestingInsight}
+                onClick={() => void requestSelectedInsight()}
+              >
+                {isRequestingInsight ? "Queueing..." : "Generate insight"}
+              </button>
+            </div>
             <p className="helper-text">
-              {selectedAnalysis?.aiReadinessNote ?? "Collect assigned-student activity before generating AI summaries."}
+              {selectedAiInsight?.summary ?? selectedAnalysis?.aiReadinessNote ?? "Collect assigned-student activity before generating AI summaries."}
             </p>
-            <ul className="next-steps">
-              <li>Send de-identified progress events to a secure backend.</li>
-              <li>Ask AI for evidence-based instructional summaries, not diagnoses.</li>
-              <li>Store generated recommendations with source data timestamps for auditability.</li>
-            </ul>
+            {insightStatus ? <p className="helper-text">{insightStatus}</p> : null}
+            {selectedAiInsight ? (
+              <>
+                <div className="activity-review-grid">
+                  <span>
+                    <strong>{selectedAiInsight.evidence.sourceEventCount}</strong>
+                    <small>Events analyzed</small>
+                  </span>
+                  <span>
+                    <strong>{selectedAiInsight.evidence.topMissedItems.length || "New"}</strong>
+                    <small>Review targets</small>
+                  </span>
+                  <span>
+                    <strong>{selectedAiInsight.model}</strong>
+                    <small>Analysis engine</small>
+                  </span>
+                </div>
+                <div className="insight-columns">
+                  <div>
+                    <p className="eyebrow">Needs practice</p>
+                    <ul className="next-steps">
+                      {selectedAiInsight.needsPractice.length ? selectedAiInsight.needsPractice.map((need) => (
+                        <li key={`${need.area}-${need.label}`}>{need.label}: {need.nextStep}</li>
+                      )) : <li>Keep collecting practice events before making a targeted recommendation.</li>}
+                    </ul>
+                  </div>
+                  <div>
+                    <p className="eyebrow">Teacher actions</p>
+                    <ul className="next-steps">
+                      {selectedAiInsight.recommendedTeacherActions.map((action) => (
+                        <li key={action}>{action}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+                <p className="helper-text">{selectedAiInsight.aiDisclosure}</p>
+              </>
+            ) : (
+              <ul className="next-steps">
+                <li>Backend job uses assigned-student event history, not browser-side AI secrets.</li>
+                <li>Only compact learning summaries are prepared for future AI providers.</li>
+                <li>Teacher-facing recommendations are evidence-labeled and non-diagnostic.</li>
+              </ul>
+            )}
           </article>
         </div>
       </section>

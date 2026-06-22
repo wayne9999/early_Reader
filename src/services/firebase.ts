@@ -2,12 +2,14 @@ import { initializeApp, type FirebaseApp } from "firebase/app";
 import { getAnalytics, isSupported, type Analytics } from "firebase/analytics";
 import { getAuth, type Auth } from "firebase/auth";
 import { getFirestore, type Firestore } from "firebase/firestore";
+import { getFunctions, type Functions } from "firebase/functions";
 
 type FirebaseRuntime = {
   analytics: Promise<Analytics | null>;
   app: FirebaseApp;
   auth: Auth;
   db: Firestore;
+  functions: Functions;
 };
 
 const firebaseConfig = {
@@ -45,7 +47,8 @@ export function getFirebaseRuntime() {
         : Promise.resolve(null),
       app,
       auth: getAuth(app),
-      db: getFirestore(app)
+      db: getFirestore(app),
+      functions: getFunctions(app, "us-central1")
     };
   }
 

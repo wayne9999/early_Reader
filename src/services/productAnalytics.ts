@@ -15,7 +15,8 @@ export type ProductEventName =
   | "subscription_canceled"
   | "teacher_invite_sent"
   | "teacher_invite_accepted"
-  | "report_downloaded";
+  | "report_downloaded"
+  | "ai_insight_requested";
 
 type ProductEventMetadata = Record<string, string | number | boolean | null>;
 

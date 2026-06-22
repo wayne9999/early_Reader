@@ -240,6 +240,55 @@ export type TeacherAnalysis = {
   aiReadinessNote: string;
 };
 
+export type StudentAiInsight = {
+  id?: string;
+  studentId: string;
+  status: "ready";
+  summary: string;
+  strengths: Array<{
+    area: SkillArea;
+    label: string;
+    evidence: string;
+  }>;
+  needsPractice: Array<{
+    area: SkillArea;
+    label: string;
+    evidence: string;
+    nextStep: string;
+  }>;
+  recommendedTeacherActions: string[];
+  suggestedHomePractice: string[];
+  evidence: {
+    sourceEventCount: number;
+    topMissedItems: string[];
+    topMasteredItems: string[];
+  };
+  aiDisclosure: string;
+  model: string;
+  promptVersion: string;
+  sourceDataWindow?: {
+    limit: number;
+    newestEventAt: unknown;
+    oldestEventAt: unknown;
+  };
+  createdAt?: unknown;
+  updatedAt?: unknown;
+};
+
+export type AiAnalysisJob = {
+  id?: string;
+  studentId: string;
+  requestedBy: string;
+  requestKind: "teacherRequested" | "scheduled" | "legacyRecommendation";
+  status: "queued" | "running" | "succeeded" | "failed";
+  consentAccepted: boolean;
+  insightId?: string;
+  sourceEventCount?: number;
+  error?: string;
+  createdAt?: unknown;
+  updatedAt?: unknown;
+};
+
 export type SubscriptionTier = {
   id: SubscriptionTierId;
   name: string;

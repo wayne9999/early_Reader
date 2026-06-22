@@ -19,7 +19,8 @@
 - Added Firestore security rules for profiles, progress, event history, and assignment links.
 - Added donation/subscription support page using Stripe Payment Links.
 - Added trusted subscription architecture using `subscriptions/{uid}` as production paid-access authority.
-- Added Firebase Functions scaffold for Stripe webhooks, billing portal sessions, and future AI recommendation requests.
+- Added Firebase Functions scaffold for Stripe webhooks and billing portal sessions.
+- Added backend AI-learning workflow foundation with requestable/scheduled insight jobs, deterministic summaries, secure student insight storage, and teacher dashboard display.
 - Added teacher invite-code creation scaffold.
 - Added privacy/legal/refund/teacher terms pages and footer links.
 - Added go-live, Stripe, production environment, and deployment docs.
@@ -32,7 +33,7 @@
 - Facebook and Instagram sign-in still need provider setup/custom-provider work.
 - Stripe webhook code exists, but it still needs Firebase Functions dependency install, secrets, deploy, Stripe webhook registration, and end-to-end test events.
 - Teacher-created invitation codes can be created, but invite acceptance/revocation/admin tooling still needs completion.
-- AI recommendation request endpoint is a placeholder. Real AI generation must run in a backend worker after consent/legal review.
+- AI insight generation currently uses a backend rule-based engine. A real model provider adapter still needs `OPENAI_API_KEY`, consent/legal review, prompt evaluation, and production monitoring before launch.
 - Parent multi-child profiles, placement onboarding, printable sheets, and production data deletion tooling still need completion.
 - Production role enforcement should move to backend logic/custom claims before live classroom use at scale.
 

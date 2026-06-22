@@ -33,6 +33,12 @@ firebase functions:secrets:set STRIPE_SECRET_KEY
 firebase functions:secrets:set STRIPE_WEBHOOK_SECRET
 ```
 
+Future AI provider secret, only when model-backed insights are enabled:
+
+```bash
+firebase functions:secrets:set OPENAI_API_KEY
+```
+
 Runtime environment values:
 
 - `STRIPE_FAMILY_PLUS_PRICE_ID`
@@ -46,6 +52,7 @@ Runtime environment values:
 - `subscriptions/{uid}` stores paid access state from Stripe webhook/backend only.
 - Firestore rules prevent clients from writing subscription authority.
 - Teacher access to student history requires an active `teacherStudentLinks/{teacherId_studentId}` record.
+- AI insight jobs and generated recommendations are backend-authored only. Teachers can read insight output only for actively assigned students.
 
 ## Launch Blocks
 

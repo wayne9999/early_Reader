@@ -1,9 +1,12 @@
 import { initializeApp } from "firebase-admin/app";
-import { FieldValue, getFirestore } from "firebase-admin/firestore";
+import { FieldValue, getFirestore, type DocumentData } from "firebase-admin/firestore";
 import { getAuth } from "firebase-admin/auth";
 import { defineSecret } from "firebase-functions/params";
+import { onDocumentCreated } from "firebase-functions/v2/firestore";
 import { HttpsError, onCall, onRequest } from "firebase-functions/v2/https";
+import { onSchedule } from "firebase-functions/v2/scheduler";
 import Stripe from "stripe";
+import { buildRuleBasedInsight, loadRecentLearningEvents, summarizeLearningEvents, writeStudentInsight } from "./aiLearning.js";
 
 initializeApp();
 
@@ -13,6 +16,7 @@ const appBaseUrl = process.env.READNEST_APP_BASE_URL ?? "https://wayne9999.githu
 
 type SubscriptionTier = "free" | "familyPlus" | "teacherPro";
 type SubscriptionStatus = "free" | "checkoutStarted" | "active" | "pastDue" | "canceled";
+type AiJobRequestKind = "teacherRequested" | "scheduled" | "legacyRecommendation";
 
 function stripeClient() {
   return new Stripe(stripeSecretKey.value(), {
@@ -89,6 +93,101 @@ async function setSubscriptionClaim(userId: string, tier: SubscriptionTier, stat
     hasFamilyPlus: tier === "familyPlus" && status === "active",
     hasTeacherPro: tier === "teacherPro" && status === "active"
   });
+}
+
+async function isAssignedTeacher(teacherId: string, studentId: string) {
+  const link = await getFirestore().doc(`teacherStudentLinks/${teacherId}_${studentId}`).get();
+  return link.exists && link.data()?.status === "active";
+}
+
+async function assertCanRequestStudentInsight(requesterId: string, studentId: string) {
+  if (requesterId === studentId) {
+    return;
+  }
+
+  if (await isAssignedTeacher(requesterId, studentId)) {
+    return;
+  }
+
+  const requester = await getFirestore().doc(`users/${requesterId}`).get();
+
+  if (requester.data()?.role === "admin") {
+    return;
+  }
+
+  throw new HttpsError("permission-denied", "Only assigned teachers, admins, or the student account can request this insight.");
+}
+
+async function createAiAnalysisJob(options: {
+  studentId: string;
+  requestedBy: string;
+  requestKind: AiJobRequestKind;
+  consentAccepted: boolean;
+  source?: string;
+}) {
+  const createdAt = FieldValue.serverTimestamp();
+  const jobRef = await getFirestore().collection("aiAnalysisJobs").add({
+    studentId: options.studentId,
+    requestedBy: options.requestedBy,
+    requestKind: options.requestKind,
+    consentAccepted: options.consentAccepted,
+    source: options.source ?? "readnest-backend",
+    status: "queued",
+    attempts: 0,
+    createdAt,
+    updatedAt: createdAt,
+    createdBy: options.requestedBy,
+    updatedBy: options.requestedBy
+  });
+
+  return jobRef.id;
+}
+
+async function runAiAnalysisJob(jobId: string, job: DocumentData) {
+  const db = getFirestore();
+  const studentId = typeof job.studentId === "string" ? job.studentId : "";
+
+  if (!studentId) {
+    await db.doc(`aiAnalysisJobs/${jobId}`).set({
+      status: "failed",
+      error: "Missing studentId",
+      updatedAt: FieldValue.serverTimestamp(),
+      updatedBy: "ai-worker"
+    }, { merge: true });
+    return;
+  }
+
+  await db.doc(`aiAnalysisJobs/${jobId}`).set({
+    status: "running",
+    attempts: FieldValue.increment(1),
+    startedAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
+    updatedBy: "ai-worker"
+  }, { merge: true });
+
+  try {
+    const events = await loadRecentLearningEvents(db, studentId);
+    const summary = summarizeLearningEvents(studentId, events);
+    const insight = buildRuleBasedInsight(summary);
+    const insightId = await writeStudentInsight(db, studentId, summary, insight);
+
+    await db.doc(`aiAnalysisJobs/${jobId}`).set({
+      status: "succeeded",
+      insightId,
+      sourceEventCount: events.length,
+      completedAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+      updatedBy: "ai-worker"
+    }, { merge: true });
+  } catch (error) {
+    await db.doc(`aiAnalysisJobs/${jobId}`).set({
+      status: "failed",
+      error: error instanceof Error ? error.message : "Insight processing failed",
+      updatedAt: FieldValue.serverTimestamp(),
+      updatedBy: "ai-worker"
+    }, { merge: true });
+    throw error;
+  }
 }
 
 async function handleSubscription(subscription: Stripe.Subscription, eventId: string) {
@@ -272,6 +371,38 @@ export const createBillingPortalSession = onCall(
   }
 );
 
+export const requestStudentInsight = onCall(
+  {
+    region: "us-central1"
+  },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Sign in before requesting recommendations.");
+    }
+
+    const consentAccepted = request.data?.consentAccepted === true;
+    const studentId = typeof request.data?.studentId === "string" ? request.data.studentId : request.auth.uid;
+
+    if (!consentAccepted) {
+      throw new HttpsError("failed-precondition", "Parent or teacher consent is required before AI-assisted recommendations.");
+    }
+
+    await assertCanRequestStudentInsight(request.auth.uid, studentId);
+    const jobId = await createAiAnalysisJob({
+      studentId,
+      requestedBy: request.auth.uid,
+      requestKind: "teacherRequested",
+      consentAccepted
+    });
+
+    return {
+      jobId,
+      status: "queued",
+      message: "Insight request recorded. The backend worker will generate an evidence-based summary asynchronously."
+    };
+  }
+);
+
 export const createLearningRecommendation = onCall(
   {
     region: "us-central1"
@@ -287,19 +418,69 @@ export const createLearningRecommendation = onCall(
       throw new HttpsError("failed-precondition", "Parent or teacher consent is required before AI-assisted recommendations.");
     }
 
-    await getFirestore().collection("aiRecommendationRequests").add({
+    const jobId = await createAiAnalysisJob({
+      studentId: request.auth.uid,
       requestedBy: request.auth.uid,
-      status: "queued",
-      inputSummary: request.data?.learningSummary ?? null,
+      requestKind: "legacyRecommendation",
       consentAccepted,
-      note: "AI recommendations are instructional support, not diagnosis.",
-      createdAt: FieldValue.serverTimestamp(),
-      updatedAt: FieldValue.serverTimestamp()
+      source: "legacy-callable"
     });
 
     return {
+      jobId,
       status: "queued",
-      message: "Recommendation request recorded. Production AI should run in a separate backend worker with redaction and audit logging."
+      message: "Recommendation request recorded. The backend worker will generate an evidence-based summary asynchronously."
     };
+  }
+);
+
+export const processAiAnalysisJob = onDocumentCreated(
+  {
+    document: "aiAnalysisJobs/{jobId}",
+    region: "us-central1",
+    retry: true
+  },
+  async (event) => {
+    const snapshot = event.data;
+
+    if (!snapshot) {
+      return;
+    }
+
+    const job = snapshot.data();
+
+    if (job.status !== "queued") {
+      return;
+    }
+
+    await runAiAnalysisJob(event.params.jobId, job);
+  }
+);
+
+export const enqueueDailyInsightJobs = onSchedule(
+  {
+    schedule: "every day 02:30",
+    timeZone: "America/New_York",
+    region: "us-central1"
+  },
+  async () => {
+    const snapshot = await getFirestore()
+      .collection("teacherStudentLinks")
+      .where("status", "==", "active")
+      .limit(250)
+      .get();
+    const uniqueStudentIds = [...new Set(snapshot.docs.map((doc) => doc.data().studentId).filter((studentId): studentId is string => typeof studentId === "string"))];
+
+    await Promise.all(
+      uniqueStudentIds.map((studentId) =>
+        createAiAnalysisJob({
+          studentId,
+          requestedBy: "scheduler",
+          requestKind: "scheduled",
+          consentAccepted: true,
+          source: "daily-schedule"
+        })
+      )
+    );
   }
 );
