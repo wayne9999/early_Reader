@@ -35,6 +35,13 @@ describe("firestore privacy rules", () => {
     expect(rules).toContain("resource.data.status in [\"requested\", \"active\"]");
   });
 
+  it("supports a teacher-visible student placement queue without client-side assignment writes", () => {
+    expect(rules).toContain("match /studentPlacementQueue/{studentId}");
+    expect(rules).toContain("request.resource.data.status in [\"unassigned\", \"requested\"]");
+    expect(rules).toContain("userRole() == \"teacher\" || isAdmin()");
+    expect(rules).toContain("request.query.limit <= 25");
+  });
+
   it("scopes classroom data to admins or classroom members", () => {
     expect(rules).toContain("function isClassroomMember(classroomId)");
     expect(rules).toContain("userRole() == \"admin\" || isClassroomMember(classroomId)");

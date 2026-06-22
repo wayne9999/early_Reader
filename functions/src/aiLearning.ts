@@ -1,4 +1,4 @@
-import { FieldValue, type DocumentData, type Firestore } from "firebase-admin/firestore";
+import { FieldValue, type DocumentData, type Firestore, type QueryDocumentSnapshot } from "firebase-admin/firestore";
 
 type SkillArea = "phonics" | "sightWords" | "fluency" | "workingMemory" | "consistency";
 
@@ -467,7 +467,7 @@ export async function loadRecentLearningEvents(db: Firestore, studentId: string,
     .limit(maxEvents)
     .get();
 
-  return snapshot.docs.map((doc) => ({
+  return snapshot.docs.map((doc: QueryDocumentSnapshot) => ({
     id: doc.id,
     ...doc.data()
   })) as LearningEvent[];

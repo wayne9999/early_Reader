@@ -1425,12 +1425,17 @@ button {
 }
 
 .teacher-load-key,
+.teacher-choice-actions,
 .teacher-specialties,
 .teacher-profile-details,
 .request-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.teacher-choice-actions {
+  justify-content: flex-end;
 }
 
 .teacher-search {
@@ -1523,6 +1528,11 @@ button {
 .teacher-specialties span {
   background: #f2eaff;
   color: #4f3b89;
+}
+
+.holding-space-card {
+  border-color: rgba(146, 94, 255, 0.22);
+  background: linear-gradient(135deg, #ffffff, #f2eaff 58%, #eef8ff);
 }
 
 .request-list {
@@ -1946,6 +1956,45 @@ button {
 
 .teacher-command-stat.is-coral {
   box-shadow: inset 0 -5px 0 rgba(255, 107, 107, 0.24);
+}
+
+.placement-queue-card {
+  background: linear-gradient(135deg, #ffffff, #fff5c7 52%, #f2eaff);
+}
+
+.placement-queue-heading,
+.placement-queue-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.placement-queue-heading h3 {
+  margin: 0;
+}
+
+.placement-queue-list {
+  display: grid;
+  gap: 10px;
+}
+
+.placement-queue-row {
+  min-height: 68px;
+  padding: 12px;
+  border-radius: 18px;
+  border: 2px solid rgba(146, 94, 255, 0.14);
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.placement-queue-row strong,
+.placement-queue-row small {
+  display: block;
+}
+
+.placement-queue-row small {
+  color: var(--muted);
+  font-weight: 800;
 }
 
 .teacher-metrics {
@@ -2697,6 +2746,9 @@ button {
   .role-grid,
   .subscription-compare-grid,
   .teacher-choice-intro,
+  .teacher-choice-actions,
+  .placement-queue-heading,
+  .placement-queue-row,
   .teacher-search,
   .teacher-result,
   .teacher-result-main {
@@ -2740,7 +2792,9 @@ button {
   }
 
   .student-analysis-header,
-  .insight-actions {
+  .insight-actions,
+  .placement-queue-heading,
+  .placement-queue-row {
     align-items: stretch;
     flex-direction: column;
   }

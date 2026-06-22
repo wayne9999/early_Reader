@@ -32,12 +32,14 @@ The Functions scaffold currently compiles against the installed Stripe SDK API v
 
 ## Required Checkout Metadata
 
-Stripe Checkout sessions or Payment Links must include:
+ReadNest now prefers the `createCheckoutSession` Firebase callable for Family Plus and Teacher Pro. The callable verifies the signed-in Firebase user, enforces that students can start only Family Plus and teachers can start only Teacher Pro, creates a Stripe Checkout Session in subscription mode, and attaches:
 
 - `firebaseUid`: Firebase Auth UID for the purchasing user.
+- `tier`: `familyPlus` or `teacherPro`.
+- `role`: the ReadNest user role at checkout start.
 - Price IDs matching Family Plus or Teacher Pro.
 
-Without `firebaseUid`, the webhook cannot safely map a purchase to a ReadNest account.
+Without `firebaseUid`, the webhook cannot safely map a purchase to a ReadNest account. Static Payment Links remain useful as a fallback for early testing, but production paid access should use backend-created Checkout Sessions so entitlement updates can be trusted.
 
 ## Webhook Endpoint
 

@@ -148,6 +148,19 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    match /studentPlacementQueue/{studentId} {
+      allow get: if ownsUserDocument(studentId) || userRole() == "teacher" || isAdmin();
+      allow list: if isSignedIn()
+        && (userRole() == "teacher" || isAdmin())
+        && request.query.limit <= 25;
+      allow create, update: if ownsUserDocument(studentId)
+        && request.resource.data.studentId == request.auth.uid
+        && request.resource.data.status in ["unassigned", "requested"]
+        && request.resource.data.studentName is string
+        && request.resource.data.latestProgressSnapshot != null;
+      allow delete: if false;
+    }
+
     match /teacherInvites/{inviteId} {
       allow get: if isSignedIn();
       allow list: if isSignedIn()

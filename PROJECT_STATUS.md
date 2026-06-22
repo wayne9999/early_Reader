@@ -15,11 +15,12 @@
 - Added Firebase Auth profile roles for student and teacher accounts.
 - Added Firestore progress, learning-event history, teacher profile, and teacher-student assignment repositories.
 - Added student teacher-search and assignment request flow.
+- Added student holding-space queue for skipped teacher selection and backend teacher claim flow with capacity enforcement.
 - Added teacher request approval, assigned-student history, progress snapshots, strengths, growth areas, and intervention planning.
 - Added Firestore security rules for profiles, progress, event history, and assignment links.
 - Added donation/subscription support page using Stripe Payment Links.
 - Added trusted subscription architecture using `subscriptions/{uid}` as production paid-access authority.
-- Added Firebase Functions scaffold for Stripe webhooks and billing portal sessions.
+- Added Firebase Functions for Stripe webhooks, backend-created subscription checkout sessions, and billing portal sessions.
 - Added backend AI-learning workflow foundation with requestable/scheduled insight jobs, deterministic summaries, secure student insight storage, and teacher dashboard display.
 - Added OpenAI-backed insight adapter with backend budget guard, scheduled processing, and rule-based fallback.
 - Added teacher invite-code creation scaffold.

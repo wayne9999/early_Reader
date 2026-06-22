@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase-admin/app";
-import { FieldValue, getFirestore, type DocumentData } from "firebase-admin/firestore";
+import { FieldValue, getFirestore, type DocumentData, type QueryDocumentSnapshot, type Transaction } from "firebase-admin/firestore";
 import { getAuth } from "firebase-admin/auth";
 import { defineSecret } from "firebase-functions/params";
 import { onDocumentCreated } from "firebase-functions/v2/firestore";
@@ -25,6 +25,8 @@ const aiEstimatedOutputTokenCostPerMillionUsd = parseBudgetLimit(process.env.REA
 type SubscriptionTier = "free" | "familyPlus" | "teacherPro";
 type SubscriptionStatus = "free" | "checkoutStarted" | "active" | "pastDue" | "canceled";
 type AiJobRequestKind = "teacherRequested" | "scheduled" | "legacyRecommendation";
+
+const defaultTeacherCapacity = 12;
 
 function stripeClient() {
   return new Stripe(stripeSecretKey.value(), {
@@ -101,6 +103,26 @@ async function setSubscriptionClaim(userId: string, tier: SubscriptionTier, stat
     hasFamilyPlus: tier === "familyPlus" && status === "active",
     hasTeacherPro: tier === "teacherPro" && status === "active"
   });
+}
+
+function priceIdForTier(tier: SubscriptionTier) {
+  if (tier === "familyPlus") {
+    return process.env.STRIPE_FAMILY_PLUS_PRICE_ID;
+  }
+
+  if (tier === "teacherPro") {
+    return process.env.STRIPE_TEACHER_PRO_PRICE_ID;
+  }
+
+  return null;
+}
+
+function positiveNumber(value: unknown) {
+  return typeof value === "number" && Number.isFinite(value) && value > 0 ? value : null;
+}
+
+function safeString(value: unknown, fallback: string) {
+  return typeof value === "string" && value.trim() ? value.trim() : fallback;
 }
 
 async function isAssignedTeacher(teacherId: string, studentId: string) {
@@ -293,7 +315,7 @@ async function handleSubscription(subscription: Stripe.Subscription, eventId: st
 }
 
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session, eventId: string) {
-  const userId = session.metadata?.firebaseUid;
+  const userId = session.metadata?.firebaseUid || session.client_reference_id;
   const customerId = typeof session.customer === "string" ? session.customer : session.customer?.id;
   const subscriptionId = typeof session.subscription === "string" ? session.subscription : session.subscription?.id;
 
@@ -440,6 +462,228 @@ export const createBillingPortalSession = onCall(
   }
 );
 
+export const createCheckoutSession = onCall(
+  {
+    secrets: [stripeSecretKey],
+    region: "us-central1"
+  },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Sign in before starting checkout.");
+    }
+
+    const requestedTier = request.data?.tier;
+
+    if (requestedTier !== "familyPlus" && requestedTier !== "teacherPro") {
+      throw new HttpsError("invalid-argument", "Choose Family Plus or Teacher Pro.");
+    }
+
+    const db = getFirestore();
+    const userId = request.auth.uid;
+    const userDoc = await db.doc(`users/${userId}`).get();
+    const userProfile = userDoc.data() ?? {};
+    const role = typeof userProfile.role === "string" ? userProfile.role : "";
+
+    if (!userDoc.exists || (role !== "student" && role !== "teacher" && role !== "admin")) {
+      throw new HttpsError("failed-precondition", "Finish account setup before starting checkout.");
+    }
+
+    if (requestedTier === "familyPlus" && role !== "student") {
+      throw new HttpsError("permission-denied", "Family Plus is only available for student or parent accounts.");
+    }
+
+    if (requestedTier === "teacherPro" && role !== "teacher" && role !== "admin") {
+      throw new HttpsError("permission-denied", "Teacher Pro is only available for teacher accounts.");
+    }
+
+    const priceId = priceIdForTier(requestedTier);
+
+    if (!priceId) {
+      throw new HttpsError("failed-precondition", "Stripe price ID is not configured for this plan.");
+    }
+
+    const stripe = stripeClient();
+    const subscriptionRef = db.doc(`subscriptions/${userId}`);
+    const subscriptionDoc = await subscriptionRef.get();
+    let stripeCustomerId = subscriptionDoc.data()?.stripeCustomerId;
+
+    if (typeof stripeCustomerId !== "string" || !stripeCustomerId) {
+      const customer = await stripe.customers.create({
+        email: typeof userProfile.email === "string" ? userProfile.email : (request.auth.token.email as string | undefined),
+        name: typeof userProfile.displayName === "string" ? userProfile.displayName : undefined,
+        metadata: {
+          firebaseUid: userId,
+          role
+        }
+      });
+      stripeCustomerId = customer.id;
+    }
+
+    await subscriptionRef.set({
+      userId,
+      tier: requestedTier,
+      status: "checkoutStarted",
+      source: "stripe",
+      stripeCustomerId,
+      updatedAt: FieldValue.serverTimestamp(),
+      updatedBy: userId
+    }, { merge: true });
+
+    const session = await stripe.checkout.sessions.create({
+      mode: "subscription",
+      customer: stripeCustomerId,
+      client_reference_id: userId,
+      line_items: [
+        {
+          price: priceId,
+          quantity: 1
+        }
+      ],
+      allow_promotion_codes: true,
+      success_url: `${appBaseUrl}#/account`,
+      cancel_url: `${appBaseUrl}#/account`,
+      metadata: {
+        firebaseUid: userId,
+        tier: requestedTier,
+        role
+      },
+      subscription_data: {
+        metadata: {
+          firebaseUid: userId,
+          tier: requestedTier,
+          role
+        }
+      }
+    });
+
+    if (!session.url) {
+      throw new HttpsError("internal", "Stripe did not return a checkout URL.");
+    }
+
+    return { url: session.url };
+  }
+);
+
+export const claimPlacementStudent = onCall(
+  {
+    region: "us-central1"
+  },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Sign in as a teacher before claiming a student.");
+    }
+
+    const teacherId = request.auth.uid;
+    const studentId = typeof request.data?.studentId === "string" ? request.data.studentId.trim() : "";
+
+    if (!studentId || studentId === teacherId) {
+      throw new HttpsError("invalid-argument", "Choose a valid unassigned student.");
+    }
+
+    const db = getFirestore();
+    const teacherRef = db.doc(`users/${teacherId}`);
+    const teacherProfileRef = db.doc(`teacherProfiles/${teacherId}`);
+    const teacherDirectoryRef = db.doc(`teacherDirectory/${teacherId}`);
+    const queueRef = db.doc(`studentPlacementQueue/${studentId}`);
+    const linkRef = db.doc(`teacherStudentLinks/${teacherId}_${studentId}`);
+
+    await db.runTransaction(async (transaction: Transaction) => {
+      const [teacherDoc, teacherProfileDoc, teacherDirectoryDoc, queueDoc, existingLinkDoc] = await Promise.all([
+        transaction.get(teacherRef),
+        transaction.get(teacherProfileRef),
+        transaction.get(teacherDirectoryRef),
+        transaction.get(queueRef),
+        transaction.get(linkRef)
+      ]);
+
+      const teacher = teacherDoc.data() ?? {};
+      const teacherProfile = teacherProfileDoc.data() ?? {};
+      const teacherDirectory = teacherDirectoryDoc.data() ?? {};
+      const role = teacher.role;
+
+      if (role !== "teacher" && role !== "admin") {
+        throw new HttpsError("permission-denied", "Only teacher accounts can claim unassigned students.");
+      }
+
+      const queue = queueDoc.data();
+
+      if (!queueDoc.exists || queue?.status !== "unassigned") {
+        throw new HttpsError("failed-precondition", "This student is no longer in the unassigned holding space.");
+      }
+
+      if (existingLinkDoc.exists && existingLinkDoc.data()?.status === "active") {
+        return;
+      }
+
+      const maxStudentLoad =
+        positiveNumber(teacherProfile.maxStudentLoad)
+        ?? positiveNumber(teacherDirectory.maxStudentLoad)
+        ?? defaultTeacherCapacity;
+      const activeStudentCount =
+        positiveNumber(teacherDirectory.activeStudentCount)
+        ?? positiveNumber(teacherProfile.activeStudentCount)
+        ?? 0;
+
+      if (activeStudentCount >= maxStudentLoad) {
+        throw new HttpsError("resource-exhausted", `This teacher already has ${maxStudentLoad} active students.`);
+      }
+
+      const teacherName = safeString(teacherProfile.displayName, safeString(teacherDirectory.displayName, "Teacher"));
+      const teacherEmail = typeof teacherProfile.email === "string"
+        ? teacherProfile.email
+        : typeof teacherDirectory.email === "string"
+          ? teacherDirectory.email
+          : null;
+      const studentName = safeString(queue.studentName, "Student");
+      const studentEmail = typeof queue.studentEmail === "string" ? queue.studentEmail : null;
+      const latestProgressSnapshot = queue.latestProgressSnapshot ?? null;
+      const now = FieldValue.serverTimestamp();
+
+      transaction.set(linkRef, {
+        teacherId,
+        teacherName,
+        teacherEmail,
+        studentId,
+        studentName,
+        studentEmail,
+        status: "active",
+        latestProgressSnapshot,
+        requestedAt: queue.createdAt ?? now,
+        updatedAt: now,
+        createdBy: "placement-queue",
+        updatedBy: teacherId
+      }, { merge: true });
+
+      transaction.set(queueRef, {
+        status: "assigned",
+        assignedTeacherId: teacherId,
+        assignedTeacherName: teacherName,
+        holdingTeacherName: null,
+        assignedAt: now,
+        updatedAt: now,
+        updatedBy: teacherId
+      }, { merge: true });
+
+      transaction.set(teacherDirectoryRef, {
+        activeStudentCount: FieldValue.increment(1),
+        updatedAt: now,
+        updatedBy: teacherId
+      }, { merge: true });
+
+      transaction.set(teacherProfileRef, {
+        activeStudentCount: FieldValue.increment(1),
+        updatedAt: now,
+        updatedBy: teacherId
+      }, { merge: true });
+    });
+
+    return {
+      linkId: `${teacherId}_${studentId}`,
+      status: "active"
+    };
+  }
+);
+
 export const requestStudentInsight = onCall(
   {
     region: "us-central1"
@@ -539,7 +783,11 @@ export const enqueueDailyInsightJobs = onSchedule(
       .where("status", "==", "active")
       .limit(250)
       .get();
-    const uniqueStudentIds = [...new Set(snapshot.docs.map((doc) => doc.data().studentId).filter((studentId): studentId is string => typeof studentId === "string"))];
+    const uniqueStudentIds: string[] = Array.from(new Set(
+      snapshot.docs
+        .map((doc: QueryDocumentSnapshot) => doc.data().studentId)
+        .filter((studentId: unknown): studentId is string => typeof studentId === "string")
+    ));
 
     await Promise.all(
       uniqueStudentIds.map((studentId) =>

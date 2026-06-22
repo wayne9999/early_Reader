@@ -1,6 +1,8 @@
+import { useMemo, useState } from "react";
 import { billingConfig, isCustomerPortalConfigured, isTemporaryStripePortalSession } from "../../services/billingConfig";
+import { startSubscriptionCheckout } from "../../services/billingRepository";
 import { freeStudentActivitiesDescription, paidStudentActivitiesDescription } from "../../services/entitlementService";
-import type { SubscriptionRecord, UserProfile } from "../../types";
+import type { SubscriptionRecord, SubscriptionTierId, UserProfile } from "../../types";
 
 type SubscriptionManagementProps = {
   profile: UserProfile;
@@ -13,6 +15,10 @@ function subscriptionLabel(profile: UserProfile, subscription: SubscriptionRecor
 
   if (tier === "familyPlus" && status === "active") {
     return "Family Plus active";
+  }
+
+  if (tier === "teacherPro" && status === "active") {
+    return "Teacher Pro active";
   }
 
   if (status === "pastDue") {
@@ -47,12 +53,39 @@ function subscriptionHelpText(subscription: SubscriptionRecord | null) {
 }
 
 export function SubscriptionManagement({ profile, subscription }: SubscriptionManagementProps) {
-  const isStudent = profile.role === "student";
+  const [checkoutError, setCheckoutError] = useState("");
+  const [isStartingCheckout, setIsStartingCheckout] = useState(false);
+  const rolePlanId: SubscriptionTierId = profile.role === "teacher" ? "teacherPro" : "familyPlus";
+  const rolePlanLabel = profile.role === "teacher" ? "Teacher Pro" : "Family Plus";
+  const freeLabel = profile.role === "teacher" ? "Free teacher profile" : "Free access";
+  const paidDescription = profile.role === "teacher"
+    ? "Classroom dashboard, assigned-student analysis, report exports, intervention planning, and AI-ready recommendations."
+    : paidStudentActivitiesDescription();
+  const isPaidActive = useMemo(
+    () => (subscription?.tier ?? profile.subscriptionTier) === rolePlanId
+      && (subscription?.status ?? profile.subscriptionStatus) === "active",
+    [profile.subscriptionStatus, profile.subscriptionTier, rolePlanId, subscription]
+  );
   const hasUsablePortalLink = isCustomerPortalConfigured();
   const hasTemporaryPortalSession = isTemporaryStripePortalSession(billingConfig.customerPortalLink);
 
-  if (!isStudent) {
-    return null;
+  async function startRoleCheckout() {
+    setIsStartingCheckout(true);
+    setCheckoutError("");
+
+    try {
+      const checkoutUrl = await startSubscriptionCheckout(rolePlanId);
+
+      if (checkoutUrl) {
+        window.open(checkoutUrl, "_blank", "noopener,noreferrer");
+      } else {
+        setCheckoutError("Checkout is not configured yet. Contact support for billing help.");
+      }
+    } catch (error) {
+      setCheckoutError(error instanceof Error ? error.message : "Checkout could not start right now.");
+    } finally {
+      setIsStartingCheckout(false);
+    }
   }
 
   return (
@@ -68,20 +101,34 @@ export function SubscriptionManagement({ profile, subscription }: SubscriptionMa
 
       <div className="subscription-compare-grid">
         <section>
-          <p className="eyebrow">Free access</p>
+          <p className="eyebrow">{freeLabel}</p>
           <h3>Included</h3>
-          <p className="helper-text">{freeStudentActivitiesDescription()}</p>
+          <p className="helper-text">
+            {profile.role === "teacher"
+              ? "Create a teacher profile, review public pages, and preview activities before subscribing."
+              : freeStudentActivitiesDescription()}
+          </p>
         </section>
         <section>
           <p className="eyebrow">Paid access</p>
-          <h3>Family Plus</h3>
-          <p className="helper-text">{paidStudentActivitiesDescription()}</p>
+          <h3>{rolePlanLabel}</h3>
+          <p className="helper-text">{paidDescription}</p>
         </section>
       </div>
 
       <div className="subscription-actions">
+        {!isPaidActive ? (
+          <button
+            className="primary-button"
+            disabled={isStartingCheckout}
+            type="button"
+            onClick={() => void startRoleCheckout()}
+          >
+            {isStartingCheckout ? "Opening checkout..." : `Start ${rolePlanLabel}`}
+          </button>
+        ) : null}
         <button
-          className="primary-button"
+          className={isPaidActive ? "primary-button" : "secondary-button"}
           disabled={!hasUsablePortalLink}
           type="button"
           onClick={() => {
@@ -94,8 +141,10 @@ export function SubscriptionManagement({ profile, subscription }: SubscriptionMa
         </button>
       </div>
 
+      {checkoutError ? <p className="form-error">{checkoutError}</p> : null}
+
       <p className="helper-text">
-        Stripe Customer Portal lets families update cards, view invoices, and cancel monthly billing.{" "}
+        Stripe Customer Portal lets subscribers update cards, view invoices, and cancel monthly billing.{" "}
         {hasTemporaryPortalSession
           ? "The configured portal link looks temporary, so use a durable portal login link or backend-generated session before enabling this button."
           : "If this button is disabled, the portal link still needs to be configured."}

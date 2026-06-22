@@ -1,14 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
 import { getClassroomStudents } from "../../services/classroomRepository";
 import { analyzeClassroom, analyzeStudent } from "../../services/learningAnalysisService";
-import { loadTeacherAssignments, updateTeacherAssignmentStatus } from "../../services/assignmentRepository";
+import {
+  DEFAULT_TEACHER_CAPACITY,
+  claimPlacementStudent,
+  loadOpenStudentPlacementQueue,
+  loadTeacherAssignments,
+  updateTeacherAssignmentStatus
+} from "../../services/assignmentRepository";
 import { loadLatestStudentInsight, loadLatestStudentInsightJob, requestStudentInsight } from "../../services/aiInsightRepository";
 import { loadLearningEvents } from "../../services/learningEventRepository";
 import { recentNeeds, summarizeByArea, summarizeEvents } from "../../services/learningEventSummary";
 import { trackProductEvent } from "../../services/productAnalytics";
 import { downloadStudentReportCard } from "../../services/reportCardService";
 import { createTeacherInvite, loadTeacherInvites } from "../../services/teacherInviteRepository";
-import type { AiAnalysisJob, AppUser, LearningEvent, Progress, SkillInsight, StudentAiInsight, StudentSummary, TeacherInvite, TeacherStudentLink, UserProfile } from "../../types";
+import type { AiAnalysisJob, AppUser, LearningEvent, Progress, SkillInsight, StudentAiInsight, StudentPlacementQueue, StudentSummary, TeacherInvite, TeacherStudentLink, UserProfile } from "../../types";
 
 type TeacherDashboardProps = {
   progress: Progress;
@@ -103,10 +109,13 @@ export function TeacherDashboard({ progress, user, profile }: TeacherDashboardPr
   const [studentHistories, setStudentHistories] = useState<Record<string, LearningEvent[]>>({});
   const [studentInsights, setStudentInsights] = useState<Record<string, StudentAiInsight | null>>({});
   const [studentInsightJobs, setStudentInsightJobs] = useState<Record<string, AiAnalysisJob | null>>({});
+  const [placementQueue, setPlacementQueue] = useState<StudentPlacementQueue[]>([]);
   const [isLoadingRoster, setIsLoadingRoster] = useState(true);
   const [isCreatingInvite, setIsCreatingInvite] = useState(false);
+  const [isClaimingStudent, setIsClaimingStudent] = useState(false);
   const [isRequestingInsight, setIsRequestingInsight] = useState(false);
   const [insightStatus, setInsightStatus] = useState<string>("");
+  const [placementStatus, setPlacementStatus] = useState<string>("");
   const demoStudents = useMemo(() => getClassroomStudents(progress, user), [progress, user]);
   const assignedStudents = useMemo<StudentSummary[]>(
     () =>
@@ -139,6 +148,9 @@ export function TeacherDashboard({ progress, user, profile }: TeacherDashboardPr
   const selectedAiStatus = aiJobLabel(selectedAiJob, selectedAiInsight);
   const activeAssignments = assignments.filter((assignment) => assignment.status === "active");
   const requestedAssignments = assignments.filter((assignment) => assignment.status === "requested");
+  const teacherCapacity = profile?.maxStudentLoad ?? DEFAULT_TEACHER_CAPACITY;
+  const availableTeacherSeats = Math.max(teacherCapacity - activeAssignments.length, 0);
+  const isTeacherAtCapacity = availableTeacherSeats <= 0;
   const attentionCount = classroomAnalysis.analyses.filter((analysis) => analysis.growthAreas.length > 0).length;
   const strengthCount = classroomAnalysis.analyses.filter((analysis) => analysis.strengths.length > 0).length;
   const teacherStats = [
@@ -206,6 +218,20 @@ export function TeacherDashboard({ progress, user, profile }: TeacherDashboardPr
   useEffect(() => {
     let isMounted = true;
 
+    loadOpenStudentPlacementQueue(user).then((loadedQueue) => {
+      if (isMounted) {
+        setPlacementQueue(loadedQueue);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user]);
+
+  useEffect(() => {
+    let isMounted = true;
+
     loadTeacherInvites(user).then((loadedInvites) => {
       if (isMounted) {
         setInvites(loadedInvites);
@@ -259,6 +285,30 @@ export function TeacherDashboard({ progress, user, profile }: TeacherDashboardPr
     setInvites((current) => [invite, ...current].slice(0, 10));
     void trackProductEvent(user, "teacher_invite_sent", { autoApprove: invite.autoApprove });
     setIsCreatingInvite(false);
+  }
+
+  async function claimStudentFromHoldingSpace(placement: StudentPlacementQueue) {
+    if (!user) {
+      return;
+    }
+
+    setIsClaimingStudent(true);
+    setPlacementStatus("");
+
+    try {
+      await claimPlacementStudent(placement.studentId);
+      const [nextAssignments, nextQueue] = await Promise.all([
+        loadTeacherAssignments(user),
+        loadOpenStudentPlacementQueue(user)
+      ]);
+      setAssignments(nextAssignments);
+      setPlacementQueue(nextQueue);
+      setPlacementStatus(`${placement.studentName} was added to your active roster.`);
+    } catch (error) {
+      setPlacementStatus(error instanceof Error ? error.message : "Unable to claim this student right now.");
+    } finally {
+      setIsClaimingStudent(false);
+    }
   }
 
   async function refreshSelectedInsight() {
@@ -367,6 +417,46 @@ export function TeacherDashboard({ progress, user, profile }: TeacherDashboardPr
               <li key={action}>{action}</li>
             ))}
           </ul>
+        </article>
+
+        <article className="practice-panel placement-queue-card">
+          <div className="placement-queue-heading">
+            <div>
+              <p className="eyebrow">Holding space</p>
+              <h3>Unassigned learners</h3>
+            </div>
+            <span className={`load-pill ${isTeacherAtCapacity ? "full" : availableTeacherSeats <= 3 ? "nearlyFull" : "open"}`}>
+              {availableTeacherSeats} seats open
+            </span>
+          </div>
+          <p className="helper-text">
+            Students who skipped teacher selection appear here until a teacher with capacity claims them.
+          </p>
+          {placementQueue.length ? (
+            <div className="placement-queue-list">
+              {placementQueue.slice(0, 5).map((placement) => (
+                <div className="placement-queue-row" key={placement.studentId}>
+                  <span>
+                    <strong>{placement.studentName}</strong>
+                    <small>
+                      {placement.latestProgressSnapshot.activityCompletions} activities - {placement.latestProgressSnapshot.readingSessions} reading sessions
+                    </small>
+                  </span>
+                  <button
+                    className="secondary-button"
+                    type="button"
+                    disabled={isTeacherAtCapacity || isClaimingStudent}
+                    onClick={() => void claimStudentFromHoldingSpace(placement)}
+                  >
+                    {isTeacherAtCapacity ? "At capacity" : "Claim"}
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="helper-text">No unassigned students are waiting right now.</p>
+          )}
+          {placementStatus ? <p className="helper-text">{placementStatus}</p> : null}
         </article>
       </section>
 

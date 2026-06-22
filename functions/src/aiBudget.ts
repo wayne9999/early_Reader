@@ -1,4 +1,4 @@
-import { FieldValue, Timestamp, type Firestore } from "firebase-admin/firestore";
+import { FieldValue, Timestamp, type Firestore, type Transaction } from "firebase-admin/firestore";
 
 export type AiBudgetDecision = {
   allowed: boolean;
@@ -43,7 +43,7 @@ export async function reserveAiBudget(db: Firestore, options: {
   const monthRef = db.doc(`aiBudget/monthly/months/${monthKey}`);
   const eventRef = monthRef.collection("events").doc(options.jobId);
 
-  return db.runTransaction(async (transaction) => {
+  return db.runTransaction(async (transaction: Transaction) => {
     const snapshot = await transaction.get(monthRef);
     const data = snapshot.data() as AiBudgetRecord | undefined;
     const currentSpend = typeof data?.estimatedSpendUsd === "number" ? data.estimatedSpendUsd : 0;

@@ -58,4 +58,27 @@ describe("SubscriptionPrompt", () => {
     expect(onProfileUpdated).toHaveBeenCalled();
     expect(onContinue).toHaveBeenCalled();
   });
+
+  it("shows the teacher plan for teacher accounts", () => {
+    render(
+      <SubscriptionPrompt
+        user={{ id: "teacher-1", name: "Teacher", email: "teacher@example.com" }}
+        profile={{
+          uid: "teacher-1",
+          role: "teacher",
+          displayName: "Teacher",
+          email: "teacher@example.com",
+          picture: null,
+          subscriptionTier: "free",
+          subscriptionStatus: "free"
+        }}
+        onProfileUpdated={vi.fn()}
+        onContinue={vi.fn()}
+      />
+    );
+
+    expect(screen.getByRole("heading", { name: /unlock the full teaching workspace/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /start teacher pro/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /start family plus/i })).not.toBeInTheDocument();
+  });
 });

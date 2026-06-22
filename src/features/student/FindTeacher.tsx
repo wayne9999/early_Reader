@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import {
   availableTeacherSlots,
+  loadStudentPlacement,
   loadStudentAssignments,
   requestTeacherAssignment,
   searchTeachers,
-  teacherLoadStatus
+  teacherLoadStatus,
+  upsertStudentPlacementQueue
 } from "../../services/assignmentRepository";
-import type { AppUser, Progress, TeacherStudentLink, UserProfile } from "../../types";
+import type { AppUser, Progress, StudentPlacementQueue, TeacherStudentLink, UserProfile } from "../../types";
 
 type FindTeacherProps = {
   progress: Progress;
@@ -18,11 +20,16 @@ export function FindTeacher({ progress, user, profile }: FindTeacherProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [teachers, setTeachers] = useState<UserProfile[]>([]);
   const [assignments, setAssignments] = useState<TeacherStudentLink[]>([]);
+  const [placement, setPlacement] = useState<StudentPlacementQueue | null>(null);
   const [message, setMessage] = useState("");
   const [isSearching, setIsSearching] = useState(false);
+  const [isJoiningQueue, setIsJoiningQueue] = useState(false);
 
   useEffect(() => {
-    void loadStudentAssignments(user).then(setAssignments);
+    void Promise.all([loadStudentAssignments(user), loadStudentPlacement(user)]).then(([loadedAssignments, loadedPlacement]) => {
+      setAssignments(loadedAssignments);
+      setPlacement(loadedPlacement);
+    });
   }, [user]);
 
   useEffect(() => {
@@ -59,8 +66,29 @@ export function FindTeacher({ progress, user, profile }: FindTeacherProps) {
     }
 
     await requestTeacherAssignment(teacher, user, profile, progress);
-    setAssignments(await loadStudentAssignments(user));
+    const [nextAssignments, nextPlacement] = await Promise.all([loadStudentAssignments(user), loadStudentPlacement(user)]);
+    setAssignments(nextAssignments);
+    setPlacement(nextPlacement);
     setMessage(`Request sent to ${teacher.displayName}.`);
+  }
+
+  async function joinHoldingSpace() {
+    if (!user) {
+      return;
+    }
+
+    setIsJoiningQueue(true);
+    setMessage("");
+
+    try {
+      const nextPlacement = await upsertStudentPlacementQueue(user, profile, progress, {
+        status: "unassigned"
+      });
+      setPlacement(nextPlacement);
+      setMessage("You are in the ReadNest holding space. Teachers with open capacity can now offer support.");
+    } finally {
+      setIsJoiningQueue(false);
+    }
   }
 
   function assignmentForTeacher(teacherId: string) {
@@ -85,10 +113,20 @@ export function FindTeacher({ progress, user, profile }: FindTeacherProps) {
             right path. To keep support realistic, ReadNest shows teacher load before a request is sent.
           </p>
         </div>
-        <div className="teacher-load-key" aria-label="Teacher load key">
-          <span className="load-pill open">Open</span>
-          <span className="load-pill nearlyFull">Nearly full</span>
-          <span className="load-pill full">Full</span>
+        <div className="teacher-choice-actions">
+          <div className="teacher-load-key" aria-label="Teacher load key">
+            <span className="load-pill open">Open</span>
+            <span className="load-pill nearlyFull">Nearly full</span>
+            <span className="load-pill full">Full</span>
+          </div>
+          <button
+            className="secondary-button"
+            type="button"
+            disabled={isJoiningQueue || placement?.status === "unassigned"}
+            onClick={() => void joinHoldingSpace()}
+          >
+            {placement?.status === "unassigned" ? "In holding space" : isJoiningQueue ? "Saving..." : "Skip for now"}
+          </button>
         </div>
       </section>
 
@@ -107,6 +145,16 @@ export function FindTeacher({ progress, user, profile }: FindTeacherProps) {
       </section>
 
       {message ? <p className="success-message">{message}</p> : null}
+      {placement?.status === "unassigned" ? (
+        <article className="practice-panel holding-space-card">
+          <p className="eyebrow">Holding space</p>
+          <h3>Waiting for a teacher with open capacity</h3>
+          <p className="helper-text">
+            Your latest practice snapshot is available to teachers who can take a new student. You can still request a
+            specific teacher from the list below.
+          </p>
+        </article>
+      ) : null}
 
       <section className="teacher-results">
         {teachers.map((teacher) => {

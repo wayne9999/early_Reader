@@ -1,11 +1,13 @@
-import { billingConfig } from "../../services/billingConfig";
+import { useMemo, useState } from "react";
+import { subscriptionTiers } from "../../services/billingConfig";
+import { startSubscriptionCheckout } from "../../services/billingRepository";
 import {
   freeStudentActivitiesDescription,
   paidStudentActivitiesDescription
 } from "../../services/entitlementService";
 import { updateUserProfile } from "../../services/userProfileRepository";
 import { trackProductEvent } from "../../services/productAnalytics";
-import type { AppUser, UserProfile } from "../../types";
+import type { AppUser, SubscriptionTierId, UserProfile } from "../../types";
 
 type SubscriptionPromptProps = {
   user: AppUser;
@@ -15,17 +17,46 @@ type SubscriptionPromptProps = {
 };
 
 export function SubscriptionPrompt({ user, profile, onProfileUpdated, onContinue }: SubscriptionPromptProps) {
-  async function startFamilyPlus() {
+  const [isStartingCheckout, setIsStartingCheckout] = useState(false);
+  const [checkoutError, setCheckoutError] = useState("");
+  const paidTierId: SubscriptionTierId = profile.role === "teacher" ? "teacherPro" : "familyPlus";
+  const paidTier = useMemo(
+    () => subscriptionTiers.find((tier) => tier.id === paidTierId),
+    [paidTierId]
+  );
+  const isTeacher = profile.role === "teacher";
+  const freeTitle = isTeacher ? "Free teacher account" : "Free student";
+  const paidTitle = paidTier?.name ?? (isTeacher ? "Teacher Pro" : "Family Plus");
+  const promptEyebrow = isTeacher ? "Teacher Pro" : "Family Plus";
+  const promptTitle = isTeacher ? "Unlock the full teaching workspace" : "Unlock the full student learning path";
+  const promptHelp = isTeacher
+    ? "Free teacher accounts can review the app and create a profile. Teacher Pro unlocks assigned-student data, reports, intervention planning, and AI-ready insight workflows."
+    : `Free student accounts can keep practicing with ${freeStudentActivitiesDescription()}. Family Plus unlocks more guided activities and premium learning support as the product grows.`;
+
+  async function startPaidPlan() {
+    setIsStartingCheckout(true);
+    setCheckoutError("");
+
     const nextProfile = await updateUserProfile(user, profile, {
-      subscriptionTier: "familyPlus",
+      subscriptionTier: paidTierId,
       subscriptionStatus: "checkoutStarted"
     });
 
     onProfileUpdated(nextProfile);
-    void trackProductEvent(user, "checkout_clicked", { tier: "familyPlus" });
+    void trackProductEvent(user, "checkout_clicked", { tier: paidTierId });
 
-    if (billingConfig.familyPlusLink) {
-      window.open(billingConfig.familyPlusLink, "_blank", "noopener,noreferrer");
+    try {
+      const checkoutUrl = await startSubscriptionCheckout(paidTierId);
+
+      if (checkoutUrl) {
+        window.open(checkoutUrl, "_blank", "noopener,noreferrer");
+      } else {
+        setCheckoutError("Checkout is not configured yet. Visit Support for billing help.");
+      }
+    } catch (error) {
+      setCheckoutError(error instanceof Error ? error.message : "Checkout could not start right now.");
+    } finally {
+      setIsStartingCheckout(false);
     }
   }
 
@@ -42,29 +73,37 @@ export function SubscriptionPrompt({ user, profile, onProfileUpdated, onContinue
 
   return (
     <article className="practice-panel subscription-prompt">
-      <p className="eyebrow">Family Plus</p>
-      <h2>Unlock the full student learning path</h2>
-      <p className="helper-text">
-        Free student accounts can keep practicing with {freeStudentActivitiesDescription()}. Family Plus unlocks
-        more guided activities and premium learning support as the product grows.
-      </p>
+      <p className="eyebrow">{promptEyebrow}</p>
+      <h2>{promptTitle}</h2>
+      <p className="helper-text">{promptHelp}</p>
 
       <div className="subscription-compare-grid">
         <section>
-          <p className="eyebrow">Free student</p>
-          <h3>Start practicing</h3>
+          <p className="eyebrow">{freeTitle}</p>
+          <h3>{isTeacher ? "Create your profile" : "Start practicing"}</h3>
           <ul className="next-steps">
-            <li>{freeStudentActivitiesDescription()}</li>
-            <li>Basic progress saved to the student account</li>
-            <li>Teacher request workflow</li>
+            {isTeacher ? (
+              <>
+                <li>Complete your teacher profile and verification details</li>
+                <li>Preview child-friendly activities and family support pages</li>
+                <li>Upgrade before using classroom dashboards and reports</li>
+              </>
+            ) : (
+              <>
+                <li>{freeStudentActivitiesDescription()}</li>
+                <li>Basic progress saved to the student account</li>
+                <li>Teacher request workflow and holding-space assignment</li>
+              </>
+            )}
           </ul>
         </section>
         <section>
-          <p className="eyebrow">Family Plus</p>
-          <h3>More practice unlocked</h3>
+          <p className="eyebrow">{paidTitle}</p>
+          <h3>{isTeacher ? "Classroom tools unlocked" : "More practice unlocked"}</h3>
           <ul className="next-steps">
-            <li>{paidStudentActivitiesDescription()}</li>
-            <li>More skill practice for comprehension and vocabulary</li>
+            {(paidTier?.perks ?? [paidStudentActivitiesDescription()]).slice(0, 4).map((perk) => (
+              <li key={perk}>{perk}</li>
+            ))}
             <li>Stripe-hosted checkout so payment data stays with Stripe</li>
           </ul>
         </section>
@@ -73,19 +112,21 @@ export function SubscriptionPrompt({ user, profile, onProfileUpdated, onContinue
       <div className="subscription-actions">
         <button
           className="primary-button"
-          disabled={!billingConfig.familyPlusLink}
+          disabled={isStartingCheckout}
           type="button"
-          onClick={() => void startFamilyPlus()}
+          onClick={() => void startPaidPlan()}
         >
-          Start Family Plus
+          {isStartingCheckout ? "Opening checkout..." : paidTier?.cta ?? `Start ${paidTitle}`}
         </button>
         <button className="secondary-button" type="button" onClick={() => void skipForNow()}>
           Skip for now
         </button>
       </div>
 
+      {checkoutError ? <p className="form-error">{checkoutError}</p> : null}
+
       <p className="helper-text">
-        Production note: paid access should be confirmed by a Stripe webhook that updates Firebase after checkout.
+        Paid access unlocks only after Stripe confirms checkout and Firebase receives the trusted subscription update.
       </p>
     </article>
   );

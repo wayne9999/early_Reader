@@ -173,6 +173,28 @@ export type TeacherStudentLink = {
   archivedAt?: unknown;
 };
 
+export type StudentPlacementStatus = "unassigned" | "requested" | "assigned";
+
+export type StudentPlacementQueue = {
+  id: string;
+  studentId: string;
+  studentName: string;
+  studentEmail: string | null;
+  status: StudentPlacementStatus;
+  holdingTeacherName?: string | null;
+  requestedTeacherId?: string | null;
+  requestedTeacherName?: string | null;
+  assignedTeacherId?: string | null;
+  assignedTeacherName?: string | null;
+  latestProgressSnapshot: Progress;
+  requestedAt?: unknown;
+  assignedAt?: unknown;
+  createdAt?: unknown;
+  updatedAt?: unknown;
+  createdBy?: string;
+  updatedBy?: string;
+};
+
 export type TeacherInvite = {
   id: string;
   teacherId: string;

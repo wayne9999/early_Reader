@@ -117,7 +117,7 @@ jobs:
         if: ${{ (inputs.target == 'functions' || inputs.target == 'all') && !inputs.include_scheduler }}
         run: >
           firebase deploy
-          --only functions:stripeWebhook,functions:createBillingPortalSession,functions:createLearningRecommendation,functions:requestStudentInsight,functions:processAiAnalysisJob
+          --only functions:stripeWebhook,functions:createBillingPortalSession,functions:createCheckoutSession,functions:claimPlacementStudent,functions:createLearningRecommendation,functions:requestStudentInsight,functions:processAiAnalysisJob
           --project "$FIREBASE_PROJECT_ID"
           --non-interactive
           --force
@@ -126,7 +126,7 @@ jobs:
         if: ${{ (inputs.target == 'functions' || inputs.target == 'all') && inputs.include_scheduler }}
         run: >
           firebase deploy
-          --only functions:stripeWebhook,functions:createBillingPortalSession,functions:createLearningRecommendation,functions:requestStudentInsight,functions:processAiAnalysisJob,functions:enqueueDailyInsightJobs
+          --only functions:stripeWebhook,functions:createBillingPortalSession,functions:createCheckoutSession,functions:claimPlacementStudent,functions:createLearningRecommendation,functions:requestStudentInsight,functions:processAiAnalysisJob,functions:enqueueDailyInsightJobs
           --project "$FIREBASE_PROJECT_ID"
           --non-interactive
           --force

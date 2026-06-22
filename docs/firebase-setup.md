@@ -109,6 +109,24 @@ teacherStudentLinks/{teacherId_studentId}
   requestedAt
   updatedAt
 
+studentPlacementQueue/{studentId}
+  studentId
+  studentName
+  studentEmail
+  status
+  holdingTeacherName
+  requestedTeacherId
+  requestedTeacherName
+  assignedTeacherId
+  assignedTeacherName
+  latestProgressSnapshot
+  requestedAt
+  assignedAt
+  createdAt
+  updatedAt
+  createdBy
+  updatedBy
+
 teacherInvites/{inviteId}
   teacherId
   teacherName
@@ -220,18 +238,21 @@ Current MVP behavior:
 6. Searchable teacher lookup data is written to `teacherDirectory/{teacherId}`.
 7. Students browse or search the limited teacher directory and compare bio, grade fit, specialties, active load, and available capacity.
 8. Students create `teacherStudentLinks/{teacherId_studentId}` with `status: "requested"`.
-9. Teachers approve or decline requests from the dashboard. Approval changes the status to `active` and refreshes the teacher directory active-student count.
-10. Student reading, memory, and logged-in activity actions create history records under `users/{studentId}/learningEvents`.
-11. Logged activity history includes attempts and completions so dashboards can show interaction volume, answer accuracy, review moments, and practiced skill areas.
-12. Students see a simpler dashboard with their recent history, practiced areas, progress counters, and next practice suggestion.
-13. Active assigned teachers can read that student's event history, latest progress snapshot, activity-completion summary, accuracy, and recent needs.
-14. Teachers can download a concise parent-facing report card for active assigned students using only the data visible in the dashboard.
-15. Student signup shows a Family Plus subscribe-or-skip prompt. Skipping keeps `subscriptionTier: "free"` and `subscriptionStatus: "free"`.
-16. Stripe Customer Portal should be available from Account so families can update payment details, view invoices, or cancel monthly billing. Use a durable portal login link or backend-created portal session, not a short-lived `billing.stripe.com/p/session/...` URL.
-17. Stripe Checkout/Billing webhook handling updates `subscriptions/{userId}` from trusted backend code after payment succeeds, renews, fails, refunds, disputes, or is canceled.
-18. Premium access checks should use `subscriptions/{userId}` or backend custom claims. Profile subscription fields are development/display fallback only.
-19. Teacher-created invite codes are stored in `teacherInvites`; invite acceptance and revocation should be completed with backend validation before broad launch.
-20. Teacher compensation should be calculated from active assignment records in trusted backend code before real payouts are made.
+9. Students can skip teacher selection. Skipped students create `studentPlacementQueue/{studentId}` with `status: "unassigned"` and a latest progress snapshot.
+10. Teachers with paid dashboard access can see unassigned students and claim them through the `claimPlacementStudent` Cloud Function.
+11. The default teacher load is 12 active students. The claim function rejects capacity overflow and updates `teacherDirectory.activeStudentCount` and `teacherProfiles.activeStudentCount`.
+12. Teachers approve or decline direct requests from the dashboard. Approval changes the link status to `active` and refreshes the teacher directory active-student count.
+13. Student reading, memory, and logged-in activity actions create history records under `users/{studentId}/learningEvents`.
+14. Logged activity history includes attempts and completions so dashboards can show interaction volume, answer accuracy, review moments, and practiced skill areas.
+15. Students see a simpler dashboard with their recent history, practiced areas, progress counters, and next practice suggestion.
+16. Active assigned teachers can read that student's event history, latest progress snapshot, activity-completion summary, accuracy, and recent needs.
+17. Teachers can download a concise parent-facing report card for active assigned students using only the data visible in the dashboard.
+18. Student signup shows a Family Plus subscribe-or-skip prompt; teacher signup shows a Teacher Pro subscribe-or-skip prompt. Skipping keeps paid features locked.
+19. Stripe Customer Portal should be available from Account so subscribers can update payment details, view invoices, or cancel monthly billing. Use a durable portal login link or backend-created portal session, not a short-lived `billing.stripe.com/p/session/...` URL.
+20. Stripe Checkout/Billing webhook handling updates `subscriptions/{userId}` from trusted backend code after payment succeeds, renews, fails, refunds, disputes, or is canceled.
+21. Premium access checks should use `subscriptions/{userId}` or backend custom claims. Profile subscription fields are development/display fallback only.
+22. Teacher-created invite codes are stored in `teacherInvites`; invite acceptance and revocation should be completed with backend validation before broad launch.
+23. Teacher compensation should be calculated from active assignment records in trusted backend code before real payouts are made.
 
 The app prevents role switching after profile creation. Firebase Auth also prevents one Google email from becoming two separate accounts under normal email-provider linking rules. For stricter production enforcement, use Cloud Functions or a backend API to validate role creation, custom claims, paid teacher entitlements, duplicate-email policies, and teacher certification status.
 
@@ -253,6 +274,8 @@ They also allow:
 - Signed-in users to search a limited `teacherDirectory` with query limits.
 - Teachers to create/update only their own private `teacherProfiles` when their user role is `teacher`.
 - Students to create assignment requests for themselves.
+- Students to place themselves in the unassigned holding queue or mark their placement as requested.
+- Teachers to list holding-queue students, while assignment claims are handled by trusted backend code.
 - Students to update only the latest progress snapshot on their own requested or active assignment links.
 - Teachers to approve or decline only their own assignment links.
 - Active assigned teachers to read assigned student learning events.

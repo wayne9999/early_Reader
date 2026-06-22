@@ -25,6 +25,7 @@ import {
   type AppRouteState
 } from "./services/appRoutes";
 import { billingConfig } from "./services/billingConfig";
+import { startSubscriptionCheckout } from "./services/billingRepository";
 import { paidStudentActivitiesDescription, studentActivityAccess, teacherDashboardAccess } from "./services/entitlementService";
 import { defaultProgress, loadProgress, saveProgress } from "./services/progressRepository";
 import { clearSignupIntent, loadSignupIntent } from "./services/signupIntent";
@@ -368,6 +369,12 @@ export function RootApp() {
       setPendingAuthView(null);
 
       if (createdProfile.role === "student" && createdProfile.subscriptionStatus !== "active") {
+        setPostSubscriptionView(targetView === "account" ? "findTeacher" : nextView === "reading" ? "findTeacher" : nextView);
+        setShowSubscriptionPrompt(true);
+        return;
+      }
+
+      if (createdProfile.role === "teacher" && createdProfile.subscriptionStatus !== "active") {
         setPostSubscriptionView(nextView);
         setShowSubscriptionPrompt(true);
         return;
@@ -440,12 +447,13 @@ export function RootApp() {
             <div className="subscription-actions">
               <button
                 className="primary-button"
-                disabled={!billingConfig.familyPlusLink}
                 type="button"
                 onClick={() => {
-                  if (billingConfig.familyPlusLink) {
-                    window.open(billingConfig.familyPlusLink, "_blank", "noopener,noreferrer");
-                  }
+                  void startSubscriptionCheckout("familyPlus").then((checkoutUrl) => {
+                    if (checkoutUrl) {
+                      window.open(checkoutUrl, "_blank", "noopener,noreferrer");
+                    }
+                  });
                 }}
               >
                 Start Family Plus
@@ -485,12 +493,13 @@ export function RootApp() {
             <div className="subscription-actions">
               <button
                 className="primary-button"
-                disabled={!billingConfig.teacherProLink}
                 type="button"
                 onClick={() => {
-                  if (billingConfig.teacherProLink) {
-                    window.open(billingConfig.teacherProLink, "_blank", "noopener,noreferrer");
-                  }
+                  void startSubscriptionCheckout("teacherPro").then((checkoutUrl) => {
+                    if (checkoutUrl) {
+                      window.open(checkoutUrl, "_blank", "noopener,noreferrer");
+                    }
+                  });
                 }}
               >
                 Start Teacher Pro

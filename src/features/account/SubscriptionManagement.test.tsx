@@ -45,8 +45,8 @@ describe("SubscriptionManagement", () => {
     expect(screen.getByText(/last payment did not complete/i)).toBeInTheDocument();
   });
 
-  it("does not show billing controls for teacher accounts", () => {
-    const { container } = render(
+  it("shows the Teacher Pro plan for teacher accounts", () => {
+    render(
       <SubscriptionManagement
         profile={{
           uid: "teacher-1",
@@ -59,6 +59,8 @@ describe("SubscriptionManagement", () => {
       />
     );
 
-    expect(container).toBeEmptyDOMElement();
+    expect(screen.getByRole("heading", { name: /teacher pro/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /start teacher pro/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /start family plus/i })).not.toBeInTheDocument();
   });
 });
