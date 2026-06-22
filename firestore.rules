@@ -50,7 +50,30 @@ service cloud.firestore {
       }
 
       match /learningEvents/{eventId} {
-        allow create: if ownsUserDocument(userId);
+        allow create: if ownsUserDocument(userId)
+          && request.resource.data.userId == request.auth.uid
+          && request.resource.data.type in [
+            "reading_started",
+            "word_known",
+            "word_listened",
+            "word_skipped",
+            "reading_completed",
+            "sound_listened",
+            "sentence_listened",
+            "memory_started",
+            "memory_card_revealed",
+            "memory_match",
+            "memory_attempt",
+            "memory_completed",
+            "activity_started",
+            "activity_prompt_listened",
+            "activity_answer",
+            "activity_round_advanced",
+            "activity_completed"
+          ]
+          && request.resource.data.label is string
+          && request.resource.data.area in ["phonics", "sightWords", "fluency", "workingMemory", "consistency"]
+          && request.resource.data.createdAt != null;
         allow read: if ownsUserDocument(userId) || isTeacherAssignedTo(userId);
         allow update, delete: if false;
       }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { readingLevels } from "../../data/content";
 import { recordKnownWord, recordReadingSession } from "../../services/progressRepository";
 import { celebrate, speak, speakSentence, speakSounds, speakWord } from "../../shared/speech";
@@ -17,15 +17,39 @@ export function ReadingPractice({ progress, user, onProgressChange }: ReadingPra
   const level = readingLevels[levelIndex];
   const word = level.words[wordIndex];
 
+  useEffect(() => {
+    void recordLearningEvent(user, "reading_started", word.text, "sightWords", {
+      level: level.id,
+      word: word.text,
+      sentence: word.sentence,
+      wordIndex: wordIndex + 1,
+      totalWords: level.words.length
+    });
+  }, [level.id, level.words.length, user, word.sentence, word.text, wordIndex]);
+
+  function wordMetadata() {
+    return {
+      level: level.id,
+      word: word.text,
+      sentence: word.sentence,
+      wordIndex: wordIndex + 1,
+      totalWords: level.words.length
+    };
+  }
+
   function goToNextWord() {
+    void recordLearningEvent(user, "word_skipped", word.text, "sightWords", {
+      ...wordMetadata(),
+      action: "next_word"
+    });
     setWordIndex((current) => (current + 1) % level.words.length);
   }
 
   function handleKnownWord() {
     onProgressChange(recordKnownWord(progress, word.text));
     void recordLearningEvent(user, "word_known", word.text, "sightWords", {
-      level: level.id,
-      sentence: word.sentence
+      ...wordMetadata(),
+      correct: true
     });
     celebrate(`Nice reading! You knew ${word.text}.`);
     goToNextWord();
@@ -34,8 +58,8 @@ export function ReadingPractice({ progress, user, onProgressChange }: ReadingPra
   function handleCompleteReading() {
     onProgressChange(recordReadingSession(progress));
     void recordLearningEvent(user, "reading_completed", word.sentence, "fluency", {
-      level: level.id,
-      word: word.text
+      ...wordMetadata(),
+      correct: true
     });
     celebrate("Wonderful reading! Let's try the next one.");
     goToNextWord();
@@ -53,7 +77,17 @@ export function ReadingPractice({ progress, user, onProgressChange }: ReadingPra
           aria-label="Choose reading level"
           value={levelIndex}
           onChange={(event) => {
-            setLevelIndex(Number(event.target.value));
+            const nextLevelIndex = Number(event.target.value);
+            const nextLevel = readingLevels[nextLevelIndex];
+            void recordLearningEvent(user, "reading_started", nextLevel.words[0].text, "sightWords", {
+              level: nextLevel.id,
+              word: nextLevel.words[0].text,
+              sentence: nextLevel.words[0].sentence,
+              wordIndex: 1,
+              totalWords: nextLevel.words.length,
+              action: "level_changed"
+            });
+            setLevelIndex(nextLevelIndex);
             setWordIndex(0);
           }}
         >
@@ -73,7 +107,15 @@ export function ReadingPractice({ progress, user, onProgressChange }: ReadingPra
               {wordIndex + 1} of {level.words.length}
             </span>
           </div>
-          <button className="sound-button" type="button" aria-label="Read the word aloud" onClick={() => speakWord(word.text)}>
+          <button
+            className="sound-button"
+            type="button"
+            aria-label="Read the word aloud"
+            onClick={() => {
+              speakWord(word.text);
+              void recordLearningEvent(user, "word_listened", word.text, "sightWords", wordMetadata());
+            }}
+          >
             Listen
           </button>
           <p className="big-word">{word.text}</p>
@@ -99,13 +141,31 @@ export function ReadingPractice({ progress, user, onProgressChange }: ReadingPra
                 className="sound-chip"
                 key={sound}
                 type="button"
-                onClick={() => speak(sound, { rate: 0.76, pitch: 1.24 })}
+                onClick={() => {
+                  speak(sound, { rate: 0.76, pitch: 1.24 });
+                  void recordLearningEvent(user, "sound_listened", sound, "phonics", {
+                    ...wordMetadata(),
+                    sound,
+                    phonicsWord: word.phonics.word
+                  });
+                }}
               >
                 {sound}
               </button>
             ))}
           </div>
-          <button className="secondary-button" type="button" onClick={() => speakSounds(word.phonics.sounds, word.phonics.word)}>
+          <button
+            className="secondary-button"
+            type="button"
+            onClick={() => {
+              speakSounds(word.phonics.sounds, word.phonics.word);
+              void recordLearningEvent(user, "sound_listened", word.phonics.word, "phonics", {
+                ...wordMetadata(),
+                sounds: word.phonics.sounds.join(" "),
+                phonicsWord: word.phonics.word
+              });
+            }}
+          >
             Hear sounds
           </button>
         </article>
@@ -120,8 +180,7 @@ export function ReadingPractice({ progress, user, onProgressChange }: ReadingPra
               onClick={() => {
                 speakSentence(word.sentence);
                 void recordLearningEvent(user, "sentence_listened", word.sentence, "fluency", {
-                  level: level.id,
-                  word: word.text
+                  ...wordMetadata()
                 });
               }}
             >

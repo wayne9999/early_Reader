@@ -125,14 +125,22 @@ export type UserProfile = {
 };
 
 export type LearningEventType =
+  | "reading_started"
   | "word_known"
+  | "word_listened"
+  | "word_skipped"
   | "reading_completed"
   | "sound_listened"
   | "sentence_listened"
+  | "memory_started"
+  | "memory_card_revealed"
   | "memory_match"
   | "memory_attempt"
   | "memory_completed"
+  | "activity_started"
+  | "activity_prompt_listened"
   | "activity_answer"
+  | "activity_round_advanced"
   | "activity_completed";
 
 export type LearningEvent = {

@@ -20,6 +20,13 @@ describe("firestore privacy rules", () => {
     expect(rules).toContain("allow read: if ownsUserDocument(userId) || isTeacherAssignedTo(userId);");
   });
 
+  it("requires student learning events to be self-owned and skill-scoped", () => {
+    expect(rules).toContain("match /learningEvents/{eventId}");
+    expect(rules).toContain("request.resource.data.userId == request.auth.uid");
+    expect(rules).toContain("\"activity_round_advanced\"");
+    expect(rules).toContain("request.resource.data.area in [\"phonics\", \"sightWords\", \"fluency\", \"workingMemory\", \"consistency\"]");
+  });
+
   it("scopes assignment links to the teacher or student on that link", () => {
     expect(rules).toContain("resource.data.studentId == request.auth.uid || resource.data.teacherId == request.auth.uid");
   });

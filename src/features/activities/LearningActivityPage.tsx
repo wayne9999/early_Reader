@@ -25,6 +25,14 @@ export function LearningActivityPage({ activityId, progress, user, onProgressCha
   const roundCount = activity.rounds.length;
 
   useEffect(() => {
+    void recordLearningEvent(user, "activity_started", activity.title, activity.skill, {
+      activityId: activity.id,
+      rounds: roundCount,
+      currentRound: roundIndex + 1
+    });
+  }, [activity.id, activity.skill, activity.title, roundCount, user]);
+
+  useEffect(() => {
     setRoundIndex(0);
     setCorrectAnswers(0);
     setAnsweredCorrectly(false);
@@ -81,7 +89,14 @@ export function LearningActivityPage({ activityId, progress, user, onProgressCha
   }
 
   function goToNextRound() {
-    setRoundIndex((current) => Math.min(current + 1, roundCount - 1));
+    const nextRound = Math.min(roundIndex + 1, roundCount - 1);
+    void recordLearningEvent(user, "activity_round_advanced", `${activity.title}: round ${nextRound + 1}`, activity.skill, {
+      activityId: activity.id,
+      fromRound: roundIndex + 1,
+      toRound: nextRound + 1,
+      correctAnswers
+    });
+    setRoundIndex(nextRound);
     setAnsweredCorrectly(false);
     setFeedback("Pick the answer that sounds or makes sense best.");
   }
@@ -93,7 +108,19 @@ export function LearningActivityPage({ activityId, progress, user, onProgressCha
           <p className="eyebrow">{activity.eyebrow}</p>
           <h2>{activity.title}</h2>
         </div>
-        <button className="secondary-button" type="button" onClick={() => speakSentence(currentRound.prompt)}>
+        <button
+          className="secondary-button"
+          type="button"
+          onClick={() => {
+            speakSentence(currentRound.prompt);
+            void recordLearningEvent(user, "activity_prompt_listened", `${activity.title}: ${currentRound.target}`, activity.skill, {
+              activityId: activity.id,
+              round: roundIndex + 1,
+              target: currentRound.target,
+              prompt: currentRound.prompt
+            });
+          }}
+        >
           Hear prompt
         </button>
       </div>

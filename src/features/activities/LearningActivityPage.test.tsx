@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { defaultProgress } from "../../services/progressRepository";
+import { recordLearningEvent } from "../../services/learningEventRepository";
 import { LearningActivityPage } from "./LearningActivityPage";
 
 vi.mock("../../shared/speech", () => ({
@@ -33,6 +34,32 @@ describe("LearningActivityPage", () => {
 
     expect(screen.getByRole("heading", { name: /listen to the ending sound/i })).toBeInTheDocument();
     expect(onProgressChange).not.toHaveBeenCalled();
+    expect(recordLearningEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "student-1" }),
+      "activity_answer",
+      "Rhyme Rocket: cat",
+      "phonics",
+      expect.objectContaining({
+        activityId: "rhymes",
+        correct: false,
+        selectedChoice: "sun",
+        correctChoice: "hat"
+      })
+    );
+
+    await user.click(screen.getByRole("button", { name: "Hear prompt" }));
+
+    expect(recordLearningEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "student-1" }),
+      "activity_prompt_listened",
+      "Rhyme Rocket: cat",
+      "phonics",
+      expect.objectContaining({
+        activityId: "rhymes",
+        round: 1,
+        target: "cat"
+      })
+    );
 
     for (let index = 0; index < correctChoices.length; index += 1) {
       await user.click(screen.getByRole("button", { name: correctChoices[index] }));
@@ -49,6 +76,17 @@ describe("LearningActivityPage", () => {
       activityCompletions: 1,
       completedToday: 1
     });
+    expect(recordLearningEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "student-1" }),
+      "activity_completed",
+      "Rhyme Rocket",
+      "phonics",
+      expect.objectContaining({
+        activityId: "rhymes",
+        rounds: 10,
+        correctAnswers: 10
+      })
+    );
 
     await user.click(screen.getByRole("button", { name: "bee" }));
 

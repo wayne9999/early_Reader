@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { memoryCards } from "../../data/content";
 import { recordMemoryWin } from "../../services/progressRepository";
 import { celebrate, speak } from "../../shared/speech";
@@ -36,6 +36,13 @@ export function MemoryGame({ progress, user, onProgressChange }: MemoryGameProps
   const [locked, setLocked] = useState(false);
   const [completed, setCompleted] = useState(false);
 
+  useEffect(() => {
+    void recordLearningEvent(user, "memory_started", "Memory board started", "workingMemory", {
+      pairs: memoryCards.length,
+      cards: memoryCards.length * 2
+    });
+  }, [user]);
+
   const message = useMemo(() => {
     if (completed) {
       return `Board complete in ${turns} ${turns === 1 ? "turn" : "turns"}.`;
@@ -55,6 +62,11 @@ export function MemoryGame({ progress, user, onProgressChange }: MemoryGameProps
     setTurns(0);
     setLocked(false);
     setCompleted(false);
+    void recordLearningEvent(user, "memory_started", "New memory board", "workingMemory", {
+      pairs: memoryCards.length,
+      cards: memoryCards.length * 2,
+      action: "new_game"
+    });
   }
 
   function selectCard(card: MemoryCardInstance) {
@@ -64,6 +76,12 @@ export function MemoryGame({ progress, user, onProgressChange }: MemoryGameProps
 
     const nextSelected = [...selected, card];
     setSelected(nextSelected);
+    void recordLearningEvent(user, "memory_card_revealed", card.label, "workingMemory", {
+      turns,
+      category: card.category,
+      matchedPairs: matchedIds.size,
+      pickInTurn: nextSelected.length
+    });
 
     if (nextSelected.length !== 2) {
       return;
