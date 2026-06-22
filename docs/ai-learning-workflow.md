@@ -13,11 +13,11 @@ ReadNest uses backend-only AI workflow boundaries. The React app never calls an 
   - `users/{studentId}/aiInsights/{insightId}`
 - `enqueueDailyInsightJobs` creates scheduled jobs for active teacher-student assignments each night.
 
-The current insight engine is `rule-based-v1`. It is intentionally useful without an AI provider key and becomes the fallback when model calls are unavailable.
+The default fallback insight engine is `rule-based-v1`. When `OPENAI_API_KEY` is available in Firebase Functions, the worker calls OpenAI with the compact summary and stores the model-backed structured result. If the model call fails, the worker records the provider error on the job and writes the rule-based fallback insight instead.
 
 ## Future Model-Backed Provider
 
-Add a provider adapter behind the worker only:
+The provider adapter stays behind the worker only:
 
 ```text
 Student events -> deterministic summary -> AI provider adapter -> structured insight JSON -> Firestore

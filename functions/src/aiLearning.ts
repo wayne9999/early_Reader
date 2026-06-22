@@ -51,13 +51,21 @@ export type StudentAiInsight = {
     topMasteredItems: string[];
   };
   aiDisclosure: string;
-  model: "rule-based-v1";
+  model: string;
   promptVersion: "readnest-ai-v1";
   sourceDataWindow: StudentLearningSummary["eventWindow"];
   createdAt: FieldValue;
   updatedAt: FieldValue;
   createdBy: "ai-worker";
   updatedBy: "ai-worker";
+};
+
+type OpenAiInsightPayload = {
+  summary: string;
+  strengths: Array<{ area: SkillArea; label: string; evidence: string }>;
+  needsPractice: Array<{ area: SkillArea; label: string; evidence: string; nextStep: string }>;
+  recommendedTeacherActions: string[];
+  suggestedHomePractice: string[];
 };
 
 const SKILL_LABELS: Record<SkillArea, string> = {
@@ -237,6 +245,193 @@ export function buildRuleBasedInsight(summary: StudentLearningSummary): StudentA
     model: "rule-based-v1",
     promptVersion: "readnest-ai-v1",
     sourceDataWindow: summary.eventWindow,
+    createdAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
+    createdBy: "ai-worker",
+    updatedBy: "ai-worker"
+  };
+}
+
+function cleanString(value: unknown, fallback: string) {
+  return typeof value === "string" && value.trim() ? value.trim().slice(0, 480) : fallback;
+}
+
+function cleanSkillArea(value: unknown, fallback: SkillArea): SkillArea {
+  return isSkillArea(value) ? value : fallback;
+}
+
+function cleanList(value: unknown, fallback: string[], maxItems = 5) {
+  if (!Array.isArray(value)) {
+    return fallback;
+  }
+
+  return value
+    .filter((item): item is string => typeof item === "string" && item.trim().length > 0)
+    .map((item) => item.trim().slice(0, 220))
+    .slice(0, maxItems);
+}
+
+function normalizeOpenAiPayload(payload: unknown, fallback: StudentAiInsight): OpenAiInsightPayload {
+  const source = payload && typeof payload === "object" ? payload as Record<string, unknown> : {};
+
+  return {
+    summary: cleanString(source.summary, fallback.summary),
+    strengths: Array.isArray(source.strengths)
+      ? source.strengths.slice(0, 3).map((item, index) => {
+        const row = item && typeof item === "object" ? item as Record<string, unknown> : {};
+        return {
+          area: cleanSkillArea(row.area, fallback.strengths[index]?.area ?? "sightWords"),
+          label: cleanString(row.label, fallback.strengths[index]?.label ?? "Emerging strength"),
+          evidence: cleanString(row.evidence, fallback.strengths[index]?.evidence ?? "Recent practice shows developing confidence.")
+        };
+      })
+      : fallback.strengths,
+    needsPractice: Array.isArray(source.needsPractice)
+      ? source.needsPractice.slice(0, 4).map((item, index) => {
+        const row = item && typeof item === "object" ? item as Record<string, unknown> : {};
+        return {
+          area: cleanSkillArea(row.area, fallback.needsPractice[index]?.area ?? "fluency"),
+          label: cleanString(row.label, fallback.needsPractice[index]?.label ?? "Practice focus"),
+          evidence: cleanString(row.evidence, fallback.needsPractice[index]?.evidence ?? "More scored practice is needed."),
+          nextStep: cleanString(row.nextStep, fallback.needsPractice[index]?.nextStep ?? "Use one short guided practice round, then retry independently.")
+        };
+      })
+      : fallback.needsPractice,
+    recommendedTeacherActions: cleanList(source.recommendedTeacherActions, fallback.recommendedTeacherActions, 5),
+    suggestedHomePractice: cleanList(source.suggestedHomePractice, fallback.suggestedHomePractice, 4)
+  };
+}
+
+function outputTextFromResponsesApi(response: unknown) {
+  const data = response && typeof response === "object" ? response as Record<string, unknown> : {};
+
+  if (typeof data.output_text === "string") {
+    return data.output_text;
+  }
+
+  if (!Array.isArray(data.output)) {
+    return "";
+  }
+
+  return data.output
+    .flatMap((item) => {
+      const outputItem = item && typeof item === "object" ? item as Record<string, unknown> : {};
+      return Array.isArray(outputItem.content) ? outputItem.content : [];
+    })
+    .map((content) => {
+      const contentItem = content && typeof content === "object" ? content as Record<string, unknown> : {};
+      return typeof contentItem.text === "string" ? contentItem.text : "";
+    })
+    .join("");
+}
+
+export async function buildOpenAiInsight(options: {
+  apiKey: string;
+  model: string;
+  summary: StudentLearningSummary;
+}): Promise<StudentAiInsight> {
+  const fallback = buildRuleBasedInsight(options.summary);
+  const response = await fetch("https://api.openai.com/v1/responses", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${options.apiKey}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      model: options.model,
+      input: [
+        {
+          role: "system",
+          content:
+            "You are an early literacy instructional coach for kindergarten through grade 2. Use only the provided compact learning summary. Return concise, evidence-based teaching support. Do not diagnose medical, learning, or developmental conditions."
+        },
+        {
+          role: "user",
+          content: JSON.stringify({
+            task: "Create a teacher-facing ReadNest insight from this compact student learning summary.",
+            allowedSkillAreas: SKILL_AREAS,
+            learningSummary: options.summary,
+            requirements: [
+              "Keep recommendations practical for a 5 minute lesson.",
+              "Mention evidence from the summary.",
+              "Avoid child email, payment, diagnosis, disability labels, or sensitive claims.",
+              "Use warm, professional teacher language."
+            ]
+          })
+        }
+      ],
+      text: {
+        format: {
+          type: "json_schema",
+          name: "readnest_student_insight",
+          strict: true,
+          schema: {
+            type: "object",
+            additionalProperties: false,
+            required: ["summary", "strengths", "needsPractice", "recommendedTeacherActions", "suggestedHomePractice"],
+            properties: {
+              summary: { type: "string" },
+              strengths: {
+                type: "array",
+                maxItems: 3,
+                items: {
+                  type: "object",
+                  additionalProperties: false,
+                  required: ["area", "label", "evidence"],
+                  properties: {
+                    area: { type: "string", enum: SKILL_AREAS },
+                    label: { type: "string" },
+                    evidence: { type: "string" }
+                  }
+                }
+              },
+              needsPractice: {
+                type: "array",
+                maxItems: 4,
+                items: {
+                  type: "object",
+                  additionalProperties: false,
+                  required: ["area", "label", "evidence", "nextStep"],
+                  properties: {
+                    area: { type: "string", enum: SKILL_AREAS },
+                    label: { type: "string" },
+                    evidence: { type: "string" },
+                    nextStep: { type: "string" }
+                  }
+                }
+              },
+              recommendedTeacherActions: {
+                type: "array",
+                maxItems: 5,
+                items: { type: "string" }
+              },
+              suggestedHomePractice: {
+                type: "array",
+                maxItems: 4,
+                items: { type: "string" }
+              }
+            }
+          }
+        }
+      }
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(`OpenAI insight request failed with ${response.status}`);
+  }
+
+  const text = outputTextFromResponsesApi(await response.json());
+  const normalized = normalizeOpenAiPayload(JSON.parse(text), fallback);
+
+  return {
+    ...fallback,
+    ...normalized,
+    model: options.model,
+    evidence: fallback.evidence,
+    aiDisclosure: "AI-assisted instructional support only. This is not a diagnosis or medical evaluation.",
+    promptVersion: "readnest-ai-v1",
+    sourceDataWindow: options.summary.eventWindow,
     createdAt: FieldValue.serverTimestamp(),
     updatedAt: FieldValue.serverTimestamp(),
     createdBy: "ai-worker",

@@ -6,13 +6,15 @@ import { onDocumentCreated } from "firebase-functions/v2/firestore";
 import { HttpsError, onCall, onRequest } from "firebase-functions/v2/https";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import Stripe from "stripe";
-import { buildRuleBasedInsight, loadRecentLearningEvents, summarizeLearningEvents, writeStudentInsight } from "./aiLearning.js";
+import { buildOpenAiInsight, buildRuleBasedInsight, loadRecentLearningEvents, summarizeLearningEvents, writeStudentInsight } from "./aiLearning.js";
 
 initializeApp();
 
 const stripeSecretKey = defineSecret("STRIPE_SECRET_KEY");
 const stripeWebhookSecret = defineSecret("STRIPE_WEBHOOK_SECRET");
+const openAiApiKey = defineSecret("OPENAI_API_KEY");
 const appBaseUrl = process.env.READNEST_APP_BASE_URL ?? "https://wayne9999.github.io/early_Reader/";
+const aiModel = process.env.READNEST_AI_MODEL ?? "gpt-5.5";
 
 type SubscriptionTier = "free" | "familyPlus" | "teacherPro";
 type SubscriptionStatus = "free" | "checkoutStarted" | "active" | "pastDue" | "canceled";
@@ -168,12 +170,30 @@ async function runAiAnalysisJob(jobId: string, job: DocumentData) {
   try {
     const events = await loadRecentLearningEvents(db, studentId);
     const summary = summarizeLearningEvents(studentId, events);
-    const insight = buildRuleBasedInsight(summary);
+    let insight = buildRuleBasedInsight(summary);
+    let provider = "rule-based";
+    let providerError: string | null = null;
+
+    try {
+      const apiKey = openAiApiKey.value();
+
+      if (apiKey) {
+        insight = await buildOpenAiInsight({ apiKey, model: aiModel, summary });
+        provider = "openai";
+      }
+    } catch (error) {
+      providerError = error instanceof Error ? error.message : "OpenAI provider failed";
+      console.warn("OpenAI insight generation failed; using rule-based fallback", { jobId, studentId, providerError });
+    }
+
     const insightId = await writeStudentInsight(db, studentId, summary, insight);
 
     await db.doc(`aiAnalysisJobs/${jobId}`).set({
       status: "succeeded",
       insightId,
+      provider,
+      providerError,
+      model: insight.model,
       sourceEventCount: events.length,
       completedAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
@@ -438,6 +458,7 @@ export const processAiAnalysisJob = onDocumentCreated(
   {
     document: "aiAnalysisJobs/{jobId}",
     region: "us-central1",
+    secrets: [openAiApiKey],
     retry: true
   },
   async (event) => {

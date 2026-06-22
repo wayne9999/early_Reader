@@ -28,8 +28,10 @@ jobs:
       READNEST_APP_BASE_URL: ${{ vars.READNEST_APP_BASE_URL }}
       STRIPE_FAMILY_PLUS_PRICE_ID: ${{ vars.STRIPE_FAMILY_PLUS_PRICE_ID }}
       STRIPE_TEACHER_PRO_PRICE_ID: ${{ vars.STRIPE_TEACHER_PRO_PRICE_ID }}
+      READNEST_AI_MODEL: ${{ vars.READNEST_AI_MODEL }}
       STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
       STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -77,6 +79,7 @@ jobs:
             echo "STRIPE_FAMILY_PLUS_PRICE_ID=${STRIPE_FAMILY_PLUS_PRICE_ID}"
             echo "STRIPE_TEACHER_PRO_PRICE_ID=${STRIPE_TEACHER_PRO_PRICE_ID}"
             echo "READNEST_APP_BASE_URL=${READNEST_APP_BASE_URL}"
+            echo "READNEST_AI_MODEL=${READNEST_AI_MODEL:-gpt-5.5}"
           } > .env
 
       - name: Sync Stripe secret
@@ -86,6 +89,10 @@ jobs:
       - name: Sync Stripe webhook secret
         if: ${{ (inputs.target == 'functions' || inputs.target == 'all') && env.STRIPE_WEBHOOK_SECRET != '' }}
         run: printf '%s' "$STRIPE_WEBHOOK_SECRET" | firebase functions:secrets:set STRIPE_WEBHOOK_SECRET --project "$FIREBASE_PROJECT_ID" --data-file - --non-interactive
+
+      - name: Sync OpenAI secret
+        if: ${{ (inputs.target == 'functions' || inputs.target == 'all') && env.OPENAI_API_KEY != '' }}
+        run: printf '%s' "$OPENAI_API_KEY" | firebase functions:secrets:set OPENAI_API_KEY --project "$FIREBASE_PROJECT_ID" --data-file - --non-interactive
 
       - name: Deploy Firestore rules and indexes
         if: ${{ inputs.target == 'rules' || inputs.target == 'all' }}
