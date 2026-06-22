@@ -6,6 +6,7 @@ import { onDocumentCreated } from "firebase-functions/v2/firestore";
 import { HttpsError, onCall, onRequest } from "firebase-functions/v2/https";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import Stripe from "stripe";
+import { parseBudgetLimit, recordAiBudgetActual, reserveAiBudget, type AiBudgetDecision } from "./aiBudget.js";
 import { buildOpenAiInsight, buildRuleBasedInsight, loadRecentLearningEvents, summarizeLearningEvents, writeStudentInsight } from "./aiLearning.js";
 
 initializeApp();
@@ -15,6 +16,11 @@ const stripeWebhookSecret = defineSecret("STRIPE_WEBHOOK_SECRET");
 const openAiApiKey = defineSecret("OPENAI_API_KEY");
 const appBaseUrl = process.env.READNEST_APP_BASE_URL ?? "https://wayne9999.github.io/early_Reader/";
 const aiModel = process.env.READNEST_AI_MODEL ?? "gpt-5.5";
+const aiWarningLimitUsd = parseBudgetLimit(process.env.READNEST_AI_WARNING_LIMIT_USD, 10);
+const aiMonthlyLimitUsd = parseBudgetLimit(process.env.READNEST_AI_MONTHLY_LIMIT_USD, 15);
+const aiEstimatedCostPerInsightUsd = parseBudgetLimit(process.env.READNEST_AI_ESTIMATED_COST_PER_INSIGHT_USD, 0.05);
+const aiEstimatedInputTokenCostPerMillionUsd = parseBudgetLimit(process.env.READNEST_AI_INPUT_COST_PER_1M_USD, 0);
+const aiEstimatedOutputTokenCostPerMillionUsd = parseBudgetLimit(process.env.READNEST_AI_OUTPUT_COST_PER_1M_USD, 0);
 
 type SubscriptionTier = "free" | "familyPlus" | "teacherPro";
 type SubscriptionStatus = "free" | "checkoutStarted" | "active" | "pastDue" | "canceled";
@@ -120,6 +126,14 @@ async function assertCanRequestStudentInsight(requesterId: string, studentId: st
   throw new HttpsError("permission-denied", "Only assigned teachers, admins, or the student account can request this insight.");
 }
 
+function estimateOpenAiCost(inputTokens: number, outputTokens: number) {
+  const inputCost = (inputTokens / 1_000_000) * aiEstimatedInputTokenCostPerMillionUsd;
+  const outputCost = (outputTokens / 1_000_000) * aiEstimatedOutputTokenCostPerMillionUsd;
+  const total = inputCost + outputCost;
+
+  return Math.round(total * 10000) / 10000;
+}
+
 async function createAiAnalysisJob(options: {
   studentId: string;
   requestedBy: string;
@@ -173,13 +187,44 @@ async function runAiAnalysisJob(jobId: string, job: DocumentData) {
     let insight = buildRuleBasedInsight(summary);
     let provider = "rule-based";
     let providerError: string | null = null;
+    let budgetDecision: AiBudgetDecision | null = null;
+    let inputTokens: number | null = null;
+    let outputTokens: number | null = null;
+    let actualCostUsd: number | null = null;
 
     try {
       const apiKey = openAiApiKey.value();
 
       if (apiKey) {
-        insight = await buildOpenAiInsight({ apiKey, model: aiModel, summary });
-        provider = "openai";
+        budgetDecision = await reserveAiBudget(db, {
+          jobId,
+          studentId,
+          model: aiModel,
+          estimatedCostUsd: aiEstimatedCostPerInsightUsd,
+          warningLimitUsd: aiWarningLimitUsd,
+          hardLimitUsd: aiMonthlyLimitUsd
+        });
+
+        if (budgetDecision.allowed) {
+          const result = await buildOpenAiInsight({ apiKey, model: aiModel, summary });
+          insight = result.insight;
+          inputTokens = result.inputTokens;
+          outputTokens = result.outputTokens;
+          actualCostUsd = estimateOpenAiCost(result.inputTokens, result.outputTokens);
+          provider = budgetDecision.mode === "warning" ? "openai-warning" : "openai";
+
+          await recordAiBudgetActual(db, {
+            jobId,
+            monthKey: budgetDecision.monthKey,
+            actualCostUsd: actualCostUsd || budgetDecision.reservedUsd,
+            estimatedCostUsd: budgetDecision.reservedUsd,
+            inputTokens: result.inputTokens,
+            outputTokens: result.outputTokens
+          });
+        } else {
+          provider = "budget-fallback";
+          providerError = `Monthly AI budget limit reached (${budgetDecision.estimatedMonthlySpendUsd}/${budgetDecision.hardLimitUsd} USD).`;
+        }
       }
     } catch (error) {
       providerError = error instanceof Error ? error.message : "OpenAI provider failed";
@@ -194,6 +239,10 @@ async function runAiAnalysisJob(jobId: string, job: DocumentData) {
       provider,
       providerError,
       model: insight.model,
+      budget: budgetDecision,
+      inputTokens,
+      outputTokens,
+      actualCostUsd,
       sourceEventCount: events.length,
       completedAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),

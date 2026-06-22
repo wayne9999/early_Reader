@@ -42,6 +42,11 @@ firebase functions:secrets:set OPENAI_API_KEY
 Future AI provider runtime value:
 
 - `READNEST_AI_MODEL`
+- `READNEST_AI_WARNING_LIMIT_USD`
+- `READNEST_AI_MONTHLY_LIMIT_USD`
+- `READNEST_AI_ESTIMATED_COST_PER_INSIGHT_USD`
+- `READNEST_AI_INPUT_COST_PER_1M_USD`
+- `READNEST_AI_OUTPUT_COST_PER_1M_USD`
 
 Runtime environment values:
 
@@ -57,6 +62,7 @@ Runtime environment values:
 - Firestore rules prevent clients from writing subscription authority.
 - Teacher access to student history requires an active `teacherStudentLinks/{teacherId_studentId}` record.
 - AI insight jobs and generated recommendations are backend-authored only. Teachers can read insight output only for actively assigned students.
+- AI budget records under `aiBudget/**` are backend-only. If the monthly cap is reached, the backend uses the rule-based fallback instead of calling OpenAI.
 
 ## Launch Blocks
 

@@ -15,6 +15,19 @@ ReadNest uses backend-only AI workflow boundaries. The React app never calls an 
 
 The default fallback insight engine is `rule-based-v1`. When `OPENAI_API_KEY` is available in Firebase Functions, the worker calls OpenAI with the compact summary and stores the model-backed structured result. If the model call fails, the worker records the provider error on the job and writes the rule-based fallback insight instead.
 
+## Budget Guard
+
+Model calls are protected by a backend monthly budget guard before OpenAI is called:
+
+- The worker reserves an estimated cost in `aiBudget/monthly/months/{yyyy-mm}`.
+- The React app cannot read or write `aiBudget`; Firestore rules keep it backend-only.
+- `READNEST_AI_WARNING_LIMIT_USD` marks jobs as `openai-warning` so teachers see that the app is near the budget threshold.
+- `READNEST_AI_MONTHLY_LIMIT_USD` is the hard cap. Once reached, jobs use `budget-fallback` and still write a rule-based insight.
+- `READNEST_AI_ESTIMATED_COST_PER_INSIGHT_USD` gives each insight a conservative reservation so the cap works even when exact provider pricing is not configured.
+- Optional token price variables can reconcile estimated spend after the Responses API returns token usage.
+
+The teacher dashboard shows the provider mode and budget status. In test environments, keep the cap low, such as `$10` warning and `$15` hard limit. For production, use provider billing alerts plus this app-level guard.
+
 ## Future Model-Backed Provider
 
 The provider adapter stays behind the worker only:

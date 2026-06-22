@@ -75,6 +75,28 @@ function aiJobHelp(job: AiAnalysisJob | null, insight: StudentAiInsight | null) 
   return "Generate the first insight after this student has learning history.";
 }
 
+function aiProviderHelp(job: AiAnalysisJob | null, insight: StudentAiInsight | null) {
+  if (job?.provider === "budget-fallback") {
+    return "Monthly AI budget reached. ReadNest used the rule-based insight engine so teachers still get guidance without extra model spend.";
+  }
+
+  if (job?.provider === "openai-warning") {
+    const budget = job.budget;
+    const budgetText = budget ? ` Estimated month spend is $${budget.estimatedMonthlySpendUsd} of the $${budget.hardLimitUsd} cap.` : "";
+    return `OpenAI generated this insight, but the monthly budget is near the warning level.${budgetText}`;
+  }
+
+  if (job?.provider === "openai") {
+    return "OpenAI generated this from a compact learning summary. No payment data, child email, or raw all-time history is sent.";
+  }
+
+  if (job?.provider === "rule-based" || insight?.model === "rule-based-v1") {
+    return "Using the deterministic rule-based engine. This remains available when AI keys, provider calls, or budget are unavailable.";
+  }
+
+  return "Insight source is recorded on the backend job for audit and cost control.";
+}
+
 export function TeacherDashboard({ progress, user, profile }: TeacherDashboardProps) {
   const [assignments, setAssignments] = useState<TeacherStudentLink[]>([]);
   const [invites, setInvites] = useState<TeacherInvite[]>([]);
@@ -548,6 +570,9 @@ export function TeacherDashboard({ progress, user, profile }: TeacherDashboardPr
             <p className="helper-text">
               {aiJobHelp(selectedAiJob, selectedAiInsight)} Last generated: {formatInsightDate(selectedAiInsight?.createdAt)}.
             </p>
+            <p className={`helper-text${selectedAiJob?.provider === "budget-fallback" ? " ai-budget-alert" : ""}`}>
+              {aiProviderHelp(selectedAiJob, selectedAiInsight)}
+            </p>
             {insightStatus ? <p className="helper-text">{insightStatus}</p> : null}
             {selectedAiInsight ? (
               <>
@@ -563,6 +588,18 @@ export function TeacherDashboard({ progress, user, profile }: TeacherDashboardPr
                   <span>
                     <strong>{selectedAiInsight.model}</strong>
                     <small>Analysis engine</small>
+                  </span>
+                  <span>
+                    <strong>{selectedAiJob?.provider ?? "recorded"}</strong>
+                    <small>Provider mode</small>
+                  </span>
+                  <span>
+                    <strong>
+                      {selectedAiJob?.budget
+                        ? `$${selectedAiJob.budget.estimatedMonthlySpendUsd}/$${selectedAiJob.budget.hardLimitUsd}`
+                        : "Guarded"}
+                    </strong>
+                    <small>Monthly AI budget</small>
                   </span>
                 </div>
                 <div className="insight-columns">

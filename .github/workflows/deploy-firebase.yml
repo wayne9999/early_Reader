@@ -12,6 +12,11 @@ on:
           - rules
           - functions
           - all
+      include_scheduler:
+        description: Include the scheduled AI insight function. Requires cloudscheduler.jobs.update permission.
+        required: true
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -29,6 +34,11 @@ jobs:
       STRIPE_FAMILY_PLUS_PRICE_ID: ${{ vars.STRIPE_FAMILY_PLUS_PRICE_ID }}
       STRIPE_TEACHER_PRO_PRICE_ID: ${{ vars.STRIPE_TEACHER_PRO_PRICE_ID }}
       READNEST_AI_MODEL: ${{ vars.READNEST_AI_MODEL }}
+      READNEST_AI_WARNING_LIMIT_USD: ${{ vars.READNEST_AI_WARNING_LIMIT_USD }}
+      READNEST_AI_MONTHLY_LIMIT_USD: ${{ vars.READNEST_AI_MONTHLY_LIMIT_USD }}
+      READNEST_AI_ESTIMATED_COST_PER_INSIGHT_USD: ${{ vars.READNEST_AI_ESTIMATED_COST_PER_INSIGHT_USD }}
+      READNEST_AI_INPUT_COST_PER_1M_USD: ${{ vars.READNEST_AI_INPUT_COST_PER_1M_USD }}
+      READNEST_AI_OUTPUT_COST_PER_1M_USD: ${{ vars.READNEST_AI_OUTPUT_COST_PER_1M_USD }}
       STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
       STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -80,6 +90,11 @@ jobs:
             echo "STRIPE_TEACHER_PRO_PRICE_ID=${STRIPE_TEACHER_PRO_PRICE_ID}"
             echo "READNEST_APP_BASE_URL=${READNEST_APP_BASE_URL}"
             echo "READNEST_AI_MODEL=${READNEST_AI_MODEL:-gpt-5.5}"
+            echo "READNEST_AI_WARNING_LIMIT_USD=${READNEST_AI_WARNING_LIMIT_USD:-10}"
+            echo "READNEST_AI_MONTHLY_LIMIT_USD=${READNEST_AI_MONTHLY_LIMIT_USD:-15}"
+            echo "READNEST_AI_ESTIMATED_COST_PER_INSIGHT_USD=${READNEST_AI_ESTIMATED_COST_PER_INSIGHT_USD:-0.05}"
+            echo "READNEST_AI_INPUT_COST_PER_1M_USD=${READNEST_AI_INPUT_COST_PER_1M_USD:-0}"
+            echo "READNEST_AI_OUTPUT_COST_PER_1M_USD=${READNEST_AI_OUTPUT_COST_PER_1M_USD:-0}"
           } > .env
 
       - name: Sync Stripe secret
@@ -99,10 +114,19 @@ jobs:
         run: firebase deploy --only firestore:rules,firestore:indexes --project "$FIREBASE_PROJECT_ID" --non-interactive
 
       - name: Deploy Functions
-        if: ${{ inputs.target == 'functions' || inputs.target == 'all' }}
+        if: ${{ (inputs.target == 'functions' || inputs.target == 'all') && !inputs.include_scheduler }}
         run: >
           firebase deploy
           --only functions:stripeWebhook,functions:createBillingPortalSession,functions:createLearningRecommendation,functions:requestStudentInsight,functions:processAiAnalysisJob
+          --project "$FIREBASE_PROJECT_ID"
+          --non-interactive
+          --force
+
+      - name: Deploy Functions with scheduler
+        if: ${{ (inputs.target == 'functions' || inputs.target == 'all') && inputs.include_scheduler }}
+        run: >
+          firebase deploy
+          --only functions:stripeWebhook,functions:createBillingPortalSession,functions:createLearningRecommendation,functions:requestStudentInsight,functions:processAiAnalysisJob,functions:enqueueDailyInsightJobs
           --project "$FIREBASE_PROJECT_ID"
           --non-interactive
           --force

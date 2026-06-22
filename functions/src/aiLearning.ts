@@ -68,6 +68,12 @@ type OpenAiInsightPayload = {
   suggestedHomePractice: string[];
 };
 
+export type OpenAiInsightResult = {
+  insight: StudentAiInsight;
+  inputTokens: number;
+  outputTokens: number;
+};
+
 const SKILL_LABELS: Record<SkillArea, string> = {
   phonics: "Phonics patterns",
   sightWords: "Sight word recognition",
@@ -325,11 +331,20 @@ function outputTextFromResponsesApi(response: unknown) {
     .join("");
 }
 
+function usageFromResponsesApi(response: unknown) {
+  const data = response && typeof response === "object" ? response as Record<string, unknown> : {};
+  const usage = data.usage && typeof data.usage === "object" ? data.usage as Record<string, unknown> : {};
+  const inputTokens = typeof usage.input_tokens === "number" ? usage.input_tokens : 0;
+  const outputTokens = typeof usage.output_tokens === "number" ? usage.output_tokens : 0;
+
+  return { inputTokens, outputTokens };
+}
+
 export async function buildOpenAiInsight(options: {
   apiKey: string;
   model: string;
   summary: StudentLearningSummary;
-}): Promise<StudentAiInsight> {
+}): Promise<OpenAiInsightResult> {
   const fallback = buildRuleBasedInsight(options.summary);
   const response = await fetch("https://api.openai.com/v1/responses", {
     method: "POST",
@@ -421,21 +436,27 @@ export async function buildOpenAiInsight(options: {
     throw new Error(`OpenAI insight request failed with ${response.status}`);
   }
 
-  const text = outputTextFromResponsesApi(await response.json());
+  const responseData = await response.json();
+  const text = outputTextFromResponsesApi(responseData);
+  const usage = usageFromResponsesApi(responseData);
   const normalized = normalizeOpenAiPayload(JSON.parse(text), fallback);
 
   return {
-    ...fallback,
-    ...normalized,
-    model: options.model,
-    evidence: fallback.evidence,
-    aiDisclosure: "AI-assisted instructional support only. This is not a diagnosis or medical evaluation.",
-    promptVersion: "readnest-ai-v1",
-    sourceDataWindow: options.summary.eventWindow,
-    createdAt: FieldValue.serverTimestamp(),
-    updatedAt: FieldValue.serverTimestamp(),
-    createdBy: "ai-worker",
-    updatedBy: "ai-worker"
+    insight: {
+      ...fallback,
+      ...normalized,
+      model: options.model,
+      evidence: fallback.evidence,
+      aiDisclosure: "AI-assisted instructional support only. This is not a diagnosis or medical evaluation.",
+      promptVersion: "readnest-ai-v1",
+      sourceDataWindow: options.summary.eventWindow,
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+      createdBy: "ai-worker",
+      updatedBy: "ai-worker"
+    },
+    inputTokens: usage.inputTokens,
+    outputTokens: usage.outputTokens
   };
 }
 

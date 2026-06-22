@@ -33,7 +33,23 @@ This value belongs in the Functions runtime environment, not as a `VITE_*` varia
 READNEST_AI_FALLBACK_MODEL=
 ```
 
-## 4. Provider Adapter Plan
+## 4. Set the Budget Guard
+
+ReadNest has an app-level budget guard in Firebase Functions. This is separate from OpenAI billing controls and prevents the worker from making more model calls after the configured monthly cap.
+
+Recommended test values:
+
+```text
+READNEST_AI_WARNING_LIMIT_USD=10
+READNEST_AI_MONTHLY_LIMIT_USD=15
+READNEST_AI_ESTIMATED_COST_PER_INSIGHT_USD=0.05
+READNEST_AI_INPUT_COST_PER_1M_USD=0
+READNEST_AI_OUTPUT_COST_PER_1M_USD=0
+```
+
+The estimated cost per insight is the primary test-phase guard. Token cost variables are optional and should be filled from the current OpenAI pricing page before production if you want exact reconciliation after each response. When the hard cap is reached, the backend stores `provider: "budget-fallback"` on the job and writes a rule-based insight instead.
+
+## 5. Provider Adapter Plan
 
 The worker should keep this order:
 
@@ -55,7 +71,7 @@ The provider response should include:
 - confidence
 - non-diagnostic disclosure
 
-## 5. Safety Rules
+## 6. Safety Rules
 
 - Never send card/payment data.
 - Avoid sending child email addresses.
@@ -63,9 +79,9 @@ The provider response should include:
 - Keep AI output labeled as instructional support, not diagnosis.
 - Store `model`, `promptVersion`, `sourceEventCount`, and `createdAt` for auditability.
 
-## 6. Deployment Checklist
+## 7. Deployment Checklist
 
-After setting `OPENAI_API_KEY` and `READNEST_AI_MODEL`:
+After setting `OPENAI_API_KEY`, `READNEST_AI_MODEL`, and the budget variables:
 
 ```bash
 firebase deploy --only functions --project readnest-f9c67
@@ -77,3 +93,4 @@ Then request a teacher insight from the dashboard and confirm:
 - `users/{studentId}/learningSummaries/current` is updated
 - `users/{studentId}/aiInsights/{insightId}` is created
 - the teacher dashboard shows the latest insight
+- the job document shows `provider`, `budget`, token counts when available, and any provider error/fallback reason

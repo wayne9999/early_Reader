@@ -59,6 +59,11 @@ describe("firestore privacy rules", () => {
     expect(rules).toContain("allow create, update, delete: if false;");
   });
 
+  it("keeps AI budget records backend-only", () => {
+    expect(rules).toContain("match /aiBudget/{document=**}");
+    expect(rules).toContain("allow read, create, update, delete: if false;");
+  });
+
   it("supports teacher invite codes without allowing client deletes", () => {
     expect(rules).toContain("match /teacherInvites/{inviteId}");
     expect(rules).toContain("request.resource.data.teacherId == request.auth.uid");

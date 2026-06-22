@@ -211,6 +211,10 @@ service cloud.firestore {
       allow create, update, delete: if false;
     }
 
+    match /aiBudget/{document=**} {
+      allow read, create, update, delete: if false;
+    }
+
     match /classrooms/{classroomId} {
       allow read: if isSignedIn()
         && (userRole() == "admin" || isClassroomMember(classroomId));

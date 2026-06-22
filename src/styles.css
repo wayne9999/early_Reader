@@ -1763,6 +1763,15 @@ button {
   background: linear-gradient(180deg, #ffffff, #f2eaff);
 }
 
+.ai-budget-alert {
+  padding: 10px 12px;
+  border: 2px solid rgba(255, 107, 107, 0.36);
+  border-radius: 8px;
+  background: #fff0f0;
+  color: #7a2d2d;
+  font-weight: 900;
+}
+
 .donation-hero {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(220px, 0.42fr);

@@ -285,6 +285,22 @@ export type AiAnalysisJob = {
   insightId?: string;
   sourceEventCount?: number;
   error?: string;
+  provider?: "rule-based" | "openai" | "openai-warning" | "budget-fallback" | string;
+  providerError?: string | null;
+  model?: string;
+  budget?: {
+    allowed: boolean;
+    monthKey: string;
+    mode: "openai" | "warning" | "fallback";
+    reason: "within_budget" | "warning_limit" | "hard_limit";
+    estimatedMonthlySpendUsd: number;
+    warningLimitUsd: number;
+    hardLimitUsd: number;
+    reservedUsd: number;
+  } | null;
+  inputTokens?: number | null;
+  outputTokens?: number | null;
+  actualCostUsd?: number | null;
   createdAt?: unknown;
   updatedAt?: unknown;
 };

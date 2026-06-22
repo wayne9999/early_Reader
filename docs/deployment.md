@@ -43,6 +43,44 @@ The workflow runs:
 6. Confirm Stripe Checkout and Customer Portal links.
 7. Confirm Firestore rules are deployed.
 
+## Firebase Backend Deploy
+
+The Firebase backend deploy workflow is:
+
+```text
+.github/workflows/deploy-firebase.yml
+```
+
+Use `target=rules` for Firestore rules and indexes, `target=functions` for callable/webhook workers, and `target=all` for both. The `include_scheduler` option is off by default so routine deploys do not fail if the deploy service account is missing Cloud Scheduler permissions.
+
+Enable `include_scheduler=true` only after the deploy service account has permission to update scheduled jobs.
+
+## Cloud Scheduler Permission
+
+The scheduled AI function `enqueueDailyInsightJobs` needs Cloud Scheduler update permission during deployment. If GitHub Actions fails with `cloudscheduler.jobs.update`, grant the deploy service account Cloud Scheduler Admin:
+
+```bash
+gcloud projects add-iam-policy-binding readnest-f9c67 \
+  --member=serviceAccount:YOUR_DEPLOY_SERVICE_ACCOUNT_EMAIL \
+  --role=roles/cloudscheduler.admin
+```
+
+To identify the service account used by GitHub Actions, open the failed Firebase deploy run and check the `Authenticate to Google Cloud` credentials, or list service accounts in Cloud Shell:
+
+```bash
+gcloud iam service-accounts list \
+  --project=readnest-f9c67 \
+  --format="table(email,displayName)"
+```
+
+After granting the role, rerun the Firebase backend workflow with `target=functions` and `include_scheduler=true`. Confirm the job exists:
+
+```bash
+gcloud scheduler jobs describe firebase-schedule-enqueueDailyInsightJobs-us-central1 \
+  --location=us-central1 \
+  --project=readnest-f9c67
+```
+
 ## Rollback
 
 1. Identify last known good commit.
