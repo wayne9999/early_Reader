@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { billingConfig, linkForTier, subscriptionTiers } from "../../services/billingConfig";
 import { createSupportCase } from "../../services/supportCaseRepository";
 import { supportMailtoHref } from "../../services/supportConfig";
@@ -178,8 +178,15 @@ function SupportCenterPage({ user }: { user: AppUser | null }) {
   const [caseType, setCaseType] = useState<SupportCaseType>("general");
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
+  const [contactEmail, setContactEmail] = useState(user?.email ?? "");
   const [caseStatus, setCaseStatus] = useState("");
   const [isSending, setIsSending] = useState(false);
+
+  useEffect(() => {
+    if (user?.email && !contactEmail) {
+      setContactEmail(user.email);
+    }
+  }, [contactEmail, user?.email]);
 
   async function submitSupportCase(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -197,11 +204,11 @@ function SupportCenterPage({ user }: { user: AppUser | null }) {
         type: caseType,
         subject,
         message,
-        contactEmail: user.email ?? null
+        contactEmail: contactEmail || user.email || null
       });
       setSubject("");
       setMessage("");
-      setCaseStatus("Support request saved. A ReadNest admin can review it from Firestore supportCases.");
+      setCaseStatus("Support request saved. ReadNest will create an internal summary and email the support team when backend email is configured.");
     } catch (error) {
       setCaseStatus(error instanceof Error ? error.message : "Could not save the support request.");
     } finally {
@@ -243,10 +250,11 @@ function SupportCenterPage({ user }: { user: AppUser | null }) {
 
       <section className="support-help-grid">
         <article className="practice-panel support-request-panel">
-          <p className="eyebrow">Send a request</p>
-          <h3>Ask for help inside ReadNest</h3>
+          <p className="eyebrow">Contact us</p>
+          <h3>Send a message to ReadNest support</h3>
           <p className="helper-text">
-            Signed-in families and teachers can create a support case for billing, deletion, teacher verification, or technical help.
+            Signed-in families and teachers can send billing, deletion, teacher verification, or technical messages.
+            ReadNest stores the request in Firebase and alerts the support team when backend email is configured.
           </p>
           <form className="support-case-form" onSubmit={(event) => void submitSupportCase(event)}>
             <label>
@@ -267,6 +275,17 @@ function SupportCenterPage({ user }: { user: AppUser | null }) {
                 required
                 value={subject}
                 onChange={(event) => setSubject(event.target.value)}
+              />
+            </label>
+            <label>
+              <span>Contact email</span>
+              <input
+                autoComplete="email"
+                maxLength={160}
+                placeholder="name@example.com"
+                type="email"
+                value={contactEmail}
+                onChange={(event) => setContactEmail(event.target.value)}
               />
             </label>
             <label>

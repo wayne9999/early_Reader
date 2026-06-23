@@ -8,14 +8,18 @@ import { onSchedule } from "firebase-functions/v2/scheduler";
 import Stripe from "stripe";
 import { parseBudgetLimit, recordAiBudgetActual, reserveAiBudget, type AiBudgetDecision } from "./aiBudget.js";
 import { buildOpenAiInsight, buildRuleBasedInsight, loadRecentLearningEvents, summarizeLearningEvents, writeStudentInsight } from "./aiLearning.js";
+import { sendSupportSummaryEmail, summarizeSupportCase } from "./supportWorkflow.js";
 
 initializeApp();
 
 const stripeSecretKey = defineSecret("STRIPE_SECRET_KEY");
 const stripeWebhookSecret = defineSecret("STRIPE_WEBHOOK_SECRET");
 const openAiApiKey = defineSecret("OPENAI_API_KEY");
+const resendApiKey = defineSecret("RESEND_API_KEY");
 const appBaseUrl = process.env.READNEST_APP_BASE_URL ?? "https://wayne9999.github.io/early_Reader/";
 const aiModel = process.env.READNEST_AI_MODEL ?? "gpt-5.5";
+const supportNotificationEmail = process.env.SUPPORT_NOTIFICATION_EMAIL ?? "support@readnest.app";
+const supportFromEmail = process.env.SUPPORT_FROM_EMAIL ?? "ReadNest Support <support@readnest.app>";
 const aiWarningLimitUsd = parseBudgetLimit(process.env.READNEST_AI_WARNING_LIMIT_USD, 10);
 const aiMonthlyLimitUsd = parseBudgetLimit(process.env.READNEST_AI_MONTHLY_LIMIT_USD, 15);
 const aiEstimatedCostPerInsightUsd = parseBudgetLimit(process.env.READNEST_AI_ESTIMATED_COST_PER_INSIGHT_USD, 0.05);
@@ -24,9 +28,59 @@ const aiEstimatedOutputTokenCostPerMillionUsd = parseBudgetLimit(process.env.REA
 
 type SubscriptionTier = "free" | "familyPlus" | "teacherPro";
 type SubscriptionStatus = "free" | "checkoutStarted" | "active" | "pastDue" | "canceled";
-type AiJobRequestKind = "teacherRequested" | "scheduled" | "legacyRecommendation";
+type AiJobRequestKind = "teacherRequested" | "scheduled" | "legacyRecommendation" | "thresholdTriggered";
 
 const defaultTeacherCapacity = 12;
+const learningCoachThresholdEvents = 8;
+const learningCoachCooldownMs = 12 * 60 * 60 * 1000;
+
+type LogSeverity = "info" | "warning" | "error";
+
+async function writeOperationalLog(options: {
+  severity: LogSeverity;
+  eventName: string;
+  message: string;
+  correlationId?: string;
+  resourceType?: string;
+  resourceId?: string;
+  metadata?: Record<string, unknown>;
+}) {
+  const logPayload = {
+    service: "readnest-functions",
+    ...options,
+    timestamp: new Date().toISOString()
+  };
+
+  if (options.severity === "error") {
+    console.error(logPayload);
+  } else if (options.severity === "warning") {
+    console.warn(logPayload);
+  } else {
+    console.info(logPayload);
+  }
+
+  try {
+    await getFirestore().collection("systemLogs").add({
+      ...logPayload,
+      createdAt: FieldValue.serverTimestamp(),
+      createdBy: "readnest-functions"
+    });
+  } catch (error) {
+    console.warn({
+      service: "readnest-functions",
+      eventName: "system_log_write_failed",
+      message: error instanceof Error ? error.message : "Failed to write operational log.",
+      originalEventName: options.eventName
+    });
+  }
+}
+
+function firestoreConsoleUrl(collectionPath: string, documentId: string) {
+  const projectId = process.env.GCLOUD_PROJECT ?? process.env.FIREBASE_PROJECT_ID ?? "readnest-f9c67";
+  const encodedPath = encodeURIComponent(`${collectionPath}/${documentId}`).replaceAll("%2F", "~2F");
+
+  return `https://console.firebase.google.com/project/${projectId}/firestore/databases/-default-/data/${encodedPath}`;
+}
 
 function stripeClient() {
   return new Stripe(stripeSecretKey.value(), {
@@ -125,6 +179,31 @@ function safeString(value: unknown, fallback: string) {
   return typeof value === "string" && value.trim() ? value.trim() : fallback;
 }
 
+function timestampMillis(value: unknown) {
+  if (!value) {
+    return 0;
+  }
+
+  if (typeof value === "number") {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    return Date.parse(value) || 0;
+  }
+
+  if (typeof value === "object" && "toMillis" in value && typeof value.toMillis === "function") {
+    return value.toMillis();
+  }
+
+  if (typeof value === "object" && "toDate" in value && typeof value.toDate === "function") {
+    const date = value.toDate();
+    return date instanceof Date ? date.getTime() : 0;
+  }
+
+  return 0;
+}
+
 async function isAssignedTeacher(teacherId: string, studentId: string) {
   const link = await getFirestore().doc(`teacherStudentLinks/${teacherId}_${studentId}`).get();
   return link.exists && link.data()?.status === "active";
@@ -162,6 +241,7 @@ async function createAiAnalysisJob(options: {
   requestKind: AiJobRequestKind;
   consentAccepted: boolean;
   source?: string;
+  queuedReason?: string;
 }) {
   const createdAt = FieldValue.serverTimestamp();
   const jobRef = await getFirestore().collection("aiAnalysisJobs").add({
@@ -170,6 +250,7 @@ async function createAiAnalysisJob(options: {
     requestKind: options.requestKind,
     consentAccepted: options.consentAccepted,
     source: options.source ?? "readnest-backend",
+    queuedReason: options.queuedReason ?? null,
     status: "queued",
     attempts: 0,
     createdAt,
@@ -177,6 +258,17 @@ async function createAiAnalysisJob(options: {
     createdBy: options.requestedBy,
     updatedBy: options.requestedBy
   });
+
+  await getFirestore().doc(`users/${options.studentId}/learningCoachState/current`).set({
+    studentId: options.studentId,
+    activeJobId: jobRef.id,
+    activeJobStatus: "queued",
+    activeJobRequestKind: options.requestKind,
+    lastQueuedAt: createdAt,
+    queuedReason: options.queuedReason ?? null,
+    updatedAt: createdAt,
+    updatedBy: options.requestedBy
+  }, { merge: true });
 
   return jobRef.id;
 }
@@ -186,6 +278,14 @@ async function runAiAnalysisJob(jobId: string, job: DocumentData) {
   const studentId = typeof job.studentId === "string" ? job.studentId : "";
 
   if (!studentId) {
+    await writeOperationalLog({
+      severity: "error",
+      eventName: "ai_job_invalid",
+      message: "AI job is missing studentId.",
+      correlationId: jobId,
+      resourceType: "aiAnalysisJobs",
+      resourceId: jobId
+    });
     await db.doc(`aiAnalysisJobs/${jobId}`).set({
       status: "failed",
       error: "Missing studentId",
@@ -195,11 +295,32 @@ async function runAiAnalysisJob(jobId: string, job: DocumentData) {
     return;
   }
 
+  await writeOperationalLog({
+    severity: "info",
+    eventName: "ai_job_started",
+    message: "AI analysis job started.",
+    correlationId: jobId,
+    resourceType: "aiAnalysisJobs",
+    resourceId: jobId,
+    metadata: {
+      studentId,
+      requestKind: job.requestKind ?? null
+    }
+  });
+
+  const runningAt = FieldValue.serverTimestamp();
   await db.doc(`aiAnalysisJobs/${jobId}`).set({
     status: "running",
     attempts: FieldValue.increment(1),
-    startedAt: FieldValue.serverTimestamp(),
-    updatedAt: FieldValue.serverTimestamp(),
+    startedAt: runningAt,
+    updatedAt: runningAt,
+    updatedBy: "ai-worker"
+  }, { merge: true });
+  await db.doc(`users/${studentId}/learningCoachState/current`).set({
+    studentId,
+    activeJobId: jobId,
+    activeJobStatus: "running",
+    updatedAt: runningAt,
     updatedBy: "ai-worker"
   }, { merge: true });
 
@@ -246,11 +367,31 @@ async function runAiAnalysisJob(jobId: string, job: DocumentData) {
         } else {
           provider = "budget-fallback";
           providerError = `Monthly AI budget limit reached (${budgetDecision.estimatedMonthlySpendUsd}/${budgetDecision.hardLimitUsd} USD).`;
+          await writeOperationalLog({
+            severity: "warning",
+            eventName: "ai_budget_fallback",
+            message: providerError,
+            correlationId: jobId,
+            resourceType: "aiAnalysisJobs",
+            resourceId: jobId,
+            metadata: {
+              studentId,
+              monthKey: budgetDecision.monthKey
+            }
+          });
         }
       }
     } catch (error) {
       providerError = error instanceof Error ? error.message : "OpenAI provider failed";
-      console.warn("OpenAI insight generation failed; using rule-based fallback", { jobId, studentId, providerError });
+      await writeOperationalLog({
+        severity: "warning",
+        eventName: "ai_provider_fallback",
+        message: "OpenAI insight generation failed; using rule-based fallback.",
+        correlationId: jobId,
+        resourceType: "aiAnalysisJobs",
+        resourceId: jobId,
+        metadata: { studentId, providerError }
+      });
     }
 
     const insightId = await writeStudentInsight(db, studentId, summary, insight);
@@ -270,13 +411,45 @@ async function runAiAnalysisJob(jobId: string, job: DocumentData) {
       updatedAt: FieldValue.serverTimestamp(),
       updatedBy: "ai-worker"
     }, { merge: true });
+    await writeOperationalLog({
+      severity: "info",
+      eventName: "ai_job_succeeded",
+      message: "AI analysis job completed.",
+      correlationId: jobId,
+      resourceType: "aiAnalysisJobs",
+      resourceId: jobId,
+      metadata: {
+        studentId,
+        insightId,
+        provider,
+        sourceEventCount: events.length
+      }
+    });
   } catch (error) {
+    const failedAt = FieldValue.serverTimestamp();
     await db.doc(`aiAnalysisJobs/${jobId}`).set({
       status: "failed",
       error: error instanceof Error ? error.message : "Insight processing failed",
-      updatedAt: FieldValue.serverTimestamp(),
+      updatedAt: failedAt,
       updatedBy: "ai-worker"
     }, { merge: true });
+    await db.doc(`users/${studentId}/learningCoachState/current`).set({
+      studentId,
+      activeJobId: jobId,
+      activeJobStatus: "failed",
+      lastError: error instanceof Error ? error.message : "Insight processing failed",
+      updatedAt: failedAt,
+      updatedBy: "ai-worker"
+    }, { merge: true });
+    await writeOperationalLog({
+      severity: "error",
+      eventName: "ai_job_failed",
+      message: error instanceof Error ? error.message : "Insight processing failed",
+      correlationId: jobId,
+      resourceType: "aiAnalysisJobs",
+      resourceId: jobId,
+      metadata: { studentId }
+    });
     throw error;
   }
 }
@@ -290,10 +463,17 @@ async function handleSubscription(subscription: Stripe.Subscription, eventId: st
   const status = statusFromStripe(subscription.status);
 
   if (!userId) {
-    console.warn("Stripe subscription event has no mapped Firebase user", {
-      customerId,
-      eventId,
-      subscriptionId: subscription.id
+    await writeOperationalLog({
+      severity: "warning",
+      eventName: "stripe_subscription_unmapped",
+      message: "Stripe subscription event has no mapped Firebase user.",
+      correlationId: eventId,
+      resourceType: "stripeEvent",
+      resourceId: eventId,
+      metadata: {
+        customerId,
+        subscriptionId: subscription.id
+      }
     });
     return;
   }
@@ -320,7 +500,15 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, eventId
   const subscriptionId = typeof session.subscription === "string" ? session.subscription : session.subscription?.id;
 
   if (!userId || !customerId) {
-    console.warn("Checkout completed without Firebase user metadata", { eventId, sessionId: session.id });
+    await writeOperationalLog({
+      severity: "warning",
+      eventName: "stripe_checkout_missing_user",
+      message: "Checkout completed without Firebase user metadata.",
+      correlationId: eventId,
+      resourceType: "stripeEvent",
+      resourceId: eventId,
+      metadata: { sessionId: session.id }
+    });
     return;
   }
 
@@ -343,7 +531,15 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice, eventId: stri
   const userId = customerId ? await findUserIdForCustomer(customerId) : null;
 
   if (!userId) {
-    console.warn("Invoice failure has no mapped Firebase user", { eventId, invoiceId: invoice.id });
+    await writeOperationalLog({
+      severity: "warning",
+      eventName: "stripe_invoice_failure_unmapped",
+      message: "Invoice failure has no mapped Firebase user.",
+      correlationId: eventId,
+      resourceType: "stripeEvent",
+      resourceId: eventId,
+      metadata: { invoiceId: invoice.id }
+    });
     return;
   }
 
@@ -358,7 +554,15 @@ async function handleRefundOrDispute(charge: Stripe.Charge, eventId: string, sta
   const userId = customerId ? await findUserIdForCustomer(customerId) : null;
 
   if (!userId) {
-    console.warn("Refund/dispute has no mapped Firebase user", { eventId, chargeId: charge.id });
+    await writeOperationalLog({
+      severity: "warning",
+      eventName: "stripe_charge_unmapped",
+      message: "Refund or dispute has no mapped Firebase user.",
+      correlationId: eventId,
+      resourceType: "stripeEvent",
+      resourceId: eventId,
+      metadata: { chargeId: charge.id }
+    });
     return;
   }
 
@@ -370,7 +574,15 @@ async function handleRefundOrDispute(charge: Stripe.Charge, eventId: string, sta
 
 async function handleDispute(dispute: Stripe.Dispute, eventId: string) {
   if (!dispute.charge || typeof dispute.charge !== "string") {
-    console.warn("Dispute event has no charge id", { eventId, disputeId: dispute.id });
+    await writeOperationalLog({
+      severity: "warning",
+      eventName: "stripe_dispute_missing_charge",
+      message: "Dispute event has no charge id.",
+      correlationId: eventId,
+      resourceType: "stripeEvent",
+      resourceId: eventId,
+      metadata: { disputeId: dispute.id }
+    });
     return;
   }
 
@@ -428,9 +640,26 @@ export const stripeWebhook = onRequest(
           break;
       }
 
+      await writeOperationalLog({
+        severity: "info",
+        eventName: "stripe_webhook_processed",
+        message: "Stripe webhook event processed.",
+        correlationId: event.id,
+        resourceType: "stripeEvent",
+        resourceId: event.id,
+        metadata: { type: event.type }
+      });
       response.status(200).json({ received: true });
     } catch (error) {
-      console.error("Stripe webhook handling failed", error);
+      await writeOperationalLog({
+        severity: "error",
+        eventName: "stripe_webhook_failed",
+        message: error instanceof Error ? error.message : "Stripe webhook handling failed.",
+        correlationId: event.id,
+        resourceType: "stripeEvent",
+        resourceId: event.id,
+        metadata: { type: event.type }
+      });
       response.status(500).send("Webhook handling failed");
     }
   }
@@ -559,6 +788,19 @@ export const createCheckoutSession = onCall(
     if (!session.url) {
       throw new HttpsError("internal", "Stripe did not return a checkout URL.");
     }
+
+    await writeOperationalLog({
+      severity: "info",
+      eventName: "stripe_checkout_session_created",
+      message: "Stripe checkout session created.",
+      correlationId: session.id,
+      resourceType: "subscriptions",
+      resourceId: userId,
+      metadata: {
+        tier: requestedTier,
+        role
+      }
+    });
 
     return { url: session.url };
   }
@@ -744,6 +986,255 @@ export const createLearningRecommendation = onCall(
       status: "queued",
       message: "Recommendation request recorded. The backend worker will generate an evidence-based summary asynchronously."
     };
+  }
+);
+
+export const updateLearningCoachState = onDocumentCreated(
+  {
+    document: "users/{studentId}/learningEvents/{eventId}",
+    region: "us-central1"
+  },
+  async (event) => {
+    const studentId = event.params.studentId;
+    const db = getFirestore();
+    const stateRef = db.doc(`users/${studentId}/learningCoachState/current`);
+    const userRef = db.doc(`users/${studentId}`);
+    const now = FieldValue.serverTimestamp();
+
+    await db.runTransaction(async (transaction) => {
+      const [userDoc, stateDoc] = await Promise.all([
+        transaction.get(userRef),
+        transaction.get(stateRef)
+      ]);
+      const profile = userDoc.data() ?? {};
+      const state = stateDoc.data() ?? {};
+      const nextEventCount = positiveNumber(state.eventsSinceLastInsight) ?? 0;
+      const eventsSinceLastInsight = nextEventCount + 1;
+      const activeJobStatus = typeof state.activeJobStatus === "string" ? state.activeJobStatus : "";
+      const hasActiveJob = activeJobStatus === "queued" || activeJobStatus === "running";
+      const lastQueuedAt = timestampMillis(state.lastQueuedAt);
+      const cooldownHasPassed = Date.now() - lastQueuedAt >= learningCoachCooldownMs;
+      const consentAccepted = profile.parentConsentAccepted === true || profile.aiRecommendationsConsentAccepted === true;
+      const shouldQueue =
+        consentAccepted
+        && !hasActiveJob
+        && eventsSinceLastInsight >= learningCoachThresholdEvents
+        && cooldownHasPassed;
+
+      transaction.set(stateRef, {
+        studentId,
+        status: shouldQueue ? "queued" : "collecting",
+        activeJobStatus: shouldQueue ? "queued" : activeJobStatus || null,
+        eventsSinceLastInsight,
+        lastEventId: event.params.eventId,
+        lastEventAt: now,
+        thresholdEvents: learningCoachThresholdEvents,
+        cooldownHours: learningCoachCooldownMs / 1000 / 60 / 60,
+        consentAccepted,
+        updatedAt: now,
+        updatedBy: "learning-event-trigger"
+      }, { merge: true });
+
+      if (shouldQueue) {
+        const jobRef = db.collection("aiAnalysisJobs").doc();
+        transaction.set(jobRef, {
+          studentId,
+          requestedBy: "learning-event-trigger",
+          requestKind: "thresholdTriggered",
+          consentAccepted: true,
+          source: "learning-event-threshold",
+          queuedReason: `${eventsSinceLastInsight} new learning events since the last coach insight.`,
+          status: "queued",
+          attempts: 0,
+          createdAt: now,
+          updatedAt: now,
+          createdBy: "learning-event-trigger",
+          updatedBy: "learning-event-trigger"
+        });
+        transaction.set(stateRef, {
+          activeJobId: jobRef.id,
+          activeJobStatus: "queued",
+          activeJobRequestKind: "thresholdTriggered",
+          lastQueuedAt: now,
+          queuedReason: `${eventsSinceLastInsight} new learning events since the last coach insight.`,
+          updatedAt: now,
+          updatedBy: "learning-event-trigger"
+        }, { merge: true });
+      }
+    });
+  }
+);
+
+export const processSupportCase = onDocumentCreated(
+  {
+    document: "supportCases/{caseId}",
+    region: "us-central1",
+    secrets: [openAiApiKey, resendApiKey],
+    retry: true
+  },
+  async (event) => {
+    const snapshot = event.data;
+
+    if (!snapshot) {
+      return;
+    }
+
+    const caseId = event.params.caseId;
+    const supportCase = snapshot.data();
+    const db = getFirestore();
+    const detailUrl = firestoreConsoleUrl("supportCases", caseId);
+
+    await writeOperationalLog({
+      severity: "info",
+      eventName: "support_case_received",
+      message: "Support case received for backend processing.",
+      correlationId: caseId,
+      resourceType: "supportCases",
+      resourceId: caseId,
+      metadata: {
+        type: supportCase.type ?? null,
+        userId: supportCase.userId ?? null
+      }
+    });
+
+    try {
+      await snapshot.ref.set({
+        aiSummaryStatus: "processing",
+        emailNotificationStatus: "pending",
+        adminDetailUrl: detailUrl,
+        updatedAt: FieldValue.serverTimestamp(),
+        updatedBy: "support-case-worker"
+      }, { merge: true });
+
+      let openAiKey = "";
+      let resendKey = "";
+
+      try {
+        openAiKey = openAiApiKey.value();
+      } catch {
+        openAiKey = "";
+      }
+
+      try {
+        resendKey = resendApiKey.value();
+      } catch {
+        resendKey = "";
+      }
+
+      const summaryResult = await summarizeSupportCase({
+        apiKey: openAiKey,
+        model: aiModel,
+        supportCase: {
+          id: caseId,
+          userId: typeof supportCase.userId === "string" ? supportCase.userId : "unknown",
+          type: typeof supportCase.type === "string" ? supportCase.type : "general",
+          subject: typeof supportCase.subject === "string" ? supportCase.subject : "Support request",
+          message: typeof supportCase.message === "string" ? supportCase.message : "",
+          contactEmail: typeof supportCase.contactEmail === "string" ? supportCase.contactEmail : null
+        }
+      });
+
+      await snapshot.ref.set({
+        aiSummaryStatus: "ready",
+        aiSummaryProvider: summaryResult.provider,
+        aiSummaryProviderError: summaryResult.providerError,
+        aiSummary: summaryResult.summary.summary,
+        aiUrgency: summaryResult.summary.urgency,
+        aiCategory: summaryResult.summary.category,
+        aiRecommendedNextSteps: summaryResult.summary.recommendedNextSteps,
+        aiCustomerReplyDraft: summaryResult.summary.customerReplyDraft,
+        aiSafetyFlags: summaryResult.summary.safetyFlags,
+        adminDetailUrl: detailUrl,
+        updatedAt: FieldValue.serverTimestamp(),
+        updatedBy: "support-case-worker"
+      }, { merge: true });
+
+      await writeOperationalLog({
+        severity: summaryResult.providerError ? "warning" : "info",
+        eventName: "support_case_summarized",
+        message: summaryResult.providerError ? "Support case summarized with fallback." : "Support case summarized.",
+        correlationId: caseId,
+        resourceType: "supportCases",
+        resourceId: caseId,
+        metadata: {
+          provider: summaryResult.provider,
+          providerError: summaryResult.providerError,
+          urgency: summaryResult.summary.urgency
+        }
+      });
+
+      try {
+        const emailResult = await sendSupportSummaryEmail({
+          resendApiKey: resendKey,
+          fromEmail: supportFromEmail,
+          toEmail: supportNotificationEmail,
+          supportCase: {
+            id: caseId,
+            userId: typeof supportCase.userId === "string" ? supportCase.userId : "unknown",
+            type: typeof supportCase.type === "string" ? supportCase.type : "general",
+            subject: typeof supportCase.subject === "string" ? supportCase.subject : "Support request",
+            message: typeof supportCase.message === "string" ? supportCase.message : "",
+            contactEmail: typeof supportCase.contactEmail === "string" ? supportCase.contactEmail : null
+          },
+          summary: summaryResult.summary,
+          detailUrl
+        });
+
+        await snapshot.ref.set({
+          emailNotificationStatus: emailResult.status,
+          emailProviderMessage: emailResult.providerMessage,
+          emailNotificationSentAt: emailResult.status === "sent" ? FieldValue.serverTimestamp() : null,
+          updatedAt: FieldValue.serverTimestamp(),
+          updatedBy: "support-case-worker"
+        }, { merge: true });
+        await writeOperationalLog({
+          severity: emailResult.status === "sent" ? "info" : "warning",
+          eventName: emailResult.status === "sent" ? "support_email_sent" : "support_email_skipped",
+          message: emailResult.providerMessage,
+          correlationId: caseId,
+          resourceType: "supportCases",
+          resourceId: caseId,
+          metadata: {
+            toEmail: supportNotificationEmail,
+            status: emailResult.status
+          }
+        });
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Support email failed.";
+        await snapshot.ref.set({
+          emailNotificationStatus: "failed",
+          emailProviderMessage: errorMessage,
+          updatedAt: FieldValue.serverTimestamp(),
+          updatedBy: "support-case-worker"
+        }, { merge: true });
+        await writeOperationalLog({
+          severity: "error",
+          eventName: "support_email_failed",
+          message: errorMessage,
+          correlationId: caseId,
+          resourceType: "supportCases",
+          resourceId: caseId,
+          metadata: { toEmail: supportNotificationEmail }
+        });
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Support case processing failed.";
+      await snapshot.ref.set({
+        aiSummaryStatus: "failed",
+        processingError: errorMessage,
+        updatedAt: FieldValue.serverTimestamp(),
+        updatedBy: "support-case-worker"
+      }, { merge: true });
+      await writeOperationalLog({
+        severity: "error",
+        eventName: "support_case_processing_failed",
+        message: errorMessage,
+        correlationId: caseId,
+        resourceType: "supportCases",
+        resourceId: caseId
+      });
+      throw error;
+    }
   }
 );
 

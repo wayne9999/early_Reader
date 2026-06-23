@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { progressTips } from "../../data/content";
+import { loadLatestStudentInsight, loadLearningCoachState } from "../../services/aiInsightRepository";
 import { loadLearningEvents } from "../../services/learningEventRepository";
 import { formatEventTime, nextStudentPractice, summarizeByArea, summarizeEvents } from "../../services/learningEventSummary";
 import { clearProgress } from "../../services/progressRepository";
-import type { AppUser, LearningEvent, Progress } from "../../types";
+import type { AppUser, LearningCoachState, LearningEvent, Progress, StudentAiInsight } from "../../types";
 
 type ProgressDashboardProps = {
   progress: Progress;
@@ -13,6 +14,8 @@ type ProgressDashboardProps = {
 
 export function ProgressDashboard({ progress, user, onProgressChange }: ProgressDashboardProps) {
   const [events, setEvents] = useState<LearningEvent[]>([]);
+  const [coachInsight, setCoachInsight] = useState<StudentAiInsight | null>(null);
+  const [coachState, setCoachState] = useState<LearningCoachState | null>(null);
   const knownWordCount = Object.keys(progress.knownWords).length;
   const memoryTurns = progress.memoryTurns ?? progress.memoryMoves ?? 0;
   const averageTurns = progress.memoryWins > 0 ? Math.round(memoryTurns / progress.memoryWins) : 0;
@@ -20,6 +23,7 @@ export function ProgressDashboard({ progress, user, onProgressChange }: Progress
   const allAreaSummaries = useMemo(() => summarizeByArea(events), [events]);
   const areaSummaries = useMemo(() => allAreaSummaries.filter((area) => area.interactions > 0), [allAreaSummaries]);
   const nextPractice = useMemo(() => nextStudentPractice(events), [events]);
+  const coachRecommendation = coachInsight?.nextBestActivity ?? coachState?.currentRecommendation ?? null;
   const dailyGoal = 4;
   const goalCompleted = Math.min(progress.completedToday, dailyGoal);
   const goalPercent = Math.round((goalCompleted / dailyGoal) * 100);
@@ -99,6 +103,32 @@ export function ProgressDashboard({ progress, user, onProgressChange }: Progress
     };
   }, [user, progress]);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    if (!user) {
+      setCoachInsight(null);
+      setCoachState(null);
+      return () => {
+        isMounted = false;
+      };
+    }
+
+    Promise.all([
+      loadLatestStudentInsight(user.id),
+      loadLearningCoachState(user.id)
+    ]).then(([latestInsight, latestState]) => {
+      if (isMounted) {
+        setCoachInsight(latestInsight);
+        setCoachState(latestState);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user, progress]);
+
   return (
     <>
       <div className="section-heading dashboard-heading">
@@ -128,8 +158,16 @@ export function ProgressDashboard({ progress, user, onProgressChange }: Progress
 
         <article className="practice-panel next-best-card">
           <p className="eyebrow">Next best for you</p>
-          <h3>{nextPractice}</h3>
-          <p>Start now and grow one skill today.</p>
+          <h3>{coachRecommendation?.title ?? nextPractice}</h3>
+          <p>{coachRecommendation?.reason ?? "Start now and grow one skill today."}</p>
+          {coachRecommendation?.route ? (
+            <a className="secondary-button" href={coachRecommendation.route}>
+              Start activity
+            </a>
+          ) : null}
+          {coachState?.activeJobStatus === "queued" || coachState?.activeJobStatus === "running" ? (
+            <small className="helper-text">Learning Coach is refreshing your path from your latest practice.</small>
+          ) : null}
         </article>
       </section>
 
@@ -213,11 +251,13 @@ export function ProgressDashboard({ progress, user, onProgressChange }: Progress
 
         <article className="practice-panel">
           <h3>Recommended next steps</h3>
+          {coachInsight?.parentSummary ? <p className="helper-text">{coachInsight.parentSummary}</p> : null}
           <ul className="next-steps">
-            {personalizedTips.map((tip) => (
+            {(coachInsight?.suggestedHomePractice.length ? coachInsight.suggestedHomePractice : personalizedTips).map((tip) => (
               <li key={tip}>{tip}</li>
             ))}
           </ul>
+          {coachInsight?.aiDisclosure ? <p className="helper-text">{coachInsight.aiDisclosure}</p> : null}
         </article>
       </section>
     </>

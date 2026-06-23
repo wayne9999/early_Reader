@@ -39,9 +39,12 @@ jobs:
       READNEST_AI_ESTIMATED_COST_PER_INSIGHT_USD: ${{ vars.READNEST_AI_ESTIMATED_COST_PER_INSIGHT_USD }}
       READNEST_AI_INPUT_COST_PER_1M_USD: ${{ vars.READNEST_AI_INPUT_COST_PER_1M_USD }}
       READNEST_AI_OUTPUT_COST_PER_1M_USD: ${{ vars.READNEST_AI_OUTPUT_COST_PER_1M_USD }}
+      SUPPORT_NOTIFICATION_EMAIL: ${{ vars.SUPPORT_NOTIFICATION_EMAIL }}
+      SUPPORT_FROM_EMAIL: ${{ vars.SUPPORT_FROM_EMAIL }}
       STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
       STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -95,6 +98,8 @@ jobs:
             echo "READNEST_AI_ESTIMATED_COST_PER_INSIGHT_USD=${READNEST_AI_ESTIMATED_COST_PER_INSIGHT_USD:-0.05}"
             echo "READNEST_AI_INPUT_COST_PER_1M_USD=${READNEST_AI_INPUT_COST_PER_1M_USD:-0}"
             echo "READNEST_AI_OUTPUT_COST_PER_1M_USD=${READNEST_AI_OUTPUT_COST_PER_1M_USD:-0}"
+            echo "SUPPORT_NOTIFICATION_EMAIL=${SUPPORT_NOTIFICATION_EMAIL:-support@readnest.app}"
+            echo "SUPPORT_FROM_EMAIL=${SUPPORT_FROM_EMAIL:-ReadNest Support <support@readnest.app>}"
           } > .env
 
       - name: Sync Stripe secret
@@ -109,6 +114,10 @@ jobs:
         if: ${{ (inputs.target == 'functions' || inputs.target == 'all') && env.OPENAI_API_KEY != '' }}
         run: printf '%s' "$OPENAI_API_KEY" | firebase functions:secrets:set OPENAI_API_KEY --project "$FIREBASE_PROJECT_ID" --data-file - --non-interactive
 
+      - name: Sync Resend secret
+        if: ${{ (inputs.target == 'functions' || inputs.target == 'all') && env.RESEND_API_KEY != '' }}
+        run: printf '%s' "$RESEND_API_KEY" | firebase functions:secrets:set RESEND_API_KEY --project "$FIREBASE_PROJECT_ID" --data-file - --non-interactive
+
       - name: Deploy Firestore rules and indexes
         if: ${{ inputs.target == 'rules' || inputs.target == 'all' }}
         run: firebase deploy --only firestore:rules,firestore:indexes --project "$FIREBASE_PROJECT_ID" --non-interactive
@@ -117,7 +126,7 @@ jobs:
         if: ${{ (inputs.target == 'functions' || inputs.target == 'all') && !inputs.include_scheduler }}
         run: >
           firebase deploy
-          --only functions:stripeWebhook,functions:createBillingPortalSession,functions:createCheckoutSession,functions:claimPlacementStudent,functions:createLearningRecommendation,functions:requestStudentInsight,functions:processAiAnalysisJob
+          --only functions:stripeWebhook,functions:createBillingPortalSession,functions:createCheckoutSession,functions:claimPlacementStudent,functions:createLearningRecommendation,functions:requestStudentInsight,functions:updateLearningCoachState,functions:processAiAnalysisJob,functions:processSupportCase
           --project "$FIREBASE_PROJECT_ID"
           --non-interactive
           --force
@@ -126,7 +135,7 @@ jobs:
         if: ${{ (inputs.target == 'functions' || inputs.target == 'all') && inputs.include_scheduler }}
         run: >
           firebase deploy
-          --only functions:stripeWebhook,functions:createBillingPortalSession,functions:createCheckoutSession,functions:claimPlacementStudent,functions:createLearningRecommendation,functions:requestStudentInsight,functions:processAiAnalysisJob,functions:enqueueDailyInsightJobs
+          --only functions:stripeWebhook,functions:createBillingPortalSession,functions:createCheckoutSession,functions:claimPlacementStudent,functions:createLearningRecommendation,functions:requestStudentInsight,functions:updateLearningCoachState,functions:processAiAnalysisJob,functions:processSupportCase,functions:enqueueDailyInsightJobs
           --project "$FIREBASE_PROJECT_ID"
           --non-interactive
           --force

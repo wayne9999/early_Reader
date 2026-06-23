@@ -22,6 +22,15 @@ type SkillSummary = {
   masteredItems: string[];
 };
 
+type InsightGuardrailStatus = "passed" | "fallback" | "blocked";
+
+type NextBestActivity = {
+  title: string;
+  route: string;
+  reason: string;
+  skillArea: SkillArea;
+};
+
 export type StudentLearningSummary = {
   studentId: string;
   sourceEventCount: number;
@@ -41,18 +50,29 @@ export type StudentAiInsight = {
   studentId: string;
   status: "ready";
   summary: string;
+  teacherSummary: string;
+  parentSummary: string;
+  nextBestActivity: NextBestActivity;
+  confidence: "low" | "medium" | "high";
   strengths: Array<{ area: SkillArea; label: string; evidence: string }>;
   needsPractice: Array<{ area: SkillArea; label: string; evidence: string; nextStep: string }>;
   recommendedTeacherActions: string[];
   suggestedHomePractice: string[];
+  skillFocusAreas: SkillArea[];
   evidence: {
     sourceEventCount: number;
     topMissedItems: string[];
     topMasteredItems: string[];
+    recentLabels: string[];
+  };
+  guardrail: {
+    status: InsightGuardrailStatus;
+    checkedAt: FieldValue;
+    notes: string[];
   };
   aiDisclosure: string;
   model: string;
-  promptVersion: "readnest-ai-v1";
+  promptVersion: "readnest-ai-v2";
   sourceDataWindow: StudentLearningSummary["eventWindow"];
   createdAt: FieldValue;
   updatedAt: FieldValue;
@@ -62,10 +82,15 @@ export type StudentAiInsight = {
 
 type OpenAiInsightPayload = {
   summary: string;
+  teacherSummary: string;
+  parentSummary: string;
+  nextBestActivity: NextBestActivity;
+  confidence: "low" | "medium" | "high";
   strengths: Array<{ area: SkillArea; label: string; evidence: string }>;
   needsPractice: Array<{ area: SkillArea; label: string; evidence: string; nextStep: string }>;
   recommendedTeacherActions: string[];
   suggestedHomePractice: string[];
+  skillFocusAreas: SkillArea[];
 };
 
 export type OpenAiInsightResult = {
@@ -83,6 +108,14 @@ const SKILL_LABELS: Record<SkillArea, string> = {
 };
 
 const SKILL_AREAS: SkillArea[] = ["phonics", "sightWords", "fluency", "workingMemory", "consistency"];
+
+const ROUTE_BY_SKILL: Record<SkillArea, string> = {
+  phonics: "#/sound-sort",
+  sightWords: "#/reading",
+  fluency: "#/sentence-builder",
+  workingMemory: "#/memory",
+  consistency: "#/progress"
+};
 
 function isSkillArea(value: unknown): value is SkillArea {
   return typeof value === "string" && SKILL_AREAS.includes(value as SkillArea);
@@ -189,6 +222,41 @@ function statusFromSkill(skill: SkillSummary) {
   return "needsEvidence";
 }
 
+function confidenceForSummary(summary: StudentLearningSummary): "low" | "medium" | "high" {
+  const scoredAttempts = summary.skills.reduce((total, skill) => total + skill.attempts, 0);
+
+  if (summary.sourceEventCount >= 30 && scoredAttempts >= 12) {
+    return "high";
+  }
+
+  if (summary.sourceEventCount >= 12 && scoredAttempts >= 5) {
+    return "medium";
+  }
+
+  return "low";
+}
+
+function nextBestActivityForSkill(skill: SkillSummary | undefined, summary: StudentLearningSummary): NextBestActivity {
+  const area = skill?.area ?? "sightWords";
+  const missed = skill?.missedItems[0] ?? summary.topMissedItems[0];
+  const label = SKILL_LABELS[area];
+
+  return {
+    title: area === "consistency" ? "Finish one short practice path" : `Practice ${label.toLowerCase()}`,
+    route: ROUTE_BY_SKILL[area],
+    reason: missed
+      ? `Recent practice shows ${missed} needs another short, confident try.`
+      : `This is the next useful skill area based on the latest practice pattern.`,
+    skillArea: area
+  };
+}
+
+function skillFocusAreasFromNeeds(needsPractice: SkillSummary[]) {
+  const areas = needsPractice.map((skill) => skill.area);
+
+  return areas.length ? areas : ["sightWords" as SkillArea];
+}
+
 export function buildRuleBasedInsight(summary: StudentLearningSummary): StudentAiInsight {
   const rankedSkills = [...summary.skills].sort((a, b) => {
     const aScore = a.accuracy ?? (a.interactions ? 50 : 0);
@@ -206,14 +274,24 @@ export function buildRuleBasedInsight(summary: StudentLearningSummary): StudentA
     .slice(0, 3);
   const primaryNeed = needsPractice[0] ?? rankedSkills[rankedSkills.length - 1];
   const missedPhrase = summary.topMissedItems.length ? summary.topMissedItems.join(", ") : "new practice items";
+  const confidence = confidenceForSummary(summary);
+  const nextBestActivity = nextBestActivityForSkill(primaryNeed, summary);
+  const summaryText =
+    summary.sourceEventCount === 0
+      ? "No recent learning events are available yet. Start with short practice and generate a new insight after the learner completes a few rounds."
+      : `Recent practice shows ${summary.sourceEventCount} tracked interactions. Focus next on ${SKILL_LABELS[primaryNeed.area].toLowerCase()} using short, repeated practice.`;
 
   return {
     studentId: summary.studentId,
     status: "ready",
-    summary:
+    summary: summaryText,
+    teacherSummary: summaryText,
+    parentSummary:
       summary.sourceEventCount === 0
-        ? "No recent learning events are available yet. Start with short practice and generate a new insight after the learner completes a few rounds."
-        : `Recent practice shows ${summary.sourceEventCount} tracked interactions. Focus next on ${SKILL_LABELS[primaryNeed.area].toLowerCase()} using short, repeated practice.`,
+        ? "Your child is ready to start. Try one short reading or memory activity, then check progress again."
+        : `Your child has been practicing. A helpful next step is a short ${SKILL_LABELS[primaryNeed.area].toLowerCase()} activity with praise after a successful try.`,
+    nextBestActivity,
+    confidence,
     strengths: strongest.map((skill) => ({
       area: skill.area,
       label: SKILL_LABELS[skill.area],
@@ -242,14 +320,21 @@ export function buildRuleBasedInsight(summary: StudentLearningSummary): StudentA
         ? `Read and repeat these items: ${summary.topMissedItems.slice(0, 3).join(", ")}.`
         : "Read one familiar sentence together, then let the child try it independently."
     ],
+    skillFocusAreas: skillFocusAreasFromNeeds(needsPractice),
     evidence: {
       sourceEventCount: summary.sourceEventCount,
       topMissedItems: summary.topMissedItems,
-      topMasteredItems: summary.topMasteredItems
+      topMasteredItems: summary.topMasteredItems,
+      recentLabels: summary.recentLabels
+    },
+    guardrail: {
+      status: "fallback",
+      checkedAt: FieldValue.serverTimestamp(),
+      notes: ["Rule-based insight used without an external AI provider."]
     },
     aiDisclosure: "Instructional support only. This is not a diagnosis or medical evaluation.",
     model: "rule-based-v1",
-    promptVersion: "readnest-ai-v1",
+    promptVersion: "readnest-ai-v2",
     sourceDataWindow: summary.eventWindow,
     createdAt: FieldValue.serverTimestamp(),
     updatedAt: FieldValue.serverTimestamp(),
@@ -277,11 +362,31 @@ function cleanList(value: unknown, fallback: string[], maxItems = 5) {
     .slice(0, maxItems);
 }
 
+function cleanConfidence(value: unknown, fallback: StudentAiInsight["confidence"]) {
+  return value === "low" || value === "medium" || value === "high" ? value : fallback;
+}
+
+function cleanNextBestActivity(value: unknown, fallback: NextBestActivity): NextBestActivity {
+  const source = value && typeof value === "object" ? value as Record<string, unknown> : {};
+  const skillArea = cleanSkillArea(source.skillArea, fallback.skillArea);
+
+  return {
+    title: cleanString(source.title, fallback.title),
+    route: cleanString(source.route, ROUTE_BY_SKILL[skillArea] ?? fallback.route),
+    reason: cleanString(source.reason, fallback.reason),
+    skillArea
+  };
+}
+
 function normalizeOpenAiPayload(payload: unknown, fallback: StudentAiInsight): OpenAiInsightPayload {
   const source = payload && typeof payload === "object" ? payload as Record<string, unknown> : {};
 
   return {
     summary: cleanString(source.summary, fallback.summary),
+    teacherSummary: cleanString(source.teacherSummary, fallback.teacherSummary),
+    parentSummary: cleanString(source.parentSummary, fallback.parentSummary),
+    nextBestActivity: cleanNextBestActivity(source.nextBestActivity, fallback.nextBestActivity),
+    confidence: cleanConfidence(source.confidence, fallback.confidence),
     strengths: Array.isArray(source.strengths)
       ? source.strengths.slice(0, 3).map((item, index) => {
         const row = item && typeof item === "object" ? item as Record<string, unknown> : {};
@@ -304,8 +409,47 @@ function normalizeOpenAiPayload(payload: unknown, fallback: StudentAiInsight): O
       })
       : fallback.needsPractice,
     recommendedTeacherActions: cleanList(source.recommendedTeacherActions, fallback.recommendedTeacherActions, 5),
-    suggestedHomePractice: cleanList(source.suggestedHomePractice, fallback.suggestedHomePractice, 4)
+    suggestedHomePractice: cleanList(source.suggestedHomePractice, fallback.suggestedHomePractice, 4),
+    skillFocusAreas: Array.isArray(source.skillFocusAreas)
+      ? source.skillFocusAreas.filter(isSkillArea).slice(0, 4)
+      : fallback.skillFocusAreas
   };
+}
+
+const UNSAFE_INSIGHT_TERMS = [
+  "diagnosis",
+  "diagnose",
+  "dyslexia",
+  "adhd",
+  "autism",
+  "disorder",
+  "disabled",
+  "disability",
+  "medical condition",
+  "learning disability"
+];
+
+function collectInsightText(insight: OpenAiInsightPayload) {
+  return [
+    insight.summary,
+    insight.teacherSummary,
+    insight.parentSummary,
+    insight.nextBestActivity.title,
+    insight.nextBestActivity.reason,
+    ...insight.recommendedTeacherActions,
+    ...insight.suggestedHomePractice,
+    ...insight.strengths.flatMap((strength) => [strength.label, strength.evidence]),
+    ...insight.needsPractice.flatMap((need) => [need.label, need.evidence, need.nextStep])
+  ].join(" ").toLowerCase();
+}
+
+function assertInsightGuardrails(insight: OpenAiInsightPayload) {
+  const text = collectInsightText(insight);
+  const blockedTerms = UNSAFE_INSIGHT_TERMS.filter((term) => text.includes(term));
+
+  if (blockedTerms.length) {
+    throw new Error(`AI insight failed safety guardrail for unsupported terms: ${blockedTerms.join(", ")}`);
+  }
 }
 
 function outputTextFromResponsesApi(response: unknown) {
@@ -354,6 +498,7 @@ export async function buildOpenAiInsight(options: {
     },
     body: JSON.stringify({
       model: options.model,
+      store: false,
       input: [
         {
           role: "system",
@@ -370,7 +515,8 @@ export async function buildOpenAiInsight(options: {
               "Keep recommendations practical for a 5 minute lesson.",
               "Mention evidence from the summary.",
               "Avoid child email, payment, diagnosis, disability labels, or sensitive claims.",
-              "Use warm, professional teacher language."
+              "Use warm, professional teacher language.",
+              "Also provide a parent-friendly summary and one next best activity for the student."
             ]
           })
         }
@@ -383,9 +529,34 @@ export async function buildOpenAiInsight(options: {
           schema: {
             type: "object",
             additionalProperties: false,
-            required: ["summary", "strengths", "needsPractice", "recommendedTeacherActions", "suggestedHomePractice"],
+            required: [
+              "summary",
+              "teacherSummary",
+              "parentSummary",
+              "nextBestActivity",
+              "confidence",
+              "strengths",
+              "needsPractice",
+              "recommendedTeacherActions",
+              "suggestedHomePractice",
+              "skillFocusAreas"
+            ],
             properties: {
               summary: { type: "string" },
+              teacherSummary: { type: "string" },
+              parentSummary: { type: "string" },
+              confidence: { type: "string", enum: ["low", "medium", "high"] },
+              nextBestActivity: {
+                type: "object",
+                additionalProperties: false,
+                required: ["title", "route", "reason", "skillArea"],
+                properties: {
+                  title: { type: "string" },
+                  route: { type: "string" },
+                  reason: { type: "string" },
+                  skillArea: { type: "string", enum: SKILL_AREAS }
+                }
+              },
               strengths: {
                 type: "array",
                 maxItems: 3,
@@ -424,6 +595,11 @@ export async function buildOpenAiInsight(options: {
                 type: "array",
                 maxItems: 4,
                 items: { type: "string" }
+              },
+              skillFocusAreas: {
+                type: "array",
+                maxItems: 4,
+                items: { type: "string", enum: SKILL_AREAS }
               }
             }
           }
@@ -440,6 +616,7 @@ export async function buildOpenAiInsight(options: {
   const text = outputTextFromResponsesApi(responseData);
   const usage = usageFromResponsesApi(responseData);
   const normalized = normalizeOpenAiPayload(JSON.parse(text), fallback);
+  assertInsightGuardrails(normalized);
 
   return {
     insight: {
@@ -447,8 +624,13 @@ export async function buildOpenAiInsight(options: {
       ...normalized,
       model: options.model,
       evidence: fallback.evidence,
+      guardrail: {
+        status: "passed",
+        checkedAt: FieldValue.serverTimestamp(),
+        notes: ["Structured output validated and non-diagnostic language guardrail passed."]
+      },
       aiDisclosure: "AI-assisted instructional support only. This is not a diagnosis or medical evaluation.",
-      promptVersion: "readnest-ai-v1",
+      promptVersion: "readnest-ai-v2",
       sourceDataWindow: options.summary.eventWindow,
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
@@ -483,6 +665,21 @@ export async function writeStudentInsight(db: Firestore, studentId: string, summ
     updatedBy: "ai-worker"
   } satisfies DocumentData);
   batch.set(insightRef, insight satisfies DocumentData);
+  batch.set(db.doc(`users/${studentId}/learningCoachState/current`), {
+    studentId,
+    status: "ready",
+    activeJobStatus: "succeeded",
+    lastInsightId: insightRef.id,
+    lastInsightAt: FieldValue.serverTimestamp(),
+    eventsSinceLastInsight: 0,
+    currentRecommendation: insight.nextBestActivity,
+    skillFocusAreas: insight.skillFocusAreas,
+    confidence: insight.confidence,
+    providerModel: insight.model,
+    guardrailStatus: insight.guardrail.status,
+    updatedAt: FieldValue.serverTimestamp(),
+    updatedBy: "ai-worker"
+  } satisfies DocumentData, { merge: true });
 
   await batch.commit();
 

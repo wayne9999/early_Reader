@@ -39,6 +39,12 @@ Future AI provider secret, only when model-backed insights are enabled:
 firebase functions:secrets:set OPENAI_API_KEY
 ```
 
+Optional support email automation secret:
+
+```bash
+firebase functions:secrets:set RESEND_API_KEY
+```
+
 Future AI provider runtime value:
 
 - `READNEST_AI_MODEL`
@@ -53,6 +59,8 @@ Runtime environment values:
 - `STRIPE_FAMILY_PLUS_PRICE_ID`
 - `STRIPE_TEACHER_PRO_PRICE_ID`
 - `READNEST_APP_BASE_URL`
+- `SUPPORT_NOTIFICATION_EMAIL`
+- `SUPPORT_FROM_EMAIL`
 
 ## Production Authority
 
@@ -63,6 +71,34 @@ Runtime environment values:
 - Teacher access to student history requires an active `teacherStudentLinks/{teacherId_studentId}` record.
 - AI insight jobs and generated recommendations are backend-authored only. Teachers can read insight output only for actively assigned students.
 - AI budget records under `aiBudget/**` are backend-only. If the monthly cap is reached, the backend uses the rule-based fallback instead of calling OpenAI.
+- Support requests are stored in `supportCases/{caseId}`. The backend support worker writes AI summary fields and a Firebase Console detail link to the same document.
+- Operational logs are written to Cloud Logging and backend-authored `systemLogs/{logId}` documents. Client users cannot write operational logs; admins can read them through Firestore rules.
+
+## Observability Queries
+
+Use Cloud Logging for runtime root-cause analysis:
+
+```text
+resource.type="cloud_run_revision"
+jsonPayload.service="readnest-functions"
+jsonPayload.eventName="support_case_processing_failed"
+```
+
+For a specific support ticket or AI job, filter by the correlation id:
+
+```text
+jsonPayload.correlationId="SUPPORT_OR_JOB_ID"
+```
+
+Use Firestore `systemLogs` for app-level operational history:
+
+- `eventName == "support_case_received"`
+- `eventName == "support_case_summarized"`
+- `eventName == "support_email_failed"`
+- `eventName == "ai_provider_fallback"`
+- `eventName == "ai_job_failed"`
+
+Each log stores severity, event name, message, resource type/id, correlation id, and privacy-safe metadata. Full support messages stay in `supportCases/{caseId}`, not in logs.
 
 ## Launch Blocks
 

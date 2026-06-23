@@ -648,7 +648,7 @@ export function TeacherDashboard({ progress, user, profile }: TeacherDashboardPr
           <article className="practice-panel ai-boundary">
             <div className="student-analysis-header">
               <div>
-                <p className="eyebrow">AI-assisted teacher insight</p>
+                <p className="eyebrow">Learning Coach</p>
                 <h3>{selectedAiInsight ? "Latest backend insight" : "Queue a secure insight"}</h3>
               </div>
               <div className="insight-actions">
@@ -667,7 +667,7 @@ export function TeacherDashboard({ progress, user, profile }: TeacherDashboardPr
               </div>
             </div>
             <p className="helper-text">
-              {selectedAiInsight?.summary ?? selectedAnalysis?.aiReadinessNote ?? "Collect assigned-student activity before generating AI summaries."}
+              {selectedAiInsight?.teacherSummary ?? selectedAiInsight?.summary ?? selectedAnalysis?.aiReadinessNote ?? "Collect assigned-student activity before generating AI summaries."}
             </p>
             <p className="helper-text">
               {aiJobHelp(selectedAiJob, selectedAiInsight)} Last generated: {formatInsightDate(selectedAiInsight?.createdAt)}.
@@ -692,6 +692,10 @@ export function TeacherDashboard({ progress, user, profile }: TeacherDashboardPr
                     <small>Analysis engine</small>
                   </span>
                   <span>
+                    <strong>{selectedAiInsight.confidence ?? "low"}</strong>
+                    <small>Confidence</small>
+                  </span>
+                  <span>
                     <strong>{selectedAiJob?.provider ?? "recorded"}</strong>
                     <small>Provider mode</small>
                   </span>
@@ -706,7 +710,7 @@ export function TeacherDashboard({ progress, user, profile }: TeacherDashboardPr
                 </div>
                 <div className="insight-columns">
                   <div>
-                    <p className="eyebrow">Needs practice</p>
+                    <p className="eyebrow">What I noticed</p>
                     <ul className="next-steps">
                       {selectedAiInsight.needsPractice.length ? selectedAiInsight.needsPractice.map((need) => (
                         <li key={`${need.area}-${need.label}`}>{need.label}: {need.nextStep}</li>
@@ -714,7 +718,7 @@ export function TeacherDashboard({ progress, user, profile }: TeacherDashboardPr
                     </ul>
                   </div>
                   <div>
-                    <p className="eyebrow">Teacher actions</p>
+                    <p className="eyebrow">What to try next</p>
                     <ul className="next-steps">
                       {selectedAiInsight.recommendedTeacherActions.map((action) => (
                         <li key={action}>{action}</li>
@@ -722,6 +726,32 @@ export function TeacherDashboard({ progress, user, profile }: TeacherDashboardPr
                     </ul>
                   </div>
                 </div>
+                <div className="insight-columns">
+                  <div>
+                    <p className="eyebrow">Parent-friendly summary</p>
+                    <p className="helper-text">
+                      {selectedAiInsight.parentSummary ?? "A parent summary will appear after the next Learning Coach refresh."}
+                    </p>
+                    <ul className="next-steps">
+                      {selectedAiInsight.suggestedHomePractice.map((practice) => (
+                        <li key={practice}>{practice}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <p className="eyebrow">Next best activity</p>
+                    <h4>{selectedAiInsight.nextBestActivity?.title ?? "Keep practicing"}</h4>
+                    <p className="helper-text">
+                      {selectedAiInsight.nextBestActivity?.reason ?? "The next activity will update after more student practice is logged."}
+                    </p>
+                    {selectedAiInsight.skillFocusAreas?.length ? (
+                      <p className="helper-text">Focus: {selectedAiInsight.skillFocusAreas.join(", ")}</p>
+                    ) : null}
+                  </div>
+                </div>
+                <p className="helper-text">
+                  Guardrail: {selectedAiInsight.guardrail?.status ?? "recorded"}. {(selectedAiInsight.guardrail?.notes ?? []).join(" ")}
+                </p>
                 <p className="helper-text">{selectedAiInsight.aiDisclosure}</p>
               </>
             ) : (

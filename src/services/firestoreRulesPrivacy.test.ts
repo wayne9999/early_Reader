@@ -55,6 +55,7 @@ describe("firestore privacy rules", () => {
   it("keeps AI summaries and insights backend-authored but readable to assigned teachers", () => {
     expect(rules).toContain("match /learningSummaries/{summaryId}");
     expect(rules).toContain("match /aiInsights/{insightId}");
+    expect(rules).toContain("match /learningCoachState/{stateId}");
     expect(rules).toContain("allow read: if ownsUserDocument(userId) || isTeacherAssignedTo(userId);");
     expect(rules).toContain("allow create, update, delete: if false;");
   });
@@ -82,5 +83,11 @@ describe("firestore privacy rules", () => {
     expect(rules).toContain("request.resource.data.userId == request.auth.uid");
     expect(rules).toContain("request.resource.data.type in [\"general\", \"billing\", \"dataDeletion\", \"teacherVerification\", \"technical\"]");
     expect(rules).toContain("request.resource.data.status == \"open\"");
+  });
+
+  it("keeps operational logs backend-authored and admin-only", () => {
+    expect(rules).toContain("match /systemLogs/{logId}");
+    expect(rules).toContain("allow read: if isAdmin();");
+    expect(rules).toContain("allow create, update, delete: if false;");
   });
 });

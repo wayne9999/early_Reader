@@ -1,6 +1,6 @@
-import { collection, getDocs, limit, orderBy, query, where } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, limit, orderBy, query, where } from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
-import type { AiAnalysisJob, AppUser, StudentAiInsight } from "../types";
+import type { AiAnalysisJob, AppUser, LearningCoachState, StudentAiInsight } from "../types";
 import { getFirebaseRuntime } from "./firebase";
 
 const LOCAL_INSIGHT_KEY = "readnest-ai-insights-v1";
@@ -58,6 +58,23 @@ export async function loadLatestStudentInsightJob(studentId: string): Promise<Ai
   return jobs.sort((left, right) => timestampMillis(right.createdAt) - timestampMillis(left.createdAt))[0] ?? null;
 }
 
+export async function loadLearningCoachState(studentId: string): Promise<LearningCoachState | null> {
+  const runtime = getFirebaseRuntime();
+  const firebaseUser = runtime?.auth.currentUser;
+
+  if (!runtime || !firebaseUser) {
+    return null;
+  }
+
+  const stateDoc = await getDoc(doc(runtime.db, "users", studentId, "learningCoachState", "current"));
+
+  if (!stateDoc.exists()) {
+    return null;
+  }
+
+  return stateDoc.data() as LearningCoachState;
+}
+
 function timestampMillis(value: unknown) {
   if (typeof value === "string") {
     return Date.parse(value) || 0;
@@ -84,14 +101,29 @@ export async function requestStudentInsight(user: AppUser | null, studentId: str
       needsPractice: [],
       recommendedTeacherActions: ["Sign in with Firebase and request an updated insight after student practice is logged."],
       suggestedHomePractice: ["Complete one short reading activity and one memory activity."],
+      parentSummary: "Sign in to save practice history and unlock backend-generated learning coach summaries.",
+      teacherSummary: "Firebase sign-in is required before secure teacher insights can be generated.",
+      nextBestActivity: {
+        title: "Try Reading or Memory",
+        route: "#/reading",
+        reason: "Local preview mode does not have enough saved history for a personalized path yet.",
+        skillArea: "sightWords"
+      },
+      confidence: "low",
+      skillFocusAreas: ["sightWords"],
       evidence: {
         sourceEventCount: 0,
         topMissedItems: [],
-        topMasteredItems: []
+        topMasteredItems: [],
+        recentLabels: []
+      },
+      guardrail: {
+        status: "fallback",
+        notes: ["Local preview only; no backend AI provider was called."]
       },
       aiDisclosure: "Instructional support only. This is not a diagnosis or medical evaluation.",
       model: "local-preview",
-      promptVersion: "readnest-ai-v1",
+      promptVersion: "readnest-ai-v2",
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };

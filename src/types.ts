@@ -270,6 +270,15 @@ export type StudentAiInsight = {
   studentId: string;
   status: "ready";
   summary: string;
+  teacherSummary?: string;
+  parentSummary?: string;
+  nextBestActivity?: {
+    title: string;
+    route: string;
+    reason: string;
+    skillArea: SkillArea;
+  };
+  confidence?: "low" | "medium" | "high";
   strengths: Array<{
     area: SkillArea;
     label: string;
@@ -283,10 +292,17 @@ export type StudentAiInsight = {
   }>;
   recommendedTeacherActions: string[];
   suggestedHomePractice: string[];
+  skillFocusAreas?: SkillArea[];
   evidence: {
     sourceEventCount: number;
     topMissedItems: string[];
     topMasteredItems: string[];
+    recentLabels?: string[];
+  };
+  guardrail?: {
+    status: "passed" | "fallback" | "blocked";
+    checkedAt?: unknown;
+    notes: string[];
   };
   aiDisclosure: string;
   model: string;
@@ -304,7 +320,7 @@ export type AiAnalysisJob = {
   id?: string;
   studentId: string;
   requestedBy: string;
-  requestKind: "teacherRequested" | "scheduled" | "legacyRecommendation";
+  requestKind: "teacherRequested" | "scheduled" | "legacyRecommendation" | "thresholdTriggered";
   status: "queued" | "running" | "succeeded" | "failed";
   consentAccepted: boolean;
   insightId?: string;
@@ -326,7 +342,32 @@ export type AiAnalysisJob = {
   inputTokens?: number | null;
   outputTokens?: number | null;
   actualCostUsd?: number | null;
+  queuedReason?: string | null;
   createdAt?: unknown;
+  updatedAt?: unknown;
+};
+
+export type LearningCoachState = {
+  studentId: string;
+  status?: "collecting" | "queued" | "ready";
+  activeJobId?: string | null;
+  activeJobStatus?: AiAnalysisJob["status"] | null;
+  activeJobRequestKind?: AiAnalysisJob["requestKind"] | null;
+  eventsSinceLastInsight?: number;
+  lastInsightId?: string | null;
+  lastInsightAt?: unknown;
+  lastQueuedAt?: unknown;
+  lastEventId?: string | null;
+  lastEventAt?: unknown;
+  queuedReason?: string | null;
+  currentRecommendation?: StudentAiInsight["nextBestActivity"] | null;
+  skillFocusAreas?: SkillArea[];
+  confidence?: StudentAiInsight["confidence"];
+  providerModel?: string;
+  guardrailStatus?: "passed" | "fallback" | "blocked" | string;
+  consentAccepted?: boolean;
+  thresholdEvents?: number;
+  cooldownHours?: number;
   updatedAt?: unknown;
 };
 
@@ -351,6 +392,20 @@ export type SupportCase = {
   message: string;
   status: "open" | "inReview" | "resolved";
   contactEmail?: string | null;
+  adminDetailUrl?: string | null;
+  aiSummaryStatus?: "processing" | "ready" | "failed";
+  aiSummaryProvider?: string | null;
+  aiSummaryProviderError?: string | null;
+  aiSummary?: string | null;
+  aiUrgency?: "low" | "normal" | "high";
+  aiCategory?: string | null;
+  aiRecommendedNextSteps?: string[];
+  aiCustomerReplyDraft?: string | null;
+  aiSafetyFlags?: string[];
+  emailNotificationStatus?: "pending" | "sent" | "skipped" | "failed";
+  emailProviderMessage?: string | null;
+  emailNotificationSentAt?: unknown;
+  processingError?: string | null;
   createdAt?: unknown;
   updatedAt?: unknown;
   createdBy?: string;

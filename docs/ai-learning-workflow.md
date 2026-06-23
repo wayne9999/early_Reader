@@ -5,15 +5,32 @@ ReadNest uses backend-only AI workflow boundaries. The React app never calls an 
 ## Current Implementation
 
 - Student activity events are written to `users/{studentId}/learningEvents/{eventId}`.
+- `updateLearningCoachState` runs on each learning event and updates `users/{studentId}/learningCoachState/current`.
+- When a consented student reaches the activity threshold, the state trigger queues an `aiAnalysisJobs/{jobId}` refresh with cooldown protection.
 - Teachers can request a backend insight with the `requestStudentInsight` callable function.
 - The callable creates an `aiAnalysisJobs/{jobId}` document.
 - `processAiAnalysisJob` runs asynchronously when a job is created.
 - The worker loads recent learning events, creates a compact deterministic summary, and writes:
   - `users/{studentId}/learningSummaries/current`
   - `users/{studentId}/aiInsights/{insightId}`
+  - `users/{studentId}/learningCoachState/current`
 - `enqueueDailyInsightJobs` creates scheduled jobs for active teacher-student assignments each night.
 
-The default fallback insight engine is `rule-based-v1`. When `OPENAI_API_KEY` is available in Firebase Functions, the worker calls OpenAI with the compact summary and stores the model-backed structured result. If the model call fails, the worker records the provider error on the job and writes the rule-based fallback insight instead.
+The default fallback insight engine is `rule-based-v1`. When `OPENAI_API_KEY` is available in Firebase Functions, the worker calls OpenAI with the compact summary, `store: false`, and a strict structured output schema. If the model call fails, budget is exceeded, consent is missing, or the guardrail check fails, the worker records the provider error on the job and writes the rule-based fallback insight instead.
+
+## Learning Coach Output
+
+Each saved insight includes:
+
+- teacher summary
+- parent-friendly summary
+- next best activity recommendation
+- strengths and needs-practice areas
+- teacher actions and short home practice
+- source event evidence
+- confidence level
+- guardrail status and notes
+- model, prompt version, token, and cost audit fields
 
 ## Budget Guard
 
@@ -51,11 +68,11 @@ Do not send raw all-time event history, student email, payment data, or unnecess
 
 - Scheduled batch: nightly for active students with teacher links.
 - Teacher request: on-demand, gated by auth, assignment, consent, and subscription policy.
-- Threshold trigger: future enhancement after enough new practice events are collected.
+- Threshold trigger: after 8 new learning events since the latest insight, with a 12-hour cooldown and parent/AI consent required.
 
 ## Security Rules
 
-- Clients cannot create or update AI jobs, summaries, or insights directly.
+- Clients cannot create or update AI jobs, summaries, insights, or learning coach state directly.
 - A student can read only their own insight records.
 - A teacher can read only assigned students through `teacherStudentLinks/{teacherId_studentId}` with `status == "active"`.
 - Admin review should use admin-controlled backend tooling, not broad client reads.
