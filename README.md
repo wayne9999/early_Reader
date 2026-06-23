@@ -64,22 +64,29 @@ Test metrics:
 
 ## SEO
 
-The app includes metadata, Open Graph/Twitter preview tags, structured data, `robots.txt`, `sitemap.xml`, a web manifest, a social preview image, and crawlable static SEO pages.
+The app includes metadata, Open Graph/Twitter preview tags, structured data, `robots.txt`, `sitemap.xml`, a web manifest, a social preview image, crawlable static SEO pages, and a growth checklist in `docs/growth-seo-plan.md`.
 
-Before production launch, replace the placeholder canonical URL `https://readnest.app/` in:
+The current canonical base URL is `https://wayne9999.github.io/early_Reader/`. When ReadNest moves to a custom domain, update:
 
 - `index.html`
+- every crawlable page under `public/*/index.html`
 - `public/robots.txt`
 - `public/sitemap.xml`
 
 Static SEO pages currently live in:
 
 - `public/reading-practice/`
+- `public/online-reading-games/`
+- `public/kindergarten-reading/`
+- `public/first-grade-reading/`
+- `public/second-grade-reading/`
 - `public/phonics-practice/`
 - `public/sight-words/`
 - `public/memory-games/`
 - `public/teacher-dashboard/`
+- `public/reading-intervention/`
 - `public/caregiver-progress/`
+- `public/pricing/`
 
 For a larger production site, replace these static pages with prerendered or server-rendered routes.
 

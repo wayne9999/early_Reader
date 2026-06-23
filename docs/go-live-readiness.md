@@ -60,8 +60,8 @@ Status labels:
 | --- | --- | --- |
 | Privacy-conscious analytics | Completed | `trackProductEvent` strips child-identifying metadata and stores event names only for signed-in Firebase users. |
 | Business metrics dashboard | Blocked | Needs backend aggregation for MRR, churn, active users, AI spend, and feature usage. |
-| SEO metadata | Needs Work | Static metadata exists for GitHub Pages. Custom domain, canonical URLs, and prerender/SSR should be revisited before paid acquisition. |
-| Pricing/FAQ/testimonials | Needs Work | Support page includes packages; marketing-grade pricing/FAQ/testimonial sections need a dedicated landing-page pass. |
+| SEO metadata | Completed | Static metadata, FAQ structured data, sitemap, robots, OG/Twitter previews, and crawlable pages exist for the current GitHub Pages domain. Custom domain and prerender/SSR should still be revisited before paid acquisition. |
+| Pricing/FAQ/testimonials | Needs Work | Pricing and FAQ content exist; real screenshots, testimonials, case studies, and demo videos need user validation before broad marketing. |
 
 ## Legal, Privacy, And Operations
 
