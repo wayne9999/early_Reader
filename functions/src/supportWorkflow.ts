@@ -204,7 +204,7 @@ export async function sendSupportSummaryEmail(options: {
   summary: SupportCaseSummary;
   detailUrl: string;
 }) {
-  if (!options.resendApiKey) {
+  if (!options.resendApiKey || options.resendApiKey === "not_configured") {
     return { status: "skipped", providerMessage: "RESEND_API_KEY is not configured." };
   }
 
