@@ -126,7 +126,7 @@ jobs:
             echo "READNEST_AI_OUTPUT_COST_PER_1M_USD=${READNEST_AI_OUTPUT_COST_PER_1M_USD:-0}"
             echo "READNEST_ENFORCE_APP_CHECK=${READNEST_ENFORCE_APP_CHECK:-false}"
             echo "SUPPORT_NOTIFICATION_EMAIL=${SUPPORT_NOTIFICATION_EMAIL:-support@myreadnest.org}"
-            echo "SUPPORT_FROM_EMAIL=${SUPPORT_FROM_EMAIL:-ReadNest Support <support@mail.myreadnest.org>}"
+            echo "SUPPORT_FROM_EMAIL=${SUPPORT_FROM_EMAIL:-ReadNest Support <support@myreadnest.org>}"
           } > .env
 
       - name: Sync Stripe secret

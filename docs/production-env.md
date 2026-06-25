@@ -72,7 +72,7 @@ Production values after custom-domain verification:
 
 - `READNEST_APP_BASE_URL=https://myreadnest.org/`
 - `VITE_SUPPORT_EMAIL=support@myreadnest.org`
-- `SUPPORT_FROM_EMAIL=ReadNest Support <support@mail.myreadnest.org>`
+- `SUPPORT_FROM_EMAIL=ReadNest Support <support@myreadnest.org>`
 
 ## Production Authority
 
