@@ -48,6 +48,8 @@ firebase functions:secrets:set RESEND_API_KEY
 
 The GitHub backend workflow does not rewrite secrets during a normal deploy. Select `sync_secrets=true` only when a secret value has changed; ordinary deployments reuse the active Firebase Secret Manager versions.
 
+Firestore rules deploy through the official Firebase Rules REST API using the workflow service account. This avoids relying on an interactive Firebase CLI login in CI. Firestore indexes remain defined in `firestore.indexes.json`; deploy index changes separately after validating the service account's Firestore index permissions.
+
 Future AI provider runtime value:
 
 - `READNEST_AI_MODEL`

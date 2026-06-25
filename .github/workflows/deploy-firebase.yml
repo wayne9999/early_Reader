@@ -76,7 +76,7 @@ jobs:
         run: npm ci
 
       - name: Install functions dependencies
-        if: ${{ inputs.target == 'functions' || inputs.target == 'all' }}
+        if: ${{ inputs.target == 'functions' || inputs.target == 'rules' || inputs.target == 'all' }}
         working-directory: functions
         run: npm ci
 
@@ -125,9 +125,9 @@ jobs:
         if: ${{ inputs.sync_secrets && (inputs.target == 'functions' || inputs.target == 'all') && env.RESEND_API_KEY != '' }}
         run: printf '%s' "$RESEND_API_KEY" | firebase functions:secrets:set RESEND_API_KEY --project "$FIREBASE_PROJECT_ID" --data-file - --non-interactive
 
-      - name: Deploy Firestore rules and indexes
+      - name: Deploy Firestore rules
         if: ${{ inputs.target == 'rules' || inputs.target == 'all' }}
-        run: firebase deploy --only firestore:rules,firestore:indexes --project "$FIREBASE_PROJECT_ID" --non-interactive
+        run: node functions/scripts/deploy-firestore-rules.mjs
 
       - name: Deploy Functions
         if: ${{ (inputs.target == 'functions' || inputs.target == 'all') && !inputs.include_scheduler }}
