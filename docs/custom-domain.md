@@ -82,4 +82,4 @@ ReadNest Support <support@myreadnest.org>
 - support submissions send from the verified Resend domain.
 - `robots.txt`, `sitemap.xml`, canonical tags, Open Graph URLs, and the PWA manifest use `myreadnest.org`.
 - security headers are present.
-- the GitHub Pages fallback still opens during the transition.
+- the GitHub Pages development environment still opens independently.

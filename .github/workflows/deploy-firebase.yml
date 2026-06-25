@@ -11,7 +11,6 @@ on:
         options:
           - rules
           - functions
-          - hosting
           - all
       include_scheduler:
         description: Include the scheduled AI insight function. Requires cloudscheduler.jobs.update permission.
@@ -108,12 +107,6 @@ jobs:
         working-directory: functions
         run: npm run build
 
-      - name: Build production web app
-        if: ${{ inputs.target == 'hosting' || inputs.target == 'all' }}
-        run: npm run build
-        env:
-          VITE_BASE_PATH: /
-
       - name: Write functions runtime env
         if: ${{ inputs.target == 'functions' || inputs.target == 'all' }}
         working-directory: functions
@@ -173,7 +166,3 @@ jobs:
           --project "$FIREBASE_PROJECT_ID"
           --non-interactive
           --force
-
-      - name: Deploy Firebase Hosting
-        if: ${{ inputs.target == 'hosting' || inputs.target == 'all' }}
-        run: firebase deploy --only hosting --project "$FIREBASE_PROJECT_ID" --non-interactive
