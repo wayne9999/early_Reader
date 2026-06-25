@@ -1,11 +1,23 @@
 import type { SubscriptionTier } from "../types";
 
 export const billingConfig = {
+  environment: import.meta.env.VITE_APP_ENVIRONMENT || "development",
+  stripeMode: import.meta.env.VITE_STRIPE_MODE || "test",
   donationLink: import.meta.env.VITE_STRIPE_DONATION_LINK || "",
   familyPlusLink: import.meta.env.VITE_STRIPE_FAMILY_PLUS_LINK || "",
   teacherProLink: import.meta.env.VITE_STRIPE_TEACHER_PRO_LINK || "",
   customerPortalLink: import.meta.env.VITE_STRIPE_CUSTOMER_PORTAL_LINK || ""
 };
+
+export function isStripeLinkCompatible(link: string) {
+  if (!link) {
+    return false;
+  }
+
+  const isTestLink = link.includes("/test_");
+
+  return billingConfig.stripeMode === "test" ? isTestLink : !isTestLink;
+}
 
 export function isTemporaryStripePortalSession(link: string) {
   if (!link) {
@@ -76,7 +88,9 @@ export const subscriptionTiers: SubscriptionTier[] = [
 
 export function isBillingConfigured() {
   return Boolean(
-    billingConfig.donationLink || billingConfig.familyPlusLink || billingConfig.teacherProLink
+    isStripeLinkCompatible(billingConfig.donationLink)
+      || isStripeLinkCompatible(billingConfig.familyPlusLink)
+      || isStripeLinkCompatible(billingConfig.teacherProLink)
   );
 }
 

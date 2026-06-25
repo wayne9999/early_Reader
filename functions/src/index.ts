@@ -14,6 +14,8 @@ initializeApp();
 
 const stripeSecretKey = defineSecret("STRIPE_SECRET_KEY");
 const stripeWebhookSecret = defineSecret("STRIPE_WEBHOOK_SECRET");
+const stripeLiveSecretKey = defineSecret("STRIPE_LIVE_SECRET_KEY");
+const stripeLiveWebhookSecret = defineSecret("STRIPE_LIVE_WEBHOOK_SECRET");
 const openAiApiKey = defineSecret("OPENAI_API_KEY");
 const resendApiKey = defineSecret("RESEND_API_KEY");
 const appBaseUrl = process.env.READNEST_APP_BASE_URL ?? "https://myreadnest.org/";
@@ -29,6 +31,14 @@ const aiEstimatedOutputTokenCostPerMillionUsd = parseBudgetLimit(process.env.REA
 
 type SubscriptionTier = "free" | "familyPlus" | "teacherPro";
 type SubscriptionStatus = "free" | "checkoutStarted" | "active" | "pastDue" | "canceled";
+type StripeMode = "test" | "live";
+type BillingRuntime = {
+  appBaseUrl: string;
+  collectionName: "testSubscriptions" | "subscriptions";
+  mode: StripeMode;
+  secretKey: ReturnType<typeof defineSecret>;
+  webhookSecret: ReturnType<typeof defineSecret>;
+};
 type AiJobRequestKind = "teacherRequested" | "scheduled" | "legacyRecommendation" | "thresholdTriggered";
 
 const defaultTeacherCapacity = 12;
@@ -147,22 +157,65 @@ function firestoreConsoleUrl(collectionPath: string, documentId: string) {
   return `https://console.firebase.google.com/project/${projectId}/firestore/databases/-default-/data/${encodedPath}`;
 }
 
-function stripeClient() {
-  return new Stripe(stripeSecretKey.value(), {
+const testBillingRuntime: BillingRuntime = {
+  appBaseUrl: process.env.STRIPE_TEST_APP_BASE_URL ?? "https://wayne9999.github.io/early_Reader/",
+  collectionName: "testSubscriptions",
+  mode: "test",
+  secretKey: stripeSecretKey,
+  webhookSecret: stripeWebhookSecret
+};
+
+const liveBillingRuntime: BillingRuntime = {
+  appBaseUrl,
+  collectionName: "subscriptions",
+  mode: "live",
+  secretKey: stripeLiveSecretKey,
+  webhookSecret: stripeLiveWebhookSecret
+};
+
+function stripeClient(runtime: BillingRuntime) {
+  const secretKey = runtime.secretKey.value();
+  const expectedPrefix = runtime.mode === "live" ? "sk_live_" : "sk_test_";
+
+  if (!secretKey.startsWith(expectedPrefix)) {
+    throw new HttpsError(
+      "failed-precondition",
+      `Stripe ${runtime.mode} mode is configured with the wrong secret-key type.`
+    );
+  }
+
+  return new Stripe(secretKey, {
     apiVersion: "2025-08-27.basil"
   });
 }
 
-function tierFromPrice(priceId?: string | null): SubscriptionTier {
+function assertStripeEventMode(event: Stripe.Event, runtime: BillingRuntime) {
+  const expectsLiveEvent = runtime.mode === "live";
+
+  if (event.livemode !== expectsLiveEvent) {
+    throw new Error(
+      `Rejected Stripe ${event.livemode ? "live" : "test"} event in ${runtime.mode} environment.`
+    );
+  }
+}
+
+function tierFromPrice(priceId: string | null | undefined, runtime: BillingRuntime): SubscriptionTier {
   if (!priceId) {
     return "free";
   }
 
-  if (priceId === process.env.STRIPE_TEACHER_PRO_PRICE_ID) {
+  const teacherPriceId = runtime.mode === "live"
+    ? process.env.STRIPE_LIVE_TEACHER_PRO_PRICE_ID
+    : process.env.STRIPE_TEACHER_PRO_PRICE_ID;
+  const familyPriceId = runtime.mode === "live"
+    ? process.env.STRIPE_LIVE_FAMILY_PLUS_PRICE_ID
+    : process.env.STRIPE_FAMILY_PLUS_PRICE_ID;
+
+  if (priceId === teacherPriceId) {
     return "teacherPro";
   }
 
-  if (priceId === process.env.STRIPE_FAMILY_PLUS_PRICE_ID) {
+  if (priceId === familyPriceId) {
     return "familyPlus";
   }
 
@@ -185,9 +238,9 @@ function statusFromStripe(status?: Stripe.Subscription.Status | null): Subscript
   return "free";
 }
 
-async function findUserIdForCustomer(customerId: string) {
+async function findUserIdForCustomer(customerId: string, runtime: BillingRuntime) {
   const snapshot = await getFirestore()
-    .collection("subscriptions")
+    .collection(runtime.collectionName)
     .where("stripeCustomerId", "==", customerId)
     .limit(1)
     .get();
@@ -195,14 +248,21 @@ async function findUserIdForCustomer(customerId: string) {
   return snapshot.docs[0]?.id ?? null;
 }
 
-async function writeSubscription(userId: string, data: Record<string, unknown>, eventId: string) {
+async function writeSubscription(
+  userId: string,
+  data: Record<string, unknown>,
+  eventId: string,
+  runtime: BillingRuntime
+) {
   const db = getFirestore();
 
-  await db.doc(`subscriptions/${userId}`).set(
+  await db.doc(`${runtime.collectionName}/${userId}`).set(
     {
       ...data,
       userId,
       source: "stripe",
+      environment: runtime.mode === "live" ? "production" : "development",
+      stripeMode: runtime.mode,
       lastStripeEventId: eventId,
       updatedAt: FieldValue.serverTimestamp(),
       updatedBy: "stripe-webhook"
@@ -224,13 +284,17 @@ async function setSubscriptionClaim(userId: string, tier: SubscriptionTier, stat
   });
 }
 
-function priceIdForTier(tier: SubscriptionTier) {
+function priceIdForTier(tier: SubscriptionTier, runtime: BillingRuntime) {
   if (tier === "familyPlus") {
-    return process.env.STRIPE_FAMILY_PLUS_PRICE_ID;
+    return runtime.mode === "live"
+      ? process.env.STRIPE_LIVE_FAMILY_PLUS_PRICE_ID
+      : process.env.STRIPE_FAMILY_PLUS_PRICE_ID;
   }
 
   if (tier === "teacherPro") {
-    return process.env.STRIPE_TEACHER_PRO_PRICE_ID;
+    return runtime.mode === "live"
+      ? process.env.STRIPE_LIVE_TEACHER_PRO_PRICE_ID
+      : process.env.STRIPE_TEACHER_PRO_PRICE_ID;
   }
 
   return null;
@@ -519,11 +583,11 @@ async function runAiAnalysisJob(jobId: string, job: DocumentData) {
   }
 }
 
-async function handleSubscription(subscription: Stripe.Subscription, eventId: string) {
+async function handleSubscription(subscription: Stripe.Subscription, eventId: string, runtime: BillingRuntime) {
   const customerId = typeof subscription.customer === "string" ? subscription.customer : subscription.customer.id;
-  const userId = subscription.metadata.firebaseUid || await findUserIdForCustomer(customerId);
+  const userId = subscription.metadata.firebaseUid || await findUserIdForCustomer(customerId, runtime);
   const firstItem = subscription.items.data[0];
-  const tier = tierFromPrice(firstItem?.price.id);
+  const tier = tierFromPrice(firstItem?.price.id, runtime);
   const status = statusFromStripe(subscription.status);
 
   if (!userId) {
@@ -553,12 +617,19 @@ async function handleSubscription(subscription: Stripe.Subscription, eventId: st
       cancelAtPeriodEnd: subscription.cancel_at_period_end,
       lastPaymentError: null
     },
-    eventId
+    eventId,
+    runtime
   );
-  await setSubscriptionClaim(userId, tier, status);
+  if (runtime.mode === "live") {
+    await setSubscriptionClaim(userId, tier, status);
+  }
 }
 
-async function handleCheckoutCompleted(session: Stripe.Checkout.Session, eventId: string) {
+async function handleCheckoutCompleted(
+  session: Stripe.Checkout.Session,
+  eventId: string,
+  runtime: BillingRuntime
+) {
   const userId = session.metadata?.firebaseUid || session.client_reference_id;
   const customerId = typeof session.customer === "string" ? session.customer : session.customer?.id;
   const subscriptionId = typeof session.subscription === "string" ? session.subscription : session.subscription?.id;
@@ -577,8 +648,8 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, eventId
   }
 
   if (subscriptionId) {
-    const subscription = await stripeClient().subscriptions.retrieve(subscriptionId);
-    await handleSubscription(subscription, eventId);
+    const subscription = await stripeClient(runtime).subscriptions.retrieve(subscriptionId);
+    await handleSubscription(subscription, eventId, runtime);
     return;
   }
 
@@ -587,12 +658,16 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, eventId
     status: "checkoutStarted",
     stripeCustomerId: customerId,
     stripeSubscriptionId: null
-  }, eventId);
+  }, eventId, runtime);
 }
 
-async function handleInvoicePaymentFailed(invoice: Stripe.Invoice, eventId: string) {
+async function handleInvoicePaymentFailed(
+  invoice: Stripe.Invoice,
+  eventId: string,
+  runtime: BillingRuntime
+) {
   const customerId = typeof invoice.customer === "string" ? invoice.customer : invoice.customer?.id;
-  const userId = customerId ? await findUserIdForCustomer(customerId) : null;
+  const userId = customerId ? await findUserIdForCustomer(customerId, runtime) : null;
 
   if (!userId) {
     await writeOperationalLog({
@@ -610,12 +685,17 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice, eventId: stri
   await writeSubscription(userId, {
     status: "pastDue",
     lastPaymentError: invoice.last_finalization_error?.message ?? "invoice.payment_failed"
-  }, eventId);
+  }, eventId, runtime);
 }
 
-async function handleRefundOrDispute(charge: Stripe.Charge, eventId: string, status: SubscriptionStatus) {
+async function handleRefundOrDispute(
+  charge: Stripe.Charge,
+  eventId: string,
+  status: SubscriptionStatus,
+  runtime: BillingRuntime
+) {
   const customerId = typeof charge.customer === "string" ? charge.customer : charge.customer?.id;
-  const userId = customerId ? await findUserIdForCustomer(customerId) : null;
+  const userId = customerId ? await findUserIdForCustomer(customerId, runtime) : null;
 
   if (!userId) {
     await writeOperationalLog({
@@ -633,10 +713,10 @@ async function handleRefundOrDispute(charge: Stripe.Charge, eventId: string, sta
   await writeSubscription(userId, {
     status,
     lastPaymentError: status === "canceled" ? "refund_or_dispute" : "payment_dispute"
-  }, eventId);
+  }, eventId, runtime);
 }
 
-async function handleDispute(dispute: Stripe.Dispute, eventId: string) {
+async function handleDispute(dispute: Stripe.Dispute, eventId: string, runtime: BillingRuntime) {
   if (!dispute.charge || typeof dispute.charge !== "string") {
     await writeOperationalLog({
       severity: "warning",
@@ -650,11 +730,274 @@ async function handleDispute(dispute: Stripe.Dispute, eventId: string) {
     return;
   }
 
-  const charge = await stripeClient().charges.retrieve(dispute.charge);
-  await handleRefundOrDispute(charge, eventId, "pastDue");
+  const charge = await stripeClient(runtime).charges.retrieve(dispute.charge);
+  await handleRefundOrDispute(charge, eventId, "pastDue", runtime);
 }
 
-export const stripeWebhook = onRequest(
+function createStripeWebhook(runtime: BillingRuntime) {
+  return onRequest(
+    {
+      secrets: [runtime.secretKey, runtime.webhookSecret],
+      region: "us-central1",
+      cors: false
+    },
+    async (request, response) => {
+      const signature = request.header("stripe-signature");
+
+      if (!signature) {
+        response.status(400).send("Missing Stripe signature");
+        return;
+      }
+
+      let event: Stripe.Event;
+
+      try {
+        event = stripeClient(runtime).webhooks.constructEvent(
+          request.rawBody,
+          signature,
+          runtime.webhookSecret.value()
+        );
+        assertStripeEventMode(event, runtime);
+      } catch (error) {
+        response.status(400).send(`Invalid Stripe signature: ${error instanceof Error ? error.message : "unknown error"}`);
+        return;
+      }
+
+      try {
+        switch (event.type) {
+          case "checkout.session.completed":
+            await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session, event.id, runtime);
+            break;
+          case "customer.subscription.created":
+          case "customer.subscription.updated":
+          case "customer.subscription.deleted":
+            await handleSubscription(event.data.object as Stripe.Subscription, event.id, runtime);
+            break;
+          case "invoice.payment_failed":
+            await handleInvoicePaymentFailed(event.data.object as Stripe.Invoice, event.id, runtime);
+            break;
+          case "charge.refunded":
+            await handleRefundOrDispute(event.data.object as Stripe.Charge, event.id, "canceled", runtime);
+            break;
+          case "charge.dispute.created":
+            await handleDispute(event.data.object as Stripe.Dispute, event.id, runtime);
+            break;
+          default:
+            break;
+        }
+
+        await writeOperationalLog({
+          severity: "info",
+          eventName: "stripe_webhook_processed",
+          message: `Stripe ${runtime.mode} webhook event processed.`,
+          correlationId: event.id,
+          resourceType: "stripeEvent",
+          resourceId: event.id,
+          metadata: { type: event.type, stripeMode: runtime.mode }
+        });
+        response.status(200).json({ received: true });
+      } catch (error) {
+        await writeOperationalLog({
+          severity: "error",
+          eventName: "stripe_webhook_failed",
+          message: error instanceof Error ? error.message : "Stripe webhook handling failed.",
+          correlationId: event.id,
+          resourceType: "stripeEvent",
+          resourceId: event.id,
+          metadata: { type: event.type, stripeMode: runtime.mode }
+        });
+        response.status(500).send("Webhook handling failed");
+      }
+    }
+  );
+}
+
+export const stripeWebhook = createStripeWebhook(liveBillingRuntime);
+export const stripeWebhookTest = createStripeWebhook(testBillingRuntime);
+
+function createPortalFunction(runtime: BillingRuntime) {
+  return onCall(
+    {
+      secrets: [runtime.secretKey],
+      region: "us-central1",
+      enforceAppCheck
+    },
+    async (request) => {
+      if (!request.auth) {
+        throw new HttpsError("unauthenticated", "Sign in before managing billing.");
+      }
+
+      await enforceUserRateLimit({
+        userId: request.auth.uid,
+        action: "billingPortal",
+        maxAttempts: 6,
+        windowMs: 10 * 60 * 1000
+      });
+
+      const subscription = await getFirestore()
+        .doc(`${runtime.collectionName}/${request.auth.uid}`)
+        .get();
+      const stripeCustomerId = subscription.data()?.stripeCustomerId;
+
+      if (!stripeCustomerId || typeof stripeCustomerId !== "string") {
+        throw new HttpsError("failed-precondition", "No Stripe customer is linked to this account yet.");
+      }
+
+      const session = await stripeClient(runtime).billingPortal.sessions.create({
+        customer: stripeCustomerId,
+        return_url: `${runtime.appBaseUrl}#/account`
+      });
+
+      return { url: session.url };
+    }
+  );
+}
+
+export const createBillingPortalSession = createPortalFunction(liveBillingRuntime);
+export const createBillingPortalSessionTest = createPortalFunction(testBillingRuntime);
+
+function createCheckoutFunction(runtime: BillingRuntime) {
+  return onCall(
+    {
+      secrets: [runtime.secretKey],
+      region: "us-central1",
+      enforceAppCheck
+    },
+    async (request) => {
+      if (!request.auth) {
+        throw new HttpsError("unauthenticated", "Sign in before starting checkout.");
+      }
+
+      await enforceUserRateLimit({
+        userId: request.auth.uid,
+        action: "checkout",
+        maxAttempts: 5,
+        windowMs: 15 * 60 * 1000
+      });
+
+      const requestedTier = request.data?.tier;
+
+      if (requestedTier !== "familyPlus" && requestedTier !== "teacherPro") {
+        throw new HttpsError("invalid-argument", "Choose Family Plus or Teacher Pro.");
+      }
+
+      const db = getFirestore();
+      const userId = request.auth.uid;
+      const userDoc = await db.doc(`users/${userId}`).get();
+      const userProfile = userDoc.data() ?? {};
+      const role = typeof userProfile.role === "string" ? userProfile.role : "";
+
+      if (!userDoc.exists || (role !== "student" && role !== "teacher" && role !== "admin")) {
+        throw new HttpsError("failed-precondition", "Finish account setup before starting checkout.");
+      }
+
+      if (requestedTier === "familyPlus" && role !== "student") {
+        throw new HttpsError("permission-denied", "Family Plus is only available for student or parent accounts.");
+      }
+
+      if (requestedTier === "teacherPro" && role !== "teacher" && role !== "admin") {
+        throw new HttpsError("permission-denied", "Teacher Pro is only available for teacher accounts.");
+      }
+
+      const priceId = priceIdForTier(requestedTier, runtime);
+
+      if (!priceId) {
+        throw new HttpsError("failed-precondition", `Stripe ${runtime.mode} price ID is not configured for this plan.`);
+      }
+
+      const stripe = stripeClient(runtime);
+      const subscriptionRef = db.doc(`${runtime.collectionName}/${userId}`);
+      const subscriptionDoc = await subscriptionRef.get();
+      let stripeCustomerId = subscriptionDoc.data()?.stripeCustomerId;
+
+      if (typeof stripeCustomerId !== "string" || !stripeCustomerId) {
+        const customer = await stripe.customers.create({
+          email: typeof userProfile.email === "string" ? userProfile.email : (request.auth.token.email as string | undefined),
+          name: typeof userProfile.displayName === "string" ? userProfile.displayName : undefined,
+          metadata: {
+            firebaseUid: userId,
+            role,
+            stripeMode: runtime.mode
+          }
+        });
+        stripeCustomerId = customer.id;
+      }
+
+      await subscriptionRef.set({
+        userId,
+        tier: requestedTier,
+        status: "checkoutStarted",
+        source: "stripe",
+        stripeCustomerId,
+        environment: runtime.mode === "live" ? "production" : "development",
+        stripeMode: runtime.mode,
+        updatedAt: FieldValue.serverTimestamp(),
+        updatedBy: userId
+      }, { merge: true });
+
+      const session = await stripe.checkout.sessions.create({
+        mode: "subscription",
+        customer: stripeCustomerId,
+        client_reference_id: userId,
+        line_items: [
+          {
+            price: priceId,
+            quantity: 1
+          }
+        ],
+        allow_promotion_codes: true,
+        success_url: `${runtime.appBaseUrl}#/account`,
+        cancel_url: `${runtime.appBaseUrl}#/account`,
+        metadata: {
+          firebaseUid: userId,
+          tier: requestedTier,
+          role,
+          stripeMode: runtime.mode
+        },
+        subscription_data: {
+          metadata: {
+            firebaseUid: userId,
+            tier: requestedTier,
+            role,
+            stripeMode: runtime.mode
+          }
+        }
+      });
+
+      if (!session.url) {
+        throw new HttpsError("internal", "Stripe did not return a checkout URL.");
+      }
+
+      await writeOperationalLog({
+        severity: "info",
+        eventName: "stripe_checkout_session_created",
+        message: `Stripe ${runtime.mode} checkout session created.`,
+        correlationId: session.id,
+        resourceType: "stripeCheckoutSession",
+        resourceId: session.id,
+        metadata: {
+          userId,
+          tier: requestedTier,
+          role,
+          stripeMode: runtime.mode
+        }
+      });
+
+      return { url: session.url };
+    }
+  );
+}
+
+export const createCheckoutSession = createCheckoutFunction(liveBillingRuntime);
+export const createCheckoutSessionTest = createCheckoutFunction(testBillingRuntime);
+
+/*
+  Billing functions above intentionally keep Stripe test and live mode isolated
+  while sharing the non-billing Firebase application backend.
+*/
+/* legacy billing implementation removed below */
+/*
+export const stripeWebhookLegacy = onRequest(
   {
     secrets: [stripeSecretKey, stripeWebhookSecret],
     region: "us-central1",
@@ -676,6 +1019,7 @@ export const stripeWebhook = onRequest(
         signature,
         stripeWebhookSecret.value()
       );
+      assertStripeEventMode(event);
     } catch (error) {
       response.status(400).send(`Invalid Stripe signature: ${error instanceof Error ? error.message : "unknown error"}`);
       return;
@@ -763,7 +1107,7 @@ export const createBillingPortalSession = onCall(
   }
 );
 
-export const createCheckoutSession = onCall(
+export const createCheckoutSessionLegacy = onCall(
   {
     secrets: [stripeSecretKey],
     region: "us-central1",
@@ -885,6 +1229,7 @@ export const createCheckoutSession = onCall(
     return { url: session.url };
   }
 );
+*/
 
 export const claimPlacementStudent = onCall(
   {

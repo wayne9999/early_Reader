@@ -50,21 +50,24 @@ jobs:
         run: npm audit --audit-level=moderate
 
       - name: Build production web app
-        run: npm run build
+        run: npm run validate:deployment-env && npm run build
         env:
           VITE_BASE_PATH: /
-          VITE_FIREBASE_API_KEY: ${{ vars.VITE_FIREBASE_API_KEY }}
-          VITE_FIREBASE_AUTH_DOMAIN: ${{ vars.VITE_FIREBASE_AUTH_DOMAIN }}
-          VITE_FIREBASE_PROJECT_ID: ${{ vars.VITE_FIREBASE_PROJECT_ID }}
-          VITE_FIREBASE_STORAGE_BUCKET: ${{ vars.VITE_FIREBASE_STORAGE_BUCKET }}
-          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ vars.VITE_FIREBASE_MESSAGING_SENDER_ID }}
-          VITE_FIREBASE_APP_ID: ${{ vars.VITE_FIREBASE_APP_ID }}
-          VITE_FIREBASE_MEASUREMENT_ID: ${{ vars.VITE_FIREBASE_MEASUREMENT_ID }}
-          VITE_FIREBASE_APP_CHECK_SITE_KEY: ${{ vars.VITE_FIREBASE_APP_CHECK_SITE_KEY }}
-          VITE_STRIPE_DONATION_LINK: ${{ vars.VITE_STRIPE_DONATION_LINK }}
-          VITE_STRIPE_FAMILY_PLUS_LINK: ${{ vars.VITE_STRIPE_FAMILY_PLUS_LINK }}
-          VITE_STRIPE_TEACHER_PRO_LINK: ${{ vars.VITE_STRIPE_TEACHER_PRO_LINK }}
-          VITE_STRIPE_CUSTOMER_PORTAL_LINK: ${{ vars.VITE_STRIPE_CUSTOMER_PORTAL_LINK }}
+          VITE_APP_ENVIRONMENT: production
+          VITE_STRIPE_MODE: live
+          VITE_EXPECTED_FIREBASE_PROJECT_ID: ${{ vars.PROD_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_API_KEY: ${{ vars.PROD_VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ vars.PROD_VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID: ${{ vars.PROD_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_STORAGE_BUCKET: ${{ vars.PROD_VITE_FIREBASE_STORAGE_BUCKET }}
+          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ vars.PROD_VITE_FIREBASE_MESSAGING_SENDER_ID }}
+          VITE_FIREBASE_APP_ID: ${{ vars.PROD_VITE_FIREBASE_APP_ID }}
+          VITE_FIREBASE_MEASUREMENT_ID: ${{ vars.PROD_VITE_FIREBASE_MEASUREMENT_ID }}
+          VITE_FIREBASE_APP_CHECK_SITE_KEY: ${{ vars.PROD_VITE_FIREBASE_APP_CHECK_SITE_KEY }}
+          VITE_STRIPE_DONATION_LINK: ${{ vars.PROD_VITE_STRIPE_DONATION_LINK }}
+          VITE_STRIPE_FAMILY_PLUS_LINK: ${{ vars.PROD_VITE_STRIPE_FAMILY_PLUS_LINK }}
+          VITE_STRIPE_TEACHER_PRO_LINK: ${{ vars.PROD_VITE_STRIPE_TEACHER_PRO_LINK }}
+          VITE_STRIPE_CUSTOMER_PORTAL_LINK: ${{ vars.PROD_VITE_STRIPE_CUSTOMER_PORTAL_LINK }}
           VITE_SUPPORT_EMAIL: ${{ vars.VITE_SUPPORT_EMAIL }}
 
       - name: Upload immutable production artifact
@@ -106,7 +109,7 @@ jobs:
           path: dist
 
       - name: Deploy Firebase Hosting
-        run: firebase deploy --only hosting --project readnest-f9c67 --non-interactive
+        run: firebase deploy --only hosting --project "${{ vars.PROD_FIREBASE_PROJECT_ID }}" --non-interactive
 
       - name: Add deployment summary
         run: |
@@ -118,4 +121,3 @@ jobs:
             echo "- URL: https://myreadnest.org/"
             echo "- Firebase fallback: https://readnest-f9c67.web.app/"
           } >> "$GITHUB_STEP_SUMMARY"
-

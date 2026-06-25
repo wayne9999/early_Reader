@@ -26,6 +26,8 @@
 
 No workflow pushes directly to `production`, and Firebase Hosting never deploys from `main`.
 
+Development uses Stripe test mode and `testSubscriptions/{uid}`. Production uses Stripe live mode and `subscriptions/{uid}`. Both may use the same Firebase application backend, but billing functions, webhooks, customers, secrets, prices, and entitlement documents remain isolated.
+
 ## Approval Controls
 
 The `production` branch:
@@ -53,6 +55,8 @@ Use **Deploy Firebase Backend** manually:
 - `functions` for functions
 - `hosting` only for an emergency hosting redeploy
 - `all` only when the release explicitly coordinates backend and frontend changes
+
+Use **Deploy Live Stripe Billing** only from the protected production workflow after live Stripe values have been configured.
 
 For production backend changes, record the deployed commit in the promotion pull request.
 

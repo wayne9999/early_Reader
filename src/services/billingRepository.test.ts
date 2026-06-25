@@ -28,7 +28,7 @@ describe("billingRepository", () => {
     await expect(startSubscriptionCheckout("familyPlus")).resolves.toBe(
       "https://checkout.stripe.com/test-session"
     );
-    expect(httpsCallable).toHaveBeenCalledWith(expect.anything(), "createCheckoutSession");
+    expect(httpsCallable).toHaveBeenCalledWith(expect.anything(), "createCheckoutSessionTest");
   });
 
   it("does not fall back to a static payment link when checkout fails", async () => {
@@ -43,6 +43,6 @@ describe("billingRepository", () => {
     }) as never);
 
     await expect(createBillingPortalUrl()).resolves.toBe("https://billing.stripe.com/session/test");
-    expect(httpsCallable).toHaveBeenCalledWith(expect.anything(), "createBillingPortalSession");
+    expect(httpsCallable).toHaveBeenCalledWith(expect.anything(), "createBillingPortalSessionTest");
   });
 });

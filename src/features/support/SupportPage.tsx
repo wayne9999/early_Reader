@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { billingConfig, subscriptionTiers } from "../../services/billingConfig";
+import { billingConfig, isStripeLinkCompatible, subscriptionTiers } from "../../services/billingConfig";
 import { startSubscriptionCheckout } from "../../services/billingRepository";
 import { createSupportCase } from "../../services/supportCaseRepository";
 import { supportMailtoHref } from "../../services/supportConfig";
@@ -128,7 +128,7 @@ function DonationPage() {
           <div className="donation-actions">
             <button
               className="donation-button"
-              disabled={!billingConfig.donationLink}
+              disabled={!isStripeLinkCompatible(billingConfig.donationLink)}
               type="button"
               onClick={() => openPaymentLink(billingConfig.donationLink)}
             >

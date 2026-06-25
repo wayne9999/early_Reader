@@ -104,6 +104,11 @@ service cloud.firestore {
       allow create, update, delete: if false;
     }
 
+    match /testSubscriptions/{userId} {
+      allow read: if ownsUserDocument(userId) || isAdmin();
+      allow create, update, delete: if false;
+    }
+
     match /childProfiles/{childId} {
       allow read: if isSignedIn()
         && resource.data.parentUid == request.auth.uid;

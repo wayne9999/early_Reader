@@ -24,7 +24,7 @@ import {
   savePendingAuthView,
   type AppRouteState
 } from "./services/appRoutes";
-import { billingConfig } from "./services/billingConfig";
+import { billingConfig, isStripeLinkCompatible } from "./services/billingConfig";
 import { startSubscriptionCheckout } from "./services/billingRepository";
 import { paidStudentActivitiesDescription, studentActivityAccess, teacherDashboardAccess } from "./services/entitlementService";
 import { defaultProgress, loadProgress, saveProgress } from "./services/progressRepository";
@@ -144,7 +144,7 @@ const roleIndicatorMeta: Record<UserRole, { label: string; shortLabel: string; d
 };
 
 function openDonationLink() {
-  if (billingConfig.donationLink) {
+  if (isStripeLinkCompatible(billingConfig.donationLink)) {
     window.open(billingConfig.donationLink, "_blank", "noopener,noreferrer");
   }
 }
@@ -630,7 +630,7 @@ export function RootApp() {
           <p className="eyebrow">Mission fund</p>
           <h2 id="donation-title">Help a child read</h2>
           <p>Donations support free lessons, accessibility work, hosting, and classroom tools.</p>
-          <button type="button" onClick={openDonationLink} disabled={!billingConfig.donationLink}>
+          <button type="button" onClick={openDonationLink} disabled={!isStripeLinkCompatible(billingConfig.donationLink)}>
             Donate
           </button>
         </section>

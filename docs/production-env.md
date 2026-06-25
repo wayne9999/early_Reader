@@ -25,6 +25,8 @@ GitHub repository > Settings > Secrets and variables > Actions > Variables
 
 Vite variables are public at build time. Never put Stripe secret keys, Firebase service account keys, or webhook secrets in `VITE_*` variables.
 
+The protected `production` environment stores production-prefixed Firebase and Stripe values. GitHub Pages continues using the repository-level Firebase variables and Stripe test links.
+
 ## Firebase Functions Secrets
 
 Configure these with Firebase CLI:

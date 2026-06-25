@@ -1,5 +1,6 @@
 import { httpsCallable } from "firebase/functions";
 import type { SubscriptionTierId } from "../types";
+import { billingConfig } from "./billingConfig";
 import { getFirebaseRuntime } from "./firebase";
 
 type CheckoutSessionResponse = {
@@ -18,9 +19,12 @@ export async function startSubscriptionCheckout(tier: SubscriptionTierId) {
     throw new Error("Choose a paid subscription plan.");
   }
 
+  const callableName = billingConfig.stripeMode === "test"
+    ? "createCheckoutSessionTest"
+    : "createCheckoutSession";
   const createCheckoutSession = httpsCallable<{ tier: SubscriptionTierId }, CheckoutSessionResponse>(
     runtime.functions,
-    "createCheckoutSession"
+    callableName
   );
   const response = await createCheckoutSession({ tier });
   const url = response.data.url;
@@ -40,9 +44,12 @@ export async function createBillingPortalUrl() {
     throw new Error("Sign in before managing billing.");
   }
 
+  const callableName = billingConfig.stripeMode === "test"
+    ? "createBillingPortalSessionTest"
+    : "createBillingPortalSession";
   const createPortalSession = httpsCallable<Record<string, never>, CheckoutSessionResponse>(
     runtime.functions,
-    "createBillingPortalSession"
+    callableName
   );
   const response = await createPortalSession({});
 
