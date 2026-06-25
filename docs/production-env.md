@@ -46,6 +46,8 @@ Optional support email automation secret:
 firebase functions:secrets:set RESEND_API_KEY
 ```
 
+The GitHub backend workflow does not rewrite secrets during a normal deploy. Select `sync_secrets=true` only when a secret value has changed; ordinary deployments reuse the active Firebase Secret Manager versions.
+
 Future AI provider runtime value:
 
 - `READNEST_AI_MODEL`
