@@ -2,15 +2,14 @@
 
 ## Production Hosting
 
-The production target is Firebase Hosting:
+Production is deployed from the protected `production` branch to Firebase
+Hosting:
 
 ```text
 https://myreadnest.org/
 ```
 
-The Firebase workflow supports `target=hosting` and builds with `VITE_BASE_PATH=/` before deploying `dist`.
-
-GitHub Pages remains available as a temporary fallback:
+Development is deployed automatically from `main` to GitHub Pages:
 
 ```text
 https://wayne9999.github.io/early_Reader/
@@ -62,13 +61,18 @@ The workflow runs:
 
 ## Firebase Backend Deploy
 
-The Firebase backend deploy workflow is:
+The development Firebase backend deploy workflow is:
 
 ```text
 .github/workflows/deploy-firebase.yml
 ```
 
-Use `target=rules` for Firestore rules, `target=functions` for callable/webhook workers, `target=hosting` for the production web application, and `target=all` for all three. The `include_scheduler` option is off by default so routine deploys do not fail if the deploy service account is missing Cloud Scheduler permissions.
+Use `target=rules` for Firestore rules, `target=functions` for callable/webhook
+workers, and `target=all` for both backend targets. This workflow cannot deploy
+Firebase Hosting. Production Hosting is deployed only by
+`.github/workflows/deploy-production.yml` after branch and environment approval.
+The `include_scheduler` option is off by default so routine deploys do not fail
+if the deploy service account is missing Cloud Scheduler permissions.
 
 Enable `include_scheduler=true` only after the deploy service account has permission to update scheduled jobs.
 

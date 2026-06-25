@@ -92,7 +92,9 @@ For a larger production site, replace these static pages with prerendered or ser
 
 ## App Routes
 
-ReadNest currently uses hash-based routes so links remain portable across Firebase Hosting and the GitHub Pages fallback. These are the current shareable app URLs:
+ReadNest currently uses hash-based routes so links remain portable across the
+Firebase Hosting production site and the GitHub Pages development site. These
+are the current shareable app URLs:
 
 - `#/reading`
 - `#/memory`
