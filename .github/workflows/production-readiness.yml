@@ -1,24 +1,22 @@
-name: Deploy ReadNest Development
+name: Validate Production Promotion
 
 on:
-  push:
-    branches: ["main"]
-  workflow_dispatch:
+  pull_request:
+    branches: ["production"]
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
-  group: "pages"
-  cancel-in-progress: false
+  group: production-readiness-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 jobs:
-  build:
+  production-readiness:
+    name: Production readiness
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout proposed production commit
         uses: actions/checkout@v4
 
       - name: Setup Node
@@ -27,48 +25,37 @@ jobs:
           node-version: 24
           cache: npm
 
-      - name: Install dependencies
+      - name: Install app dependencies
         run: npm ci
 
-      - name: TypeScript check
+      - name: Install functions dependencies
+        working-directory: functions
+        run: npm ci
+
+      - name: Typecheck app
         run: npm run check
 
-      - name: Content validation
+      - name: Validate learning content
         run: npm run validate:content
 
-      - name: Unit and integration tests
+      - name: Run unit and integration tests
         run: npm run test
 
-      - name: Dependency audit
+      - name: Check app dependencies
         run: npm audit --audit-level=moderate
 
-      - name: Coverage report
-        run: npm run test:coverage
+      - name: Typecheck functions
+        working-directory: functions
+        run: npm run check
 
-      - name: Install Playwright browser
-        run: npx playwright install chromium --with-deps
+      - name: Check functions dependencies
+        working-directory: functions
+        run: npm audit --audit-level=moderate
 
-      - name: Browser automation tests
-        run: npm run test:e2e
-
-      - name: Upload coverage artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: coverage
-
-      - name: Upload Playwright report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-report
-          path: playwright-report
-
-      - name: Build
+      - name: Build production web app
         run: npm run build
         env:
-          VITE_BASE_PATH: /early_Reader/
+          VITE_BASE_PATH: /
           VITE_FIREBASE_API_KEY: ${{ vars.VITE_FIREBASE_API_KEY }}
           VITE_FIREBASE_AUTH_DOMAIN: ${{ vars.VITE_FIREBASE_AUTH_DOMAIN }}
           VITE_FIREBASE_PROJECT_ID: ${{ vars.VITE_FIREBASE_PROJECT_ID }}
@@ -81,19 +68,11 @@ jobs:
           VITE_STRIPE_FAMILY_PLUS_LINK: ${{ vars.VITE_STRIPE_FAMILY_PLUS_LINK }}
           VITE_STRIPE_TEACHER_PRO_LINK: ${{ vars.VITE_STRIPE_TEACHER_PRO_LINK }}
           VITE_STRIPE_CUSTOMER_PORTAL_LINK: ${{ vars.VITE_STRIPE_CUSTOMER_PORTAL_LINK }}
+          VITE_SUPPORT_EMAIL: ${{ vars.VITE_SUPPORT_EMAIL }}
 
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: dist
+      - name: Install Playwright browser
+        run: npx playwright install chromium --with-deps
 
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Run browser automation
+        run: npm run test:e2e
+

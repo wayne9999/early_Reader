@@ -23,6 +23,8 @@ Workflows:
 .github/workflows/deploy-pages.yml
 ```
 
+The branch promotion and approval process is documented in `docs/release-process.md`.
+
 The workflow runs:
 
 - `npm ci`

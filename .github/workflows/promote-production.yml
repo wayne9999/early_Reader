@@ -1,0 +1,65 @@
+name: Promote Development to Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_notes:
+        description: Short description of the production release
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  open-promotion:
+    name: Open production promotion pull request
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for existing promotion
+        id: existing
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          existing_url="$(gh pr list \
+            --repo "$GITHUB_REPOSITORY" \
+            --base production \
+            --head main \
+            --state open \
+            --json url \
+            --jq '.[0].url // ""')"
+          echo "url=$existing_url" >> "$GITHUB_OUTPUT"
+
+      - name: Create production promotion pull request
+        if: ${{ steps.existing.outputs.url == '' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_NOTES: ${{ inputs.release_notes }}
+        run: |
+          gh pr create \
+            --repo "$GITHUB_REPOSITORY" \
+            --base production \
+            --head main \
+            --title "Release: promote main to production" \
+            --body "$(cat <<EOF
+          ## Production release
+
+          $RELEASE_NOTES
+
+          ## Human approval checklist
+
+          - [ ] Development site has been smoke-tested
+          - [ ] Production readiness checks are green
+          - [ ] Billing, authentication, and protected routes were considered
+          - [ ] Database or backend compatibility was reviewed
+          - [ ] Rollback commit is understood
+
+          Merging this pull request promotes the tested commit to the protected \`production\` branch. Firebase Hosting still requires approval through the protected \`production\` environment.
+          EOF
+          )"
+
+      - name: Report existing promotion
+        if: ${{ steps.existing.outputs.url != '' }}
+        run: echo "An open production promotion already exists at ${{ steps.existing.outputs.url }}"
+
