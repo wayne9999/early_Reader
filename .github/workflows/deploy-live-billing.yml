@@ -38,6 +38,7 @@ jobs:
       - name: Install Firebase CLI
         run: |
           npm install -g firebase-tools@15.21.0
+          npm install --prefix "$(npm root -g)/firebase-tools" google-auth-library@10.7.0 --no-save --ignore-scripts
           firebase --version
 
       - name: Install and validate Functions
