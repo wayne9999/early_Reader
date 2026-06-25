@@ -1,4 +1,4 @@
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { httpsCallable } from "firebase/functions";
 import type { AppUser, SupportCase, SupportCaseType } from "../types";
 import { getFirebaseRuntime } from "./firebase";
 
@@ -20,6 +20,7 @@ export async function createSupportCase(
     subject: string;
     message: string;
     contactEmail?: string | null;
+    website?: string;
   }
 ) {
   const subject = cleanText(input.subject, 120);
@@ -53,17 +54,26 @@ export async function createSupportCase(
     return localCase;
   }
 
-  const docRef = await addDoc(collection(runtime.db, "supportCases"), {
-    ...supportCase,
-    userId: firebaseUser.uid,
-    createdBy: firebaseUser.uid,
-    updatedBy: firebaseUser.uid,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp()
+  const submitSupportCase = httpsCallable<
+    {
+      type: SupportCaseType;
+      subject: string;
+      message: string;
+      contactEmail: string | null;
+      website: string;
+    },
+    { caseId: string }
+  >(runtime.functions, "submitSupportCase");
+  const response = await submitSupportCase({
+    type: supportCase.type,
+    subject: supportCase.subject,
+    message: supportCase.message,
+    contactEmail: supportCase.contactEmail ?? null,
+    website: input.website ?? ""
   });
 
   return {
     ...supportCase,
-    id: docRef.id
+    id: response.data.caseId
   };
 }

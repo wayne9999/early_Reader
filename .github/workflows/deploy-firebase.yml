@@ -39,6 +39,7 @@ jobs:
       READNEST_AI_ESTIMATED_COST_PER_INSIGHT_USD: ${{ vars.READNEST_AI_ESTIMATED_COST_PER_INSIGHT_USD }}
       READNEST_AI_INPUT_COST_PER_1M_USD: ${{ vars.READNEST_AI_INPUT_COST_PER_1M_USD }}
       READNEST_AI_OUTPUT_COST_PER_1M_USD: ${{ vars.READNEST_AI_OUTPUT_COST_PER_1M_USD }}
+      READNEST_ENFORCE_APP_CHECK: ${{ vars.READNEST_ENFORCE_APP_CHECK }}
       SUPPORT_NOTIFICATION_EMAIL: ${{ vars.SUPPORT_NOTIFICATION_EMAIL }}
       SUPPORT_FROM_EMAIL: ${{ vars.SUPPORT_FROM_EMAIL }}
       STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
@@ -98,6 +99,7 @@ jobs:
             echo "READNEST_AI_ESTIMATED_COST_PER_INSIGHT_USD=${READNEST_AI_ESTIMATED_COST_PER_INSIGHT_USD:-0.05}"
             echo "READNEST_AI_INPUT_COST_PER_1M_USD=${READNEST_AI_INPUT_COST_PER_1M_USD:-0}"
             echo "READNEST_AI_OUTPUT_COST_PER_1M_USD=${READNEST_AI_OUTPUT_COST_PER_1M_USD:-0}"
+            echo "READNEST_ENFORCE_APP_CHECK=${READNEST_ENFORCE_APP_CHECK:-false}"
             echo "SUPPORT_NOTIFICATION_EMAIL=${SUPPORT_NOTIFICATION_EMAIL:-support@readnest.app}"
             echo "SUPPORT_FROM_EMAIL=${SUPPORT_FROM_EMAIL:-ReadNest Support <support@readnest.app>}"
           } > .env
@@ -126,7 +128,7 @@ jobs:
         if: ${{ (inputs.target == 'functions' || inputs.target == 'all') && !inputs.include_scheduler }}
         run: >
           firebase deploy
-          --only functions:stripeWebhook,functions:createBillingPortalSession,functions:createCheckoutSession,functions:claimPlacementStudent,functions:createLearningRecommendation,functions:requestStudentInsight,functions:updateLearningCoachState,functions:processAiAnalysisJob,functions:processSupportCase
+          --only functions:stripeWebhook,functions:createBillingPortalSession,functions:createCheckoutSession,functions:claimPlacementStudent,functions:createLearningRecommendation,functions:requestStudentInsight,functions:submitSupportCase,functions:updateLearningCoachState,functions:processAiAnalysisJob,functions:processSupportCase
           --project "$FIREBASE_PROJECT_ID"
           --non-interactive
           --force
@@ -135,7 +137,7 @@ jobs:
         if: ${{ (inputs.target == 'functions' || inputs.target == 'all') && inputs.include_scheduler }}
         run: >
           firebase deploy
-          --only functions:stripeWebhook,functions:createBillingPortalSession,functions:createCheckoutSession,functions:claimPlacementStudent,functions:createLearningRecommendation,functions:requestStudentInsight,functions:updateLearningCoachState,functions:processAiAnalysisJob,functions:processSupportCase,functions:enqueueDailyInsightJobs
+          --only functions:stripeWebhook,functions:createBillingPortalSession,functions:createCheckoutSession,functions:claimPlacementStudent,functions:createLearningRecommendation,functions:requestStudentInsight,functions:submitSupportCase,functions:updateLearningCoachState,functions:processAiAnalysisJob,functions:processSupportCase,functions:enqueueDailyInsightJobs
           --project "$FIREBASE_PROJECT_ID"
           --non-interactive
           --force

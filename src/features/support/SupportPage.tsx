@@ -179,6 +179,7 @@ function SupportCenterPage({ user }: { user: AppUser | null }) {
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
   const [contactEmail, setContactEmail] = useState(user?.email ?? "");
+  const [website, setWebsite] = useState("");
   const [caseStatus, setCaseStatus] = useState("");
   const [isSending, setIsSending] = useState(false);
 
@@ -204,10 +205,12 @@ function SupportCenterPage({ user }: { user: AppUser | null }) {
         type: caseType,
         subject,
         message,
-        contactEmail: contactEmail || user.email || null
+        contactEmail: contactEmail || user.email || null,
+        website
       });
       setSubject("");
       setMessage("");
+      setWebsite("");
       setCaseStatus("Support request saved. ReadNest will create an internal summary and email the support team when backend email is configured.");
     } catch (error) {
       setCaseStatus(error instanceof Error ? error.message : "Could not save the support request.");
@@ -257,6 +260,15 @@ function SupportCenterPage({ user }: { user: AppUser | null }) {
             ReadNest stores the request in Firebase and alerts the support team when backend email is configured.
           </p>
           <form className="support-case-form" onSubmit={(event) => void submitSupportCase(event)}>
+            <label className="form-honeypot" aria-hidden="true">
+              <span>Website</span>
+              <input
+                autoComplete="off"
+                tabIndex={-1}
+                value={website}
+                onChange={(event) => setWebsite(event.target.value)}
+              />
+            </label>
             <label>
               <span>Request type</span>
               <select value={caseType} onChange={(event) => setCaseType(event.target.value as SupportCaseType)}>

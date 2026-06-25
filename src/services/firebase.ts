@@ -1,4 +1,9 @@
 import { initializeApp, type FirebaseApp } from "firebase/app";
+import {
+  initializeAppCheck,
+  ReCaptchaEnterpriseProvider,
+  type AppCheck
+} from "firebase/app-check";
 import { getAnalytics, isSupported, type Analytics } from "firebase/analytics";
 import { getAuth, type Auth } from "firebase/auth";
 import { getFirestore, type Firestore } from "firebase/firestore";
@@ -7,6 +12,7 @@ import { getFunctions, type Functions } from "firebase/functions";
 type FirebaseRuntime = {
   analytics: Promise<Analytics | null>;
   app: FirebaseApp;
+  appCheck: AppCheck | null;
   auth: Auth;
   db: Firestore;
   functions: Functions;
@@ -22,6 +28,7 @@ const firebaseConfig = {
 };
 
 const measurementId = import.meta.env.VITE_FIREBASE_MEASUREMENT_ID;
+const appCheckSiteKey = import.meta.env.VITE_FIREBASE_APP_CHECK_SITE_KEY;
 
 function hasFirebaseConfig() {
   return Boolean(
@@ -41,11 +48,19 @@ export function getFirebaseRuntime() {
 
   if (!runtime) {
     const app = initializeApp(firebaseConfig);
+    const appCheck = appCheckSiteKey
+      ? initializeAppCheck(app, {
+          provider: new ReCaptchaEnterpriseProvider(appCheckSiteKey),
+          isTokenAutoRefreshEnabled: true
+        })
+      : null;
+
     runtime = {
       analytics: measurementId
         ? isSupported().then((supported) => (supported ? getAnalytics(app) : null))
         : Promise.resolve(null),
       app,
+      appCheck,
       auth: getAuth(app),
       db: getFirestore(app),
       functions: getFunctions(app, "us-central1")

@@ -2500,6 +2500,16 @@ button {
   font-weight: 900;
 }
 
+.form-honeypot {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  clip-path: inset(50%) !important;
+  white-space: nowrap !important;
+}
+
 .support-case-form input,
 .support-case-form select,
 .support-case-form textarea {

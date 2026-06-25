@@ -16,6 +16,7 @@ GitHub repository > Settings > Secrets and variables > Actions > Variables
 - `VITE_FIREBASE_MESSAGING_SENDER_ID`
 - `VITE_FIREBASE_APP_ID`
 - `VITE_FIREBASE_MEASUREMENT_ID`
+- `VITE_FIREBASE_APP_CHECK_SITE_KEY`
 - `VITE_STRIPE_DONATION_LINK`
 - `VITE_STRIPE_FAMILY_PLUS_LINK`
 - `VITE_STRIPE_TEACHER_PRO_LINK`
@@ -61,6 +62,7 @@ Runtime environment values:
 - `READNEST_APP_BASE_URL`
 - `SUPPORT_NOTIFICATION_EMAIL`
 - `SUPPORT_FROM_EMAIL`
+- `READNEST_ENFORCE_APP_CHECK` (`false` during monitoring, then `true` after App Check is verified)
 
 ## Production Authority
 
@@ -72,6 +74,8 @@ Runtime environment values:
 - AI insight jobs and generated recommendations are backend-authored only. Teachers can read insight output only for actively assigned students.
 - AI budget records under `aiBudget/**` are backend-only. If the monthly cap is reached, the backend uses the rule-based fallback instead of calling OpenAI.
 - Support requests are stored in `supportCases/{caseId}`. The backend support worker writes AI summary fields and a Firebase Console detail link to the same document.
+- Support submissions and costly callable operations use backend per-user rate limits. Rate-limit counters under `abuseRateLimits/**` are backend-only.
+- Firebase App Check uses reCAPTCHA Enterprise when `VITE_FIREBASE_APP_CHECK_SITE_KEY` is configured. Functions enforcement is controlled by `READNEST_ENFORCE_APP_CHECK`.
 - Operational logs are written to Cloud Logging and backend-authored `systemLogs/{logId}` documents. Client users cannot write operational logs; admins can read them through Firestore rules.
 
 ## Observability Queries

@@ -78,11 +78,20 @@ describe("firestore privacy rules", () => {
     expect(rules).toContain("allow delete: if false;");
   });
 
-  it("validates support cases for signed-in users", () => {
+  it("keeps support case creation behind the rate-limited backend", () => {
     expect(rules).toContain("match /supportCases/{caseId}");
-    expect(rules).toContain("request.resource.data.userId == request.auth.uid");
-    expect(rules).toContain("request.resource.data.type in [\"general\", \"billing\", \"dataDeletion\", \"teacherVerification\", \"technical\"]");
-    expect(rules).toContain("request.resource.data.status == \"open\"");
+    expect(rules).toContain("allow create, delete: if false;");
+  });
+
+  it("keeps rate-limit counters backend-only", () => {
+    expect(rules).toContain("match /abuseRateLimits/{limitId}");
+    expect(rules).toContain("allow read, create, update, delete: if false;");
+  });
+
+  it("limits learning and analytics event payload shape", () => {
+    expect(rules).toContain("request.resource.data.metadata.size() <= 16");
+    expect(rules).toContain("request.resource.data.metadata.size() <= 12");
+    expect(rules).toContain("request.resource.data.label.size() <= 180");
   });
 
   it("keeps operational logs backend-authored and admin-only", () => {

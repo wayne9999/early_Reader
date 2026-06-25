@@ -51,6 +51,7 @@ service cloud.firestore {
 
       match /learningEvents/{eventId} {
         allow create: if ownsUserDocument(userId)
+          && request.resource.data.keys().hasOnly(["userId", "type", "label", "area", "metadata", "createdAt"])
           && request.resource.data.userId == request.auth.uid
           && request.resource.data.type in [
             "reading_started",
@@ -72,7 +73,11 @@ service cloud.firestore {
             "activity_completed"
           ]
           && request.resource.data.label is string
+          && request.resource.data.label.size() >= 1
+          && request.resource.data.label.size() <= 180
           && request.resource.data.area in ["phonics", "sightWords", "fluency", "workingMemory", "consistency"]
+          && request.resource.data.metadata is map
+          && request.resource.data.metadata.size() <= 16
           && request.resource.data.createdAt != null;
         allow read: if ownsUserDocument(userId) || isTeacherAssignedTo(userId);
         allow update, delete: if false;
@@ -196,24 +201,39 @@ service cloud.firestore {
 
     match /analyticsEvents/{eventId} {
       allow create: if isSignedIn()
+        && request.resource.data.keys().hasOnly(["eventName", "metadata", "userId", "createdAt"])
         && request.resource.data.userId == request.auth.uid
-        && request.resource.data.eventName is string
+        && request.resource.data.eventName in [
+          "signup_started",
+          "signup_completed",
+          "onboarding_completed",
+          "activity_started",
+          "activity_completed",
+          "practice_streak",
+          "paywall_viewed",
+          "checkout_clicked",
+          "subscription_active",
+          "subscription_canceled",
+          "teacher_invite_sent",
+          "teacher_invite_accepted",
+          "report_downloaded",
+          "ai_insight_requested"
+        ]
+        && request.resource.data.metadata is map
+        && request.resource.data.metadata.size() <= 12
         && request.resource.data.createdAt != null;
       allow read, update, delete: if false;
     }
 
     match /supportCases/{caseId} {
-      allow create: if isSignedIn()
-        && request.resource.data.userId == request.auth.uid
-        && request.resource.data.status == "open"
-        && request.resource.data.type in ["general", "billing", "dataDeletion", "teacherVerification", "technical"]
-        && request.resource.data.subject is string
-        && request.resource.data.message is string
-        && request.resource.data.createdAt != null;
       allow read: if isSignedIn()
         && (resource.data.userId == request.auth.uid || isAdmin());
       allow update: if isAdmin();
-      allow delete: if false;
+      allow create, delete: if false;
+    }
+
+    match /abuseRateLimits/{limitId} {
+      allow read, create, update, delete: if false;
     }
 
     match /systemLogs/{logId} {

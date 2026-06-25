@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase-admin/app";
-import { FieldValue, getFirestore, type DocumentData, type QueryDocumentSnapshot, type Transaction } from "firebase-admin/firestore";
+import { FieldValue, getFirestore, Timestamp, type DocumentData, type QueryDocumentSnapshot, type Transaction } from "firebase-admin/firestore";
 import { getAuth } from "firebase-admin/auth";
 import { defineSecret } from "firebase-functions/params";
 import { onDocumentCreated } from "firebase-functions/v2/firestore";
@@ -20,6 +20,7 @@ const appBaseUrl = process.env.READNEST_APP_BASE_URL ?? "https://wayne9999.githu
 const aiModel = process.env.READNEST_AI_MODEL ?? "gpt-5.5";
 const supportNotificationEmail = process.env.SUPPORT_NOTIFICATION_EMAIL ?? "support@readnest.app";
 const supportFromEmail = process.env.SUPPORT_FROM_EMAIL ?? "ReadNest Support <support@readnest.app>";
+const enforceAppCheck = process.env.READNEST_ENFORCE_APP_CHECK === "true";
 const aiWarningLimitUsd = parseBudgetLimit(process.env.READNEST_AI_WARNING_LIMIT_USD, 10);
 const aiMonthlyLimitUsd = parseBudgetLimit(process.env.READNEST_AI_MONTHLY_LIMIT_USD, 15);
 const aiEstimatedCostPerInsightUsd = parseBudgetLimit(process.env.READNEST_AI_ESTIMATED_COST_PER_INSIGHT_USD, 0.05);
@@ -35,6 +36,69 @@ const learningCoachThresholdEvents = 8;
 const learningCoachCooldownMs = 12 * 60 * 60 * 1000;
 
 type LogSeverity = "info" | "warning" | "error";
+type RateLimitAction =
+  | "billingPortal"
+  | "checkout"
+  | "claimStudent"
+  | "learningRecommendation"
+  | "studentInsight"
+  | "supportCase";
+
+async function enforceUserRateLimit(options: {
+  userId: string;
+  action: RateLimitAction;
+  maxAttempts: number;
+  windowMs: number;
+}) {
+  const db = getFirestore();
+  const limitRef = db.doc(`abuseRateLimits/${options.userId}_${options.action}`);
+  const nowMs = Date.now();
+
+  await db.runTransaction(async (transaction) => {
+    const snapshot = await transaction.get(limitRef);
+    const data = snapshot.data() ?? {};
+    const windowStartedAtMs = typeof data.windowStartedAtMs === "number" ? data.windowStartedAtMs : 0;
+    const count = typeof data.count === "number" ? data.count : 0;
+    const windowExpired = !windowStartedAtMs || nowMs - windowStartedAtMs >= options.windowMs;
+    const nextCount = windowExpired ? 1 : count + 1;
+
+    if (!windowExpired && count >= options.maxAttempts) {
+      const retryAfterSeconds = Math.max(1, Math.ceil((options.windowMs - (nowMs - windowStartedAtMs)) / 1000));
+      throw new HttpsError(
+        "resource-exhausted",
+        `Too many requests. Please wait about ${retryAfterSeconds} seconds and try again.`
+      );
+    }
+
+    transaction.set(limitRef, {
+      userId: options.userId,
+      action: options.action,
+      count: nextCount,
+      windowStartedAtMs: windowExpired ? nowMs : windowStartedAtMs,
+      expiresAt: Timestamp.fromMillis((windowExpired ? nowMs : windowStartedAtMs) + options.windowMs),
+      updatedAt: FieldValue.serverTimestamp(),
+      updatedBy: "rate-limiter"
+    }, { merge: true });
+  });
+}
+
+function cleanUserText(value: unknown, limit: number) {
+  return typeof value === "string" ? value.trim().replace(/\s+/g, " ").slice(0, limit) : "";
+}
+
+function cleanContactEmail(value: unknown) {
+  const email = cleanUserText(value, 160).toLowerCase();
+
+  if (!email) {
+    return null;
+  }
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw new HttpsError("invalid-argument", "Enter a valid contact email address.");
+  }
+
+  return email;
+}
 
 async function writeOperationalLog(options: {
   severity: LogSeverity;
@@ -668,12 +732,20 @@ export const stripeWebhook = onRequest(
 export const createBillingPortalSession = onCall(
   {
     secrets: [stripeSecretKey],
-    region: "us-central1"
+    region: "us-central1",
+    enforceAppCheck
   },
   async (request) => {
     if (!request.auth) {
       throw new HttpsError("unauthenticated", "Sign in before managing billing.");
     }
+
+    await enforceUserRateLimit({
+      userId: request.auth.uid,
+      action: "billingPortal",
+      maxAttempts: 6,
+      windowMs: 10 * 60 * 1000
+    });
 
     const subscription = await getFirestore().doc(`subscriptions/${request.auth.uid}`).get();
     const stripeCustomerId = subscription.data()?.stripeCustomerId;
@@ -694,12 +766,20 @@ export const createBillingPortalSession = onCall(
 export const createCheckoutSession = onCall(
   {
     secrets: [stripeSecretKey],
-    region: "us-central1"
+    region: "us-central1",
+    enforceAppCheck
   },
   async (request) => {
     if (!request.auth) {
       throw new HttpsError("unauthenticated", "Sign in before starting checkout.");
     }
+
+    await enforceUserRateLimit({
+      userId: request.auth.uid,
+      action: "checkout",
+      maxAttempts: 5,
+      windowMs: 15 * 60 * 1000
+    });
 
     const requestedTier = request.data?.tier;
 
@@ -808,7 +888,8 @@ export const createCheckoutSession = onCall(
 
 export const claimPlacementStudent = onCall(
   {
-    region: "us-central1"
+    region: "us-central1",
+    enforceAppCheck
   },
   async (request) => {
     if (!request.auth) {
@@ -816,6 +897,13 @@ export const claimPlacementStudent = onCall(
     }
 
     const teacherId = request.auth.uid;
+    await enforceUserRateLimit({
+      userId: teacherId,
+      action: "claimStudent",
+      maxAttempts: 10,
+      windowMs: 10 * 60 * 1000
+    });
+
     const studentId = typeof request.data?.studentId === "string" ? request.data.studentId.trim() : "";
 
     if (!studentId || studentId === teacherId) {
@@ -928,12 +1016,20 @@ export const claimPlacementStudent = onCall(
 
 export const requestStudentInsight = onCall(
   {
-    region: "us-central1"
+    region: "us-central1",
+    enforceAppCheck
   },
   async (request) => {
     if (!request.auth) {
       throw new HttpsError("unauthenticated", "Sign in before requesting recommendations.");
     }
+
+    await enforceUserRateLimit({
+      userId: request.auth.uid,
+      action: "studentInsight",
+      maxAttempts: 4,
+      windowMs: 60 * 60 * 1000
+    });
 
     const consentAccepted = request.data?.consentAccepted === true;
     const studentId = typeof request.data?.studentId === "string" ? request.data.studentId : request.auth.uid;
@@ -960,12 +1056,20 @@ export const requestStudentInsight = onCall(
 
 export const createLearningRecommendation = onCall(
   {
-    region: "us-central1"
+    region: "us-central1",
+    enforceAppCheck
   },
   async (request) => {
     if (!request.auth) {
       throw new HttpsError("unauthenticated", "Sign in before requesting recommendations.");
     }
+
+    await enforceUserRateLimit({
+      userId: request.auth.uid,
+      action: "learningRecommendation",
+      maxAttempts: 4,
+      windowMs: 60 * 60 * 1000
+    });
 
     const consentAccepted = request.data?.consentAccepted === true;
 
@@ -986,6 +1090,61 @@ export const createLearningRecommendation = onCall(
       status: "queued",
       message: "Recommendation request recorded. The backend worker will generate an evidence-based summary asynchronously."
     };
+  }
+);
+
+export const submitSupportCase = onCall(
+  {
+    region: "us-central1",
+    enforceAppCheck
+  },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Sign in before contacting support.");
+    }
+
+    if (cleanUserText(request.data?.website, 200)) {
+      throw new HttpsError("invalid-argument", "Could not submit this request.");
+    }
+
+    await enforceUserRateLimit({
+      userId: request.auth.uid,
+      action: "supportCase",
+      maxAttempts: 3,
+      windowMs: 60 * 60 * 1000
+    });
+
+    const type = cleanUserText(request.data?.type, 32);
+    const subject = cleanUserText(request.data?.subject, 120);
+    const message = cleanUserText(request.data?.message, 1200);
+    const contactEmail = cleanContactEmail(request.data?.contactEmail ?? request.auth.token.email);
+    const allowedTypes = new Set(["general", "billing", "dataDeletion", "teacherVerification", "technical"]);
+
+    if (!allowedTypes.has(type)) {
+      throw new HttpsError("invalid-argument", "Choose a valid support request type.");
+    }
+
+    if (subject.length < 3 || message.length < 10) {
+      throw new HttpsError("invalid-argument", "Add a short subject and at least 10 characters of detail.");
+    }
+
+    const caseRef = getFirestore().collection("supportCases").doc();
+    const now = FieldValue.serverTimestamp();
+    await caseRef.set({
+      userId: request.auth.uid,
+      type,
+      subject,
+      message,
+      contactEmail,
+      status: "open",
+      createdAt: now,
+      updatedAt: now,
+      createdBy: request.auth.uid,
+      updatedBy: request.auth.uid,
+      source: "callable"
+    });
+
+    return { caseId: caseRef.id };
   }
 );
 
