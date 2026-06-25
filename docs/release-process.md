@@ -4,8 +4,8 @@
 
 | Environment | Branch | Hosting | Purpose |
 | --- | --- | --- | --- |
-| Development | `main` | `https://wayne9999.github.io/early_Reader/` | Latest integrated code for QA and stakeholder review |
-| Production | `production` | `https://myreadnest.org/` | Human-approved customer release |
+| Development | `main` | `https://wayne9999.github.io/early_Reader/` | Firebase project `readnest-dev-f9c67`; QA and stakeholder review |
+| Production | `production` | `https://myreadnest.org/` | Firebase project `readnest-f9c67`; human-approved customer release |
 | Firebase fallback | `production` artifact | `https://readnest-f9c67.web.app/` | Direct hosting health check and emergency fallback |
 
 ## Normal Release
@@ -26,7 +26,12 @@
 
 No workflow pushes directly to `production`, and Firebase Hosting never deploys from `main`.
 
-Development uses Stripe test mode and `testSubscriptions/{uid}`. Production uses Stripe live mode and `subscriptions/{uid}`. Both may use the same Firebase application backend, but billing functions, webhooks, customers, secrets, prices, and entitlement documents remain isolated.
+Development and production must never use the same Firebase project. Firebase
+Auth users, Firestore documents, Functions, secrets, analytics, and App Check
+configuration are isolated by project. Development uses Stripe test mode in
+`readnest-dev-f9c67`; production uses Stripe live mode in `readnest-f9c67`.
+Build validation and runtime guards reject either environment if it receives
+the opposite Firebase project ID.
 
 ## Approval Controls
 
@@ -49,11 +54,10 @@ Keep repository-level secrets available to the production deployment job only th
 
 Firestore rules and Firebase Functions remain separate from frontend promotion because backend changes can require migration and operational review.
 
-Use **Deploy Firebase Backend** manually:
+Use **Deploy Firebase Backend** manually for the development project:
 
 - `rules` for Firestore rules
 - `functions` for functions
-- `hosting` only for an emergency hosting redeploy
 - `all` only when the release explicitly coordinates backend and frontend changes
 
 Use **Deploy Live Stripe Billing** only from the protected production workflow after live Stripe values have been configured.

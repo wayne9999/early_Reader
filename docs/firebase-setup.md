@@ -1,5 +1,19 @@
 # Firebase And Auth Setup
 
+## Required Project Split
+
+Use two Firebase projects:
+
+| Environment | Firebase project | Frontend hosting |
+| --- | --- | --- |
+| Development | `readnest-dev-f9c67` | GitHub Pages |
+| Production | `readnest-f9c67` | Firebase Hosting |
+
+Firebase Auth users, Firestore documents, Cloud Functions, Secret Manager
+values, App Check, and analytics stay inside their environment's project.
+Create synthetic QA accounts in development. Never copy production child
+profiles, learning history, support messages, or teacher data into development.
+
 The app is now structured for:
 
 - Firebase Authentication for Google and Facebook sign-in.

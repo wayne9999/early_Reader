@@ -29,6 +29,9 @@ const firebaseConfig = {
 
 const measurementId = import.meta.env.VITE_FIREBASE_MEASUREMENT_ID;
 const appCheckSiteKey = import.meta.env.VITE_FIREBASE_APP_CHECK_SITE_KEY;
+const expectedProjectId = import.meta.env.VITE_EXPECTED_FIREBASE_PROJECT_ID;
+const forbiddenProjectId = import.meta.env.VITE_FORBIDDEN_FIREBASE_PROJECT_ID;
+const appEnvironment = import.meta.env.VITE_APP_ENVIRONMENT ?? "development";
 
 function hasFirebaseConfig() {
   return Boolean(
@@ -39,12 +42,40 @@ function hasFirebaseConfig() {
   );
 }
 
+function assertSafeFirebaseEnvironment() {
+  if (expectedProjectId && firebaseConfig.projectId !== expectedProjectId) {
+    throw new Error(
+      `ReadNest ${appEnvironment} Firebase configuration expected ${expectedProjectId}, received ${firebaseConfig.projectId || "no project"}.`
+    );
+  }
+
+  if (forbiddenProjectId && firebaseConfig.projectId === forbiddenProjectId) {
+    throw new Error(
+      `ReadNest ${appEnvironment} cannot use Firebase project ${forbiddenProjectId}.`
+    );
+  }
+
+  if (
+    expectedProjectId &&
+    forbiddenProjectId &&
+    expectedProjectId === forbiddenProjectId
+  ) {
+    throw new Error("ReadNest Firebase environment boundaries are misconfigured.");
+  }
+}
+
 let runtime: FirebaseRuntime | null = null;
 
 export function getFirebaseRuntime() {
   if (!hasFirebaseConfig()) {
+    if (appEnvironment === "production") {
+      throw new Error("Production Firebase configuration is missing.");
+    }
+
     return null;
   }
+
+  assertSafeFirebaseEnvironment();
 
   if (!runtime) {
     const app = initializeApp(firebaseConfig);
@@ -71,5 +102,14 @@ export function getFirebaseRuntime() {
 }
 
 export function isFirebaseConfigured() {
-  return hasFirebaseConfig();
+  if (!hasFirebaseConfig()) {
+    if (appEnvironment === "production") {
+      throw new Error("Production Firebase configuration is missing.");
+    }
+
+    return false;
+  }
+
+  assertSafeFirebaseEnvironment();
+  return true;
 }

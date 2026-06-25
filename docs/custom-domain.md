@@ -11,7 +11,8 @@ The domain currently uses Cloudflare nameservers. Keep the web-hosting records D
 
 ## Firebase Hosting
 
-1. Deploy the app with the GitHub workflow `Deploy Firebase Backend`, using `target=hosting`.
+1. Promote the approved commit to `production` and approve the
+   `Deploy ReadNest Production` environment gate.
 2. Open the [Firebase Hosting console](https://console.firebase.google.com/project/readnest-f9c67/hosting/sites).
 3. Select the ReadNest site and choose **Add custom domain**.
 4. Enter `myreadnest.org`.

@@ -35,6 +35,8 @@ export async function recordLearningEvent(
 
   await addDoc(collection(runtime.db, "users", firebaseUser.uid, "learningEvents"), {
     ...event,
+    environment: import.meta.env.VITE_APP_ENVIRONMENT ?? "development",
+    firebaseProjectId: import.meta.env.VITE_FIREBASE_PROJECT_ID ?? null,
     userId: firebaseUser.uid,
     createdAt: serverTimestamp()
   });

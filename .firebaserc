@@ -1,5 +1,7 @@
 {
   "projects": {
-    "default": "readnest-f9c67"
+    "default": "readnest-dev-f9c67",
+    "development": "readnest-dev-f9c67",
+    "production": "readnest-f9c67"
   }
 }

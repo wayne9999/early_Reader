@@ -1,0 +1,122 @@
+name: Deploy Production Firebase Backend
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Production backend target
+        required: true
+        default: rules
+        type: choice
+        options:
+          - rules
+          - functions
+          - all
+      include_scheduler:
+        description: Include the scheduled AI insight function
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-firebase-backend
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://myreadnest.org/
+    env:
+      FIREBASE_PROJECT_ID: readnest-f9c67
+      READNEST_AI_MODEL: ${{ vars.READNEST_AI_MODEL }}
+      READNEST_AI_WARNING_LIMIT_USD: ${{ vars.READNEST_AI_WARNING_LIMIT_USD }}
+      READNEST_AI_MONTHLY_LIMIT_USD: ${{ vars.READNEST_AI_MONTHLY_LIMIT_USD }}
+      READNEST_AI_ESTIMATED_COST_PER_INSIGHT_USD: ${{ vars.READNEST_AI_ESTIMATED_COST_PER_INSIGHT_USD }}
+      READNEST_AI_INPUT_COST_PER_1M_USD: ${{ vars.READNEST_AI_INPUT_COST_PER_1M_USD }}
+      READNEST_AI_OUTPUT_COST_PER_1M_USD: ${{ vars.READNEST_AI_OUTPUT_COST_PER_1M_USD }}
+      READNEST_ENFORCE_APP_CHECK: ${{ vars.READNEST_ENFORCE_APP_CHECK }}
+      SUPPORT_NOTIFICATION_EMAIL: ${{ vars.SUPPORT_NOTIFICATION_EMAIL }}
+      SUPPORT_FROM_EMAIL: ${{ vars.SUPPORT_FROM_EMAIL }}
+    steps:
+      - name: Checkout production branch
+        uses: actions/checkout@v4
+        with:
+          ref: production
+
+      - name: Authenticate to production Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.READNEST_FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            functions/package-lock.json
+
+      - name: Install Firebase CLI
+        run: |
+          npm install -g firebase-tools@15.21.0
+          npm install --prefix "$(npm root -g)/firebase-tools" google-auth-library@10.7.0 --no-save --ignore-scripts
+          node scripts/patch-firebase-cli-transport.mjs "$(npm root -g)/firebase-tools"
+          firebase --version
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm ci --prefix functions
+
+      - name: Validate Functions
+        if: ${{ inputs.target == 'functions' || inputs.target == 'all' }}
+        run: |
+          npm run check --prefix functions
+          npm run build --prefix functions
+
+      - name: Write production Functions environment
+        if: ${{ inputs.target == 'functions' || inputs.target == 'all' }}
+        working-directory: functions
+        run: |
+          {
+            echo "READNEST_ENVIRONMENT=production"
+            echo "READNEST_EXPECTED_FIREBASE_PROJECT_ID=readnest-f9c67"
+            echo "READNEST_APP_BASE_URL=https://myreadnest.org/"
+            echo "READNEST_AI_MODEL=${READNEST_AI_MODEL:-gpt-5.5}"
+            echo "READNEST_AI_WARNING_LIMIT_USD=${READNEST_AI_WARNING_LIMIT_USD:-10}"
+            echo "READNEST_AI_MONTHLY_LIMIT_USD=${READNEST_AI_MONTHLY_LIMIT_USD:-15}"
+            echo "READNEST_AI_ESTIMATED_COST_PER_INSIGHT_USD=${READNEST_AI_ESTIMATED_COST_PER_INSIGHT_USD:-0.05}"
+            echo "READNEST_AI_INPUT_COST_PER_1M_USD=${READNEST_AI_INPUT_COST_PER_1M_USD:-0}"
+            echo "READNEST_AI_OUTPUT_COST_PER_1M_USD=${READNEST_AI_OUTPUT_COST_PER_1M_USD:-0}"
+            echo "READNEST_ENFORCE_APP_CHECK=${READNEST_ENFORCE_APP_CHECK:-false}"
+            echo "SUPPORT_NOTIFICATION_EMAIL=${SUPPORT_NOTIFICATION_EMAIL:-support@myreadnest.org}"
+            echo "SUPPORT_FROM_EMAIL=${SUPPORT_FROM_EMAIL:-ReadNest Support <support@myreadnest.org>}"
+          } > .env
+
+      - name: Deploy production Firestore rules
+        if: ${{ inputs.target == 'rules' || inputs.target == 'all' }}
+        run: node functions/scripts/deploy-firestore-rules.mjs
+
+      - name: Deploy production Functions
+        if: ${{ (inputs.target == 'functions' || inputs.target == 'all') && !inputs.include_scheduler }}
+        run: >
+          firebase deploy
+          --only functions:stripeWebhook,functions:createBillingPortalSession,functions:createCheckoutSession,functions:claimPlacementStudent,functions:updateTeacherAssignmentStatus,functions:createLearningRecommendation,functions:requestStudentInsight,functions:submitSupportCase,functions:updateLearningCoachState,functions:processAiAnalysisJob,functions:processSupportCase
+          --project readnest-f9c67
+          --non-interactive
+          --force
+
+      - name: Deploy production Functions with scheduler
+        if: ${{ (inputs.target == 'functions' || inputs.target == 'all') && inputs.include_scheduler }}
+        run: >
+          firebase deploy
+          --only functions:stripeWebhook,functions:createBillingPortalSession,functions:createCheckoutSession,functions:claimPlacementStudent,functions:updateTeacherAssignmentStatus,functions:createLearningRecommendation,functions:requestStudentInsight,functions:submitSupportCase,functions:updateLearningCoachState,functions:processAiAnalysisJob,functions:processSupportCase,functions:enqueueDailyInsightJobs
+          --project readnest-f9c67
+          --non-interactive
+          --force

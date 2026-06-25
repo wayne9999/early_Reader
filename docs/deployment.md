@@ -15,6 +15,10 @@ Development is deployed automatically from `main` to GitHub Pages:
 https://wayne9999.github.io/early_Reader/
 ```
 
+The development frontend and backend use Firebase project
+`readnest-dev-f9c67`. Production uses `readnest-f9c67`. The build and browser
+runtime reject cross-environment Firebase project IDs.
+
 Workflows:
 
 ```text
