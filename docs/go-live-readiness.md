@@ -72,7 +72,7 @@ Status labels:
 | Legal review | Blocked | Counsel review is required before public child-directed launch. |
 | Parent consent | Completed | Parent/child profile creation requires an explicit consent checkbox and stores consent metadata on the user profile. |
 | Data deletion | Needs Work | Parents can submit a signed-in data deletion support case. Backend deletion/export fulfillment still needs implementation. |
-| Support operations | Needs Work | Support page, email path, and Firestore `supportCases` intake exist. Verify `mail.myreadnest.org` in Resend before switching the production sender; ticket routing, SLA, and status page still need external setup. |
+| Support operations | Needs Work | Support page, email path, and Firestore `supportCases` intake exist. `myreadnest.org` is verified in Resend and the production sender is configured; ticket routing, SLA, and status page still need external setup. |
 
 ## Quality And Deployment
 
@@ -102,4 +102,4 @@ Status labels:
 12. Confirm support email, Stripe portal, cancellation instructions, and refund policy are visible.
 13. Confirm skipped student signup creates `studentPlacementQueue/{uid}` and a Teacher Pro account can claim the student only while under capacity.
 14. Connect `myreadnest.org` to Firebase Hosting, add it to Firebase Auth and reCAPTCHA authorized domains, then verify HTTPS and security headers.
-15. Verify `mail.myreadnest.org` in Resend and change `SUPPORT_FROM_EMAIL` to `ReadNest Support <support@mail.myreadnest.org>`.
+15. Confirm `myreadnest.org` remains verified in Resend and `SUPPORT_FROM_EMAIL` is `ReadNest Support <support@myreadnest.org>`.

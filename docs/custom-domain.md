@@ -4,8 +4,8 @@
 
 - App: `https://myreadnest.org/`
 - Optional redirect: `https://www.myreadnest.org/` to the apex domain
-- Transactional email domain: `mail.myreadnest.org`
-- Production sender: `ReadNest Support <support@mail.myreadnest.org>`
+- Transactional email domain: `myreadnest.org`
+- Production sender: `ReadNest Support <support@myreadnest.org>`
 
 The domain currently uses Cloudflare nameservers. Keep the web-hosting records DNS-only while Firebase provisions its certificate.
 
@@ -60,14 +60,15 @@ The Stripe webhook URL remains the Firebase Function URL and does not change wit
 
 ## Resend
 
-1. Add `mail.myreadnest.org` in the [Resend Domains dashboard](https://resend.com/domains).
-2. Copy Resend's SPF, DKIM, and verification records into Cloudflare exactly.
-3. Keep email records DNS-only.
-4. Wait for Resend to show the domain as verified.
-5. Set `SUPPORT_FROM_EMAIL` to:
+The free Resend plan permits one sending domain. `myreadnest.org` is the verified sending domain, so ReadNest uses the root domain rather than adding a separately counted `mail.myreadnest.org` configuration.
+
+1. Keep Resend's SPF, DKIM, and verification records in Cloudflare.
+2. Keep email records DNS-only.
+3. Confirm Resend continues to show `myreadnest.org` as verified.
+4. Set `SUPPORT_FROM_EMAIL` to:
 
 ```text
-ReadNest Support <support@mail.myreadnest.org>
+ReadNest Support <support@myreadnest.org>
 ```
 
 `SUPPORT_NOTIFICATION_EMAIL` can remain a private operations inbox; it does not need to match the public sender.

@@ -19,7 +19,7 @@ const resendApiKey = defineSecret("RESEND_API_KEY");
 const appBaseUrl = process.env.READNEST_APP_BASE_URL ?? "https://myreadnest.org/";
 const aiModel = process.env.READNEST_AI_MODEL ?? "gpt-5.5";
 const supportNotificationEmail = process.env.SUPPORT_NOTIFICATION_EMAIL ?? "support@myreadnest.org";
-const supportFromEmail = process.env.SUPPORT_FROM_EMAIL ?? "ReadNest Support <support@mail.myreadnest.org>";
+const supportFromEmail = process.env.SUPPORT_FROM_EMAIL ?? "ReadNest Support <support@myreadnest.org>";
 const enforceAppCheck = process.env.READNEST_ENFORCE_APP_CHECK === "true";
 const aiWarningLimitUsd = parseBudgetLimit(process.env.READNEST_AI_WARNING_LIMIT_USD, 10);
 const aiMonthlyLimitUsd = parseBudgetLimit(process.env.READNEST_AI_MONTHLY_LIMIT_USD, 15);
