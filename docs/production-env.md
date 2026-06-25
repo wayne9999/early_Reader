@@ -1,5 +1,16 @@
 # Production Environment
 
+## Environment Isolation
+
+ReadNest uses separate Firebase projects:
+
+- Development: `readnest-dev-f9c67`
+- Production: `readnest-f9c67`
+
+This separates Firebase Auth accounts, Firestore data, Functions, Secret
+Manager values, App Check, and analytics. Do not reuse a Firebase web app or
+service-account key between environments.
+
 ## GitHub Pages Variables
 
 Configure these under:
@@ -8,15 +19,16 @@ Configure these under:
 GitHub repository > Settings > Secrets and variables > Actions > Variables
 ```
 
-- `VITE_BASE_PATH=/` for Firebase Hosting at `myreadnest.org`
-- `VITE_FIREBASE_API_KEY`
-- `VITE_FIREBASE_AUTH_DOMAIN`
-- `VITE_FIREBASE_PROJECT_ID`
-- `VITE_FIREBASE_STORAGE_BUCKET`
-- `VITE_FIREBASE_MESSAGING_SENDER_ID`
-- `VITE_FIREBASE_APP_ID`
-- `VITE_FIREBASE_MEASUREMENT_ID`
-- `VITE_FIREBASE_APP_CHECK_SITE_KEY`
+- GitHub Pages builds use `VITE_BASE_PATH=/early_Reader/`.
+- Production Firebase Hosting builds use `VITE_BASE_PATH=/`.
+- `DEV_FIREBASE_PROJECT_ID=readnest-dev-f9c67`
+- `DEV_VITE_FIREBASE_API_KEY`
+- `DEV_VITE_FIREBASE_AUTH_DOMAIN`
+- `DEV_VITE_FIREBASE_STORAGE_BUCKET`
+- `DEV_VITE_FIREBASE_MESSAGING_SENDER_ID`
+- `DEV_VITE_FIREBASE_APP_ID`
+- `DEV_VITE_FIREBASE_MEASUREMENT_ID`
+- `DEV_VITE_FIREBASE_APP_CHECK_SITE_KEY`
 - `VITE_STRIPE_DONATION_LINK`
 - `VITE_STRIPE_FAMILY_PLUS_LINK`
 - `VITE_STRIPE_TEACHER_PRO_LINK`
@@ -25,7 +37,10 @@ GitHub repository > Settings > Secrets and variables > Actions > Variables
 
 Vite variables are public at build time. Never put Stripe secret keys, Firebase service account keys, or webhook secrets in `VITE_*` variables.
 
-The protected `production` environment stores production-prefixed Firebase and Stripe values. GitHub Pages continues using the repository-level Firebase variables and Stripe test links.
+The repository secret `READNEST_DEV_FIREBASE_SERVICE_ACCOUNT` deploys only to
+the development Firebase project. The protected `production` environment uses
+`READNEST_FIREBASE_SERVICE_ACCOUNT` for production. GitHub Pages uses
+development Firebase variables and Stripe test links.
 
 ## Firebase Functions Secrets
 

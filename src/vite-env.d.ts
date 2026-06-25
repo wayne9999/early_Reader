@@ -3,6 +3,8 @@
 interface ImportMetaEnv {
   readonly VITE_APP_ENVIRONMENT?: "development" | "production";
   readonly VITE_FIREBASE_APP_CHECK_SITE_KEY?: string;
+  readonly VITE_EXPECTED_FIREBASE_PROJECT_ID?: string;
+  readonly VITE_FORBIDDEN_FIREBASE_PROJECT_ID?: string;
   readonly VITE_STRIPE_MODE?: "test" | "live";
 }
 

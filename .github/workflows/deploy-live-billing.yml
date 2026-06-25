@@ -69,6 +69,8 @@ jobs:
           TEACHER_PRICE: ${{ vars.PROD_STRIPE_TEACHER_PRO_PRICE_ID }}
         run: |
           {
+            echo "READNEST_ENVIRONMENT=production"
+            echo "READNEST_EXPECTED_FIREBASE_PROJECT_ID=readnest-f9c67"
             echo "READNEST_APP_BASE_URL=https://myreadnest.org/"
             echo "STRIPE_LIVE_FAMILY_PLUS_PRICE_ID=${FAMILY_PRICE}"
             echo "STRIPE_LIVE_TEACHER_PRO_PRICE_ID=${TEACHER_PRICE}"

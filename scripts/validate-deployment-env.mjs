@@ -2,6 +2,7 @@ const appEnvironment = process.env.VITE_APP_ENVIRONMENT;
 const stripeMode = process.env.VITE_STRIPE_MODE;
 const firebaseProjectId = process.env.VITE_FIREBASE_PROJECT_ID;
 const expectedFirebaseProjectId = process.env.VITE_EXPECTED_FIREBASE_PROJECT_ID;
+const forbiddenFirebaseProjectId = process.env.VITE_FORBIDDEN_FIREBASE_PROJECT_ID;
 const donationLink = process.env.VITE_STRIPE_DONATION_LINK ?? "";
 
 const errors = [];
@@ -22,6 +23,20 @@ if (expectedFirebaseProjectId && firebaseProjectId !== expectedFirebaseProjectId
   errors.push(
     `Firebase project mismatch: expected ${expectedFirebaseProjectId}, received ${firebaseProjectId || "empty"}.`
   );
+}
+
+if (forbiddenFirebaseProjectId && firebaseProjectId === forbiddenFirebaseProjectId) {
+  errors.push(
+    `Firebase project ${firebaseProjectId} belongs to the opposite environment.`
+  );
+}
+
+if (
+  expectedFirebaseProjectId &&
+  forbiddenFirebaseProjectId &&
+  expectedFirebaseProjectId === forbiddenFirebaseProjectId
+) {
+  errors.push("Expected and forbidden Firebase project IDs must be different.");
 }
 
 if (appEnvironment === "production" && stripeMode !== "live") {

@@ -1,13 +1,14 @@
 # Stripe Setup
 
-ReadNest uses one Firebase project but separates Stripe test and live billing authority.
+ReadNest uses separate Firebase projects and separate Stripe modes for
+development and production.
 
 ## Environment Boundary
 
-| Environment | Hosting | Stripe mode | Callable functions | Firestore entitlement |
-| --- | --- | --- | --- | --- |
-| Development | `https://wayne9999.github.io/early_Reader/` | Test | `createCheckoutSessionTest`, `createBillingPortalSessionTest` | `testSubscriptions/{uid}` |
-| Production | `https://myreadnest.org/` | Live | `createCheckoutSession`, `createBillingPortalSession` | `subscriptions/{uid}` |
+| Environment | Hosting | Firebase project | Stripe mode | Callable functions | Firestore entitlement |
+| --- | --- | --- | --- | --- | --- |
+| Development | `https://wayne9999.github.io/early_Reader/` | `readnest-dev-f9c67` | Test | `createCheckoutSessionTest`, `createBillingPortalSessionTest` | `testSubscriptions/{uid}` |
+| Production | `https://myreadnest.org/` | `readnest-f9c67` | Live | `createCheckoutSession`, `createBillingPortalSession` | `subscriptions/{uid}` |
 
 The development build is rejected if it contains a live donation link. The production build is rejected if it contains a test donation link. Test webhooks cannot write production entitlement documents, and test subscriptions never set production custom claims.
 

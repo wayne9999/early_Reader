@@ -40,6 +40,8 @@ export async function trackProductEvent(
   const firebaseUser = runtime?.auth.currentUser;
   const event = {
     eventName,
+    environment: import.meta.env.VITE_APP_ENVIRONMENT ?? "development",
+    firebaseProjectId: import.meta.env.VITE_FIREBASE_PROJECT_ID ?? null,
     metadata: safeMetadata(metadata),
     userId: firebaseUser?.uid ?? "anonymous",
     createdAt: new Date().toISOString()

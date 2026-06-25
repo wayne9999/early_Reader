@@ -23,6 +23,9 @@ const aiModel = process.env.READNEST_AI_MODEL ?? "gpt-5.5";
 const supportNotificationEmail = process.env.SUPPORT_NOTIFICATION_EMAIL ?? "support@myreadnest.org";
 const supportFromEmail = process.env.SUPPORT_FROM_EMAIL ?? "ReadNest Support <support@myreadnest.org>";
 const enforceAppCheck = process.env.READNEST_ENFORCE_APP_CHECK === "true";
+const readnestEnvironment = process.env.READNEST_ENVIRONMENT;
+const expectedFirebaseProjectId = process.env.READNEST_EXPECTED_FIREBASE_PROJECT_ID;
+const runtimeFirebaseProjectId = process.env.GCLOUD_PROJECT ?? process.env.GOOGLE_CLOUD_PROJECT ?? process.env.FIREBASE_PROJECT_ID;
 const aiWarningLimitUsd = parseBudgetLimit(process.env.READNEST_AI_WARNING_LIMIT_USD, 10);
 const aiMonthlyLimitUsd = parseBudgetLimit(process.env.READNEST_AI_MONTHLY_LIMIT_USD, 15);
 const aiEstimatedCostPerInsightUsd = parseBudgetLimit(process.env.READNEST_AI_ESTIMATED_COST_PER_INSIGHT_USD, 0.05);
@@ -44,6 +47,16 @@ type AiJobRequestKind = "teacherRequested" | "scheduled" | "legacyRecommendation
 const defaultTeacherCapacity = 12;
 const learningCoachThresholdEvents = 8;
 const learningCoachCooldownMs = 12 * 60 * 60 * 1000;
+
+if (
+  expectedFirebaseProjectId &&
+  runtimeFirebaseProjectId &&
+  expectedFirebaseProjectId !== runtimeFirebaseProjectId
+) {
+  throw new Error(
+    `Firebase project boundary violation: expected ${expectedFirebaseProjectId}, received ${runtimeFirebaseProjectId}.`
+  );
+}
 
 type LogSeverity = "info" | "warning" | "error";
 type RateLimitAction =
@@ -122,6 +135,8 @@ async function writeOperationalLog(options: {
 }) {
   const logPayload = {
     service: "readnest-functions",
+    environment: readnestEnvironment ?? "unknown",
+    firebaseProjectId: runtimeFirebaseProjectId ?? "unknown",
     ...options,
     timestamp: new Date().toISOString()
   };
@@ -174,6 +189,15 @@ const liveBillingRuntime: BillingRuntime = {
 };
 
 function stripeClient(runtime: BillingRuntime) {
+  const expectedEnvironment = runtime.mode === "live" ? "production" : "development";
+
+  if (readnestEnvironment && readnestEnvironment !== expectedEnvironment) {
+    throw new HttpsError(
+      "failed-precondition",
+      `Stripe ${runtime.mode} billing is disabled in the ${readnestEnvironment} environment.`
+    );
+  }
+
   const secretKey = runtime.secretKey.value();
   const expectedPrefix = runtime.mode === "live" ? "sk_live_" : "sk_test_";
 
@@ -262,6 +286,7 @@ async function writeSubscription(
       userId,
       source: "stripe",
       environment: runtime.mode === "live" ? "production" : "development",
+      firebaseProjectId: runtimeFirebaseProjectId ?? null,
       stripeMode: runtime.mode,
       lastStripeEventId: eventId,
       updatedAt: FieldValue.serverTimestamp(),
@@ -917,6 +942,7 @@ function createCheckoutFunction(runtime: BillingRuntime) {
           metadata: {
             firebaseUid: userId,
             role,
+            firebaseProjectId: runtimeFirebaseProjectId ?? "unknown",
             stripeMode: runtime.mode
           }
         });
