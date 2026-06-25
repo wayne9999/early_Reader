@@ -523,7 +523,6 @@ async function handleSubscription(subscription: Stripe.Subscription, eventId: st
   const customerId = typeof subscription.customer === "string" ? subscription.customer : subscription.customer.id;
   const userId = subscription.metadata.firebaseUid || await findUserIdForCustomer(customerId);
   const firstItem = subscription.items.data[0];
-  const subscriptionWithPeriod = subscription as Stripe.Subscription & { current_period_end?: number };
   const tier = tierFromPrice(firstItem?.price.id);
   const status = statusFromStripe(subscription.status);
 
@@ -550,7 +549,7 @@ async function handleSubscription(subscription: Stripe.Subscription, eventId: st
       status,
       stripeCustomerId: customerId,
       stripeSubscriptionId: subscription.id,
-      currentPeriodEnd: subscriptionWithPeriod.current_period_end ? subscriptionWithPeriod.current_period_end * 1000 : null,
+      currentPeriodEnd: firstItem?.current_period_end ? firstItem.current_period_end * 1000 : null,
       cancelAtPeriodEnd: subscription.cancel_at_period_end,
       lastPaymentError: null
     },
