@@ -37,12 +37,16 @@ export function ReadingPractice({ progress, user, onProgressChange }: ReadingPra
     };
   }
 
-  function goToNextWord() {
+  function advanceWord() {
+    setWordIndex((current) => (current + 1) % level.words.length);
+  }
+
+  function skipWord() {
     void recordLearningEvent(user, "word_skipped", word.text, "sightWords", {
       ...wordMetadata(),
       action: "next_word"
     });
-    setWordIndex((current) => (current + 1) % level.words.length);
+    advanceWord();
   }
 
   function handleKnownWord() {
@@ -52,7 +56,7 @@ export function ReadingPractice({ progress, user, onProgressChange }: ReadingPra
       correct: true
     });
     celebrate(`Nice reading! You knew ${word.text}.`);
-    goToNextWord();
+    advanceWord();
   }
 
   function handleCompleteReading() {
@@ -62,7 +66,7 @@ export function ReadingPractice({ progress, user, onProgressChange }: ReadingPra
       correct: true
     });
     celebrate("Wonderful reading! Let's try the next one.");
-    goToNextWord();
+    advanceWord();
   }
 
   return (
@@ -124,7 +128,7 @@ export function ReadingPractice({ progress, user, onProgressChange }: ReadingPra
             <button className="primary-button" type="button" onClick={handleKnownWord}>
               I know it
             </button>
-            <button className="secondary-button" type="button" onClick={goToNextWord}>
+            <button className="secondary-button" type="button" onClick={skipWord}>
               Next word
             </button>
           </div>

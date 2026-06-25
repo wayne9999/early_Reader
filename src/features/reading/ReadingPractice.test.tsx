@@ -88,4 +88,28 @@ describe("ReadingPractice", () => {
       expect.objectContaining({ word: "sun", correct: true })
     );
   });
+
+  it("does not record a skip when a learner knows a word", async () => {
+    const user = userEvent.setup();
+    const student = { id: "student-1", name: "Reader" };
+
+    vi.mocked(recordLearningEvent).mockClear();
+    render(<ReadingPractice progress={defaultProgress} user={student} onProgressChange={vi.fn()} />);
+    await user.click(screen.getByRole("button", { name: "I know it" }));
+
+    expect(recordLearningEvent).toHaveBeenCalledWith(
+      student,
+      "word_known",
+      "cat",
+      "sightWords",
+      expect.objectContaining({ correct: true })
+    );
+    expect(recordLearningEvent).not.toHaveBeenCalledWith(
+      student,
+      "word_skipped",
+      "cat",
+      "sightWords",
+      expect.anything()
+    );
+  });
 });

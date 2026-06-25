@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { defaultProgress } from "../../services/progressRepository";
 import { recordLearningEvent } from "../../services/learningEventRepository";
+import { learningActivities } from "../../data/content";
 import { LearningActivityPage } from "./LearningActivityPage";
 
 vi.mock("../../shared/speech", () => ({
@@ -91,5 +92,27 @@ describe("LearningActivityPage", () => {
     await user.click(screen.getByRole("button", { name: "bee" }));
 
     expect(onProgressChange).toHaveBeenCalledTimes(1);
+
+    await user.click(screen.getByRole("button", { name: "Play again" }));
+
+    expect(screen.getByText("Round 1 of 10")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "hat" })).toBeEnabled();
   });
+
+  it.each(learningActivities.map((activity) => [activity.id, activity.rounds.length]))(
+    "%s provides ten complete practice rounds",
+    (activityId, roundCount) => {
+      render(
+        <LearningActivityPage
+          activityId={activityId}
+          progress={defaultProgress}
+          user={{ id: "student-1", name: "Reader" }}
+          onProgressChange={vi.fn()}
+        />
+      );
+
+      expect(roundCount).toBe(10);
+      expect(screen.getByText("Round 1 of 10")).toBeInTheDocument();
+    }
+  );
 });

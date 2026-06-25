@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
-import { billingConfig, isCustomerPortalConfigured, isTemporaryStripePortalSession } from "../../services/billingConfig";
-import { startSubscriptionCheckout } from "../../services/billingRepository";
+import { createBillingPortalUrl, startSubscriptionCheckout } from "../../services/billingRepository";
 import { freeStudentActivitiesDescription, paidStudentActivitiesDescription } from "../../services/entitlementService";
 import type { SubscriptionRecord, SubscriptionTierId, UserProfile } from "../../types";
 
@@ -55,6 +54,7 @@ function subscriptionHelpText(subscription: SubscriptionRecord | null) {
 export function SubscriptionManagement({ profile, subscription }: SubscriptionManagementProps) {
   const [checkoutError, setCheckoutError] = useState("");
   const [isStartingCheckout, setIsStartingCheckout] = useState(false);
+  const [isOpeningPortal, setIsOpeningPortal] = useState(false);
   const rolePlanId: SubscriptionTierId = profile.role === "teacher" ? "teacherPro" : "familyPlus";
   const rolePlanLabel = profile.role === "teacher" ? "Teacher Pro" : "Family Plus";
   const freeLabel = profile.role === "teacher" ? "Free teacher profile" : "Free access";
@@ -66,9 +66,6 @@ export function SubscriptionManagement({ profile, subscription }: SubscriptionMa
       && (subscription?.status ?? profile.subscriptionStatus) === "active",
     [profile.subscriptionStatus, profile.subscriptionTier, rolePlanId, subscription]
   );
-  const hasUsablePortalLink = isCustomerPortalConfigured();
-  const hasTemporaryPortalSession = isTemporaryStripePortalSession(billingConfig.customerPortalLink);
-
   async function startRoleCheckout() {
     setIsStartingCheckout(true);
     setCheckoutError("");
@@ -85,6 +82,19 @@ export function SubscriptionManagement({ profile, subscription }: SubscriptionMa
       setCheckoutError(error instanceof Error ? error.message : "Checkout could not start right now.");
     } finally {
       setIsStartingCheckout(false);
+    }
+  }
+
+  async function openBillingPortal() {
+    setIsOpeningPortal(true);
+    setCheckoutError("");
+
+    try {
+      window.location.assign(await createBillingPortalUrl());
+    } catch (error) {
+      setCheckoutError(error instanceof Error ? error.message : "Billing management could not open right now.");
+    } finally {
+      setIsOpeningPortal(false);
     }
   }
 
@@ -129,25 +139,18 @@ export function SubscriptionManagement({ profile, subscription }: SubscriptionMa
         ) : null}
         <button
           className={isPaidActive ? "primary-button" : "secondary-button"}
-          disabled={!hasUsablePortalLink}
+          disabled={!isPaidActive || isOpeningPortal}
           type="button"
-          onClick={() => {
-            if (hasUsablePortalLink) {
-              window.open(billingConfig.customerPortalLink, "_blank", "noopener,noreferrer");
-            }
-          }}
+          onClick={() => void openBillingPortal()}
         >
-          Manage or cancel subscription
+          {isOpeningPortal ? "Opening billing..." : "Manage or cancel subscription"}
         </button>
       </div>
 
       {checkoutError ? <p className="form-error">{checkoutError}</p> : null}
 
       <p className="helper-text">
-        Stripe Customer Portal lets subscribers update cards, view invoices, and cancel monthly billing.{" "}
-        {hasTemporaryPortalSession
-          ? "The configured portal link looks temporary, so use a durable portal login link or backend-generated session before enabling this button."
-          : "If this button is disabled, the portal link still needs to be configured."}
+        Stripe Customer Portal lets active subscribers update cards, view invoices, and cancel monthly billing.
       </p>
     </article>
   );

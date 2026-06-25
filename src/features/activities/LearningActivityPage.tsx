@@ -18,10 +18,9 @@ export function LearningActivityPage({ activityId, progress, user, onProgressCha
   const [roundIndex, setRoundIndex] = useState(0);
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [answeredCorrectly, setAnsweredCorrectly] = useState(false);
-  const [completedActivities, setCompletedActivities] = useState<Set<LearningActivity["id"]>>(() => new Set());
+  const [isCompleted, setIsCompleted] = useState(false);
   const [feedback, setFeedback] = useState("Pick the answer that sounds or makes sense best.");
   const currentRound = activity.rounds[roundIndex] ?? activity.rounds[0];
-  const isCompleted = completedActivities.has(activity.id);
   const roundCount = activity.rounds.length;
 
   useEffect(() => {
@@ -36,6 +35,7 @@ export function LearningActivityPage({ activityId, progress, user, onProgressCha
     setRoundIndex(0);
     setCorrectAnswers(0);
     setAnsweredCorrectly(false);
+    setIsCompleted(false);
     setFeedback("Pick the answer that sounds or makes sense best.");
   }, [activity.id]);
 
@@ -71,7 +71,7 @@ export function LearningActivityPage({ activityId, progress, user, onProgressCha
       return;
     }
 
-    setCompletedActivities((current) => new Set(current).add(activity.id));
+    setIsCompleted(true);
     onProgressChange(recordActivityCompletion(progress));
     void recordLearningEvent(user, "activity_completed", activity.title, activity.skill, {
       activityId: activity.id,
@@ -99,6 +99,20 @@ export function LearningActivityPage({ activityId, progress, user, onProgressCha
     setRoundIndex(nextRound);
     setAnsweredCorrectly(false);
     setFeedback("Pick the answer that sounds or makes sense best.");
+  }
+
+  function restartActivity() {
+    setRoundIndex(0);
+    setCorrectAnswers(0);
+    setAnsweredCorrectly(false);
+    setIsCompleted(false);
+    setFeedback("Pick the answer that sounds or makes sense best.");
+    void recordLearningEvent(user, "activity_started", activity.title, activity.skill, {
+      activityId: activity.id,
+      rounds: roundCount,
+      currentRound: 1,
+      action: "play_again"
+    });
   }
 
   return (
@@ -171,6 +185,11 @@ export function LearningActivityPage({ activityId, progress, user, onProgressCha
         {!isCompleted && answeredCorrectly ? (
           <button className="primary-button" type="button" onClick={goToNextRound}>
             Next round
+          </button>
+        ) : null}
+        {isCompleted ? (
+          <button className="primary-button" type="button" onClick={restartActivity}>
+            Play again
           </button>
         ) : null}
       </article>

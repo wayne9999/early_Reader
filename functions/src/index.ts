@@ -40,6 +40,7 @@ type RateLimitAction =
   | "billingPortal"
   | "checkout"
   | "claimStudent"
+  | "manageAssignment"
   | "learningRecommendation"
   | "studentInsight"
   | "supportCase";
@@ -911,6 +912,7 @@ export const claimPlacementStudent = onCall(
     }
 
     const db = getFirestore();
+    const studentAuth = await getAuth().getUser(studentId);
     const teacherRef = db.doc(`users/${teacherId}`);
     const teacherProfileRef = db.doc(`teacherProfiles/${teacherId}`);
     const teacherDirectoryRef = db.doc(`teacherDirectory/${teacherId}`);
@@ -965,7 +967,7 @@ export const claimPlacementStudent = onCall(
           ? teacherDirectory.email
           : null;
       const studentName = safeString(queue.studentName, "Student");
-      const studentEmail = typeof queue.studentEmail === "string" ? queue.studentEmail : null;
+      const studentEmail = studentAuth.email ?? null;
       const latestProgressSnapshot = queue.latestProgressSnapshot ?? null;
       const now = FieldValue.serverTimestamp();
 
@@ -1011,6 +1013,153 @@ export const claimPlacementStudent = onCall(
       linkId: `${teacherId}_${studentId}`,
       status: "active"
     };
+  }
+);
+
+export const updateTeacherAssignmentStatus = onCall(
+  {
+    region: "us-central1",
+    enforceAppCheck
+  },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Sign in as a teacher before updating a student request.");
+    }
+
+    const teacherId = request.auth.uid;
+    const linkId = cleanUserText(request.data?.linkId, 160);
+    const nextStatus = cleanUserText(request.data?.status, 20);
+
+    if (!linkId || (nextStatus !== "active" && nextStatus !== "declined")) {
+      throw new HttpsError("invalid-argument", "Choose a valid student request and status.");
+    }
+
+    await enforceUserRateLimit({
+      userId: teacherId,
+      action: "manageAssignment",
+      maxAttempts: 20,
+      windowMs: 10 * 60 * 1000
+    });
+
+    const db = getFirestore();
+    const teacherRef = db.doc(`users/${teacherId}`);
+    const teacherProfileRef = db.doc(`teacherProfiles/${teacherId}`);
+    const teacherDirectoryRef = db.doc(`teacherDirectory/${teacherId}`);
+    const linkRef = db.doc(`teacherStudentLinks/${linkId}`);
+
+    await db.runTransaction(async (transaction) => {
+      const [teacherDoc, teacherProfileDoc, teacherDirectoryDoc, linkDoc] = await Promise.all([
+        transaction.get(teacherRef),
+        transaction.get(teacherProfileRef),
+        transaction.get(teacherDirectoryRef),
+        transaction.get(linkRef)
+      ]);
+      const teacher = teacherDoc.data() ?? {};
+      const link = linkDoc.data() ?? {};
+
+      if (!linkDoc.exists || link.teacherId !== teacherId) {
+        throw new HttpsError("permission-denied", "This student request is not assigned to your teacher account.");
+      }
+
+      if (teacher.role !== "teacher" && teacher.role !== "admin") {
+        throw new HttpsError("permission-denied", "Only teacher accounts can manage student requests.");
+      }
+
+      if (link.status !== "requested" && link.status !== nextStatus) {
+        throw new HttpsError("failed-precondition", "This student request has already been resolved.");
+      }
+
+      const teacherProfile = teacherProfileDoc.data() ?? {};
+      const teacherDirectory = teacherDirectoryDoc.data() ?? {};
+      const maxStudentLoad =
+        positiveNumber(teacherProfile.maxStudentLoad)
+        ?? positiveNumber(teacherDirectory.maxStudentLoad)
+        ?? defaultTeacherCapacity;
+      const activeStudentCount =
+        positiveNumber(teacherDirectory.activeStudentCount)
+        ?? positiveNumber(teacherProfile.activeStudentCount)
+        ?? 0;
+      const isActivating = nextStatus === "active" && link.status !== "active";
+
+      if (isActivating && activeStudentCount >= maxStudentLoad) {
+        throw new HttpsError("resource-exhausted", `This teacher already has ${maxStudentLoad} active students.`);
+      }
+
+      const now = FieldValue.serverTimestamp();
+      transaction.set(linkRef, {
+        status: nextStatus,
+        updatedAt: now,
+        updatedBy: teacherId
+      }, { merge: true });
+
+      const studentId = typeof link.studentId === "string" ? link.studentId : "";
+
+      if (studentId) {
+        const queueRef = db.doc(`studentPlacementQueue/${studentId}`);
+
+        if (nextStatus === "active") {
+          transaction.set(queueRef, {
+            status: "assigned",
+            assignedTeacherId: teacherId,
+            assignedTeacherName: safeString(link.teacherName, safeString(teacherProfile.displayName, "Teacher")),
+            holdingTeacherName: null,
+            assignedAt: now,
+            updatedAt: now,
+            updatedBy: teacherId
+          }, { merge: true });
+        } else {
+          transaction.set(queueRef, {
+            status: "unassigned",
+            requestedTeacherId: null,
+            requestedTeacherName: null,
+            holdingTeacherName: "ReadNest holding space",
+            updatedAt: now,
+            updatedBy: teacherId
+          }, { merge: true });
+        }
+      }
+
+      if (isActivating) {
+        transaction.set(teacherDirectoryRef, {
+          activeStudentCount: FieldValue.increment(1),
+          updatedAt: now,
+          updatedBy: teacherId
+        }, { merge: true });
+        transaction.set(teacherProfileRef, {
+          activeStudentCount: FieldValue.increment(1),
+          updatedAt: now,
+          updatedBy: teacherId
+        }, { merge: true });
+      }
+    });
+
+    if (nextStatus === "active") {
+      const link = await linkRef.get();
+      const studentId = typeof link.data()?.studentId === "string" ? link.data()?.studentId : "";
+
+      if (studentId) {
+        const competingRequests = await db.collection("teacherStudentLinks")
+          .where("studentId", "==", studentId)
+          .get();
+        const batch = db.batch();
+
+        competingRequests.docs.forEach((requestDoc) => {
+          if (requestDoc.id !== linkId && requestDoc.data().status === "requested") {
+            batch.set(requestDoc.ref, {
+              status: "declined",
+              updatedAt: FieldValue.serverTimestamp(),
+              updatedBy: "assignment-worker"
+            }, { merge: true });
+          }
+        });
+
+        if (!competingRequests.empty) {
+          await batch.commit();
+        }
+      }
+    }
+
+    return { linkId, status: nextStatus };
   }
 );
 

@@ -133,7 +133,7 @@ jobs:
         if: ${{ (inputs.target == 'functions' || inputs.target == 'all') && !inputs.include_scheduler }}
         run: >
           firebase deploy
-          --only functions:stripeWebhook,functions:createBillingPortalSession,functions:createCheckoutSession,functions:claimPlacementStudent,functions:createLearningRecommendation,functions:requestStudentInsight,functions:submitSupportCase,functions:updateLearningCoachState,functions:processAiAnalysisJob,functions:processSupportCase
+          --only functions:stripeWebhook,functions:createBillingPortalSession,functions:createCheckoutSession,functions:claimPlacementStudent,functions:updateTeacherAssignmentStatus,functions:createLearningRecommendation,functions:requestStudentInsight,functions:submitSupportCase,functions:updateLearningCoachState,functions:processAiAnalysisJob,functions:processSupportCase
           --project "$FIREBASE_PROJECT_ID"
           --non-interactive
           --force
@@ -142,7 +142,7 @@ jobs:
         if: ${{ (inputs.target == 'functions' || inputs.target == 'all') && inputs.include_scheduler }}
         run: >
           firebase deploy
-          --only functions:stripeWebhook,functions:createBillingPortalSession,functions:createCheckoutSession,functions:claimPlacementStudent,functions:createLearningRecommendation,functions:requestStudentInsight,functions:submitSupportCase,functions:updateLearningCoachState,functions:processAiAnalysisJob,functions:processSupportCase,functions:enqueueDailyInsightJobs
+          --only functions:stripeWebhook,functions:createBillingPortalSession,functions:createCheckoutSession,functions:claimPlacementStudent,functions:updateTeacherAssignmentStatus,functions:createLearningRecommendation,functions:requestStudentInsight,functions:submitSupportCase,functions:updateLearningCoachState,functions:processAiAnalysisJob,functions:processSupportCase,functions:enqueueDailyInsightJobs
           --project "$FIREBASE_PROJECT_ID"
           --non-interactive
           --force

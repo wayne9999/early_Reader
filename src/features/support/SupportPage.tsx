@@ -1,8 +1,9 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { billingConfig, linkForTier, subscriptionTiers } from "../../services/billingConfig";
+import { billingConfig, subscriptionTiers } from "../../services/billingConfig";
+import { startSubscriptionCheckout } from "../../services/billingRepository";
 import { createSupportCase } from "../../services/supportCaseRepository";
 import { supportMailtoHref } from "../../services/supportConfig";
-import type { AppUser, SupportCaseType } from "../../types";
+import type { AppUser, SupportCaseType, UserProfile } from "../../types";
 
 function openPaymentLink(url: string) {
   if (!url) {
@@ -14,15 +15,16 @@ function openPaymentLink(url: string) {
 
 type SupportPageProps = {
   initialFocus?: "donation" | "plans";
+  profile?: UserProfile | null;
   user?: AppUser | null;
 };
 
-export function SupportPage({ initialFocus = "plans", user = null }: SupportPageProps) {
+export function SupportPage({ initialFocus = "plans", profile = null, user = null }: SupportPageProps) {
   if (initialFocus === "donation") {
     return <DonationPage />;
   }
 
-  return <SupportCenterPage user={user} />;
+  return <SupportCenterPage profile={profile} user={user} />;
 }
 
 const donationImpact = [
@@ -173,8 +175,22 @@ function DonationPage() {
   );
 }
 
-function SupportCenterPage({ user }: { user: AppUser | null }) {
-  const paidTiers = subscriptionTiers.filter((tier) => tier.id !== "free");
+function SupportCenterPage({ profile, user }: { profile: UserProfile | null; user: AppUser | null }) {
+  const paidTiers = subscriptionTiers.filter((tier) => {
+    if (tier.id === "free") {
+      return false;
+    }
+
+    if (profile?.role === "student") {
+      return tier.id === "familyPlus";
+    }
+
+    if (profile?.role === "teacher") {
+      return tier.id === "teacherPro";
+    }
+
+    return true;
+  });
   const [caseType, setCaseType] = useState<SupportCaseType>("general");
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
@@ -182,6 +198,8 @@ function SupportCenterPage({ user }: { user: AppUser | null }) {
   const [website, setWebsite] = useState("");
   const [caseStatus, setCaseStatus] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [upgradeStatus, setUpgradeStatus] = useState("");
+  const [openingTier, setOpeningTier] = useState<string | null>(null);
 
   useEffect(() => {
     if (user?.email && !contactEmail) {
@@ -216,6 +234,24 @@ function SupportCenterPage({ user }: { user: AppUser | null }) {
       setCaseStatus(error instanceof Error ? error.message : "Could not save the support request.");
     } finally {
       setIsSending(false);
+    }
+  }
+
+  async function startUpgrade(tierId: "familyPlus" | "teacherPro") {
+    if (!user) {
+      setUpgradeStatus("Sign in first so ReadNest can connect the subscription to the correct account.");
+      return;
+    }
+
+    setOpeningTier(tierId);
+    setUpgradeStatus("");
+
+    try {
+      window.location.assign(await startSubscriptionCheckout(tierId));
+    } catch (error) {
+      setUpgradeStatus(error instanceof Error ? error.message : "Checkout could not start right now.");
+    } finally {
+      setOpeningTier(null);
     }
   }
 
@@ -361,8 +397,6 @@ function SupportCenterPage({ user }: { user: AppUser | null }) {
 
         <div className="package-grid">
           {paidTiers.map((tier) => {
-            const paymentLink = linkForTier(tier);
-
             return (
               <article className={`package-card ${tier.id}`} key={tier.id}>
                 <p className="eyebrow">{tier.audience}</p>
@@ -376,16 +410,17 @@ function SupportCenterPage({ user }: { user: AppUser | null }) {
                 </ul>
                 <button
                   className="primary-button"
-                  disabled={!paymentLink}
+                  disabled={openingTier === tier.id}
                   type="button"
-                  onClick={() => openPaymentLink(paymentLink)}
+                  onClick={() => void startUpgrade(tier.id as "familyPlus" | "teacherPro")}
                 >
-                  {tier.cta}
+                  {openingTier === tier.id ? "Opening checkout..." : tier.cta}
                 </button>
               </article>
             );
           })}
         </div>
+        {upgradeStatus ? <p className="form-error">{upgradeStatus}</p> : null}
       </section>
     </>
   );

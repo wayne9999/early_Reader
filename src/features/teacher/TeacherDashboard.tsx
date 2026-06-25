@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { getClassroomStudents } from "../../services/classroomRepository";
 import { analyzeClassroom, analyzeStudent } from "../../services/learningAnalysisService";
 import {
   DEFAULT_TEACHER_CAPACITY,
@@ -111,12 +110,12 @@ export function TeacherDashboard({ progress, user, profile }: TeacherDashboardPr
   const [studentInsightJobs, setStudentInsightJobs] = useState<Record<string, AiAnalysisJob | null>>({});
   const [placementQueue, setPlacementQueue] = useState<StudentPlacementQueue[]>([]);
   const [isLoadingRoster, setIsLoadingRoster] = useState(true);
+  const [rosterError, setRosterError] = useState("");
   const [isCreatingInvite, setIsCreatingInvite] = useState(false);
   const [isClaimingStudent, setIsClaimingStudent] = useState(false);
   const [isRequestingInsight, setIsRequestingInsight] = useState(false);
   const [insightStatus, setInsightStatus] = useState<string>("");
   const [placementStatus, setPlacementStatus] = useState<string>("");
-  const demoStudents = useMemo(() => getClassroomStudents(progress, user), [progress, user]);
   const assignedStudents = useMemo<StudentSummary[]>(
     () =>
       assignments
@@ -133,7 +132,7 @@ export function TeacherDashboard({ progress, user, profile }: TeacherDashboardPr
         })),
     [assignments, studentHistories]
   );
-  const students = assignedStudents.length ? assignedStudents : demoStudents;
+  const students = assignedStudents;
   const classroomAnalysis = useMemo(() => analyzeClassroom(students), [students]);
   const [selectedStudentId, setSelectedStudentId] = useState(students[0]?.id ?? "");
   const selectedStudent = students.find((student) => student.id === selectedStudentId) ?? students[0];
@@ -164,6 +163,7 @@ export function TeacherDashboard({ progress, user, profile }: TeacherDashboardPr
     let isMounted = true;
 
     setIsLoadingRoster(true);
+    setRosterError("");
     loadTeacherAssignments(user)
       .then(async (loadedAssignments) => {
         if (!isMounted) {
@@ -202,6 +202,11 @@ export function TeacherDashboard({ progress, user, profile }: TeacherDashboardPr
           if (isMounted) {
             setStudentInsightJobs(Object.fromEntries(jobEntries));
           }
+        }
+      })
+      .catch((error) => {
+        if (isMounted) {
+          setRosterError(error instanceof Error ? error.message : "The student roster could not be loaded.");
         }
       })
       .finally(() => {
@@ -382,9 +387,11 @@ export function TeacherDashboard({ progress, user, profile }: TeacherDashboardPr
             ))}
           </div>
           <p className="helper-text">{strengthCount} learners are showing clear strengths. {attentionCount} need a follow-up plan.</p>
+          {isLoadingRoster ? <p className="helper-text">Loading assigned students...</p> : null}
           {!assignments.length && !isLoadingRoster ? (
-            <p className="helper-text">Showing demo data until students request this teacher account.</p>
+            <p className="helper-text">No students are assigned yet. Share an invite or review the holding space.</p>
           ) : null}
+          {rosterError ? <p className="form-error">{rosterError}</p> : null}
         </article>
 
         <article className="practice-panel">
@@ -481,6 +488,9 @@ export function TeacherDashboard({ progress, user, profile }: TeacherDashboardPr
             </div>
           ) : null}
           <div className="student-list">
+            {!students.length && !isLoadingRoster ? (
+              <p className="helper-text">Assigned students will appear here after approval or a holding-space claim.</p>
+            ) : null}
             {students.map((student) => {
               const analysis = analyzeStudent(student);
               const supportCount = analysis.growthAreas.length;

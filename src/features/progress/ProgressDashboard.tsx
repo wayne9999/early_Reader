@@ -24,7 +24,7 @@ export function ProgressDashboard({ progress, user, onProgressChange }: Progress
   const areaSummaries = useMemo(() => allAreaSummaries.filter((area) => area.interactions > 0), [allAreaSummaries]);
   const nextPractice = useMemo(() => nextStudentPractice(events), [events]);
   const coachRecommendation = coachInsight?.nextBestActivity ?? coachState?.currentRecommendation ?? null;
-  const dailyGoal = 4;
+  const dailyGoal = 3;
   const goalCompleted = Math.min(progress.completedToday, dailyGoal);
   const goalPercent = Math.round((goalCompleted / dailyGoal) * 100);
   const displayName = user?.name?.split(" ")[0] ?? "Reader";

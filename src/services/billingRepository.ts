@@ -1,52 +1,54 @@
 import { httpsCallable } from "firebase/functions";
 import type { SubscriptionTierId } from "../types";
-import { billingConfig } from "./billingConfig";
 import { getFirebaseRuntime } from "./firebase";
 
 type CheckoutSessionResponse = {
   url?: string;
 };
 
-export function checkoutFallbackLink(tier: SubscriptionTierId) {
-  if (tier === "familyPlus") {
-    return billingConfig.familyPlusLink;
-  }
-
-  if (tier === "teacherPro") {
-    return billingConfig.teacherProLink;
-  }
-
-  return "";
-}
-
 export async function startSubscriptionCheckout(tier: SubscriptionTierId) {
   const runtime = getFirebaseRuntime();
   const firebaseUser = runtime?.auth.currentUser;
 
-  if (!runtime || !firebaseUser || tier === "free") {
-    return checkoutFallbackLink(tier);
+  if (!runtime || !firebaseUser) {
+    throw new Error("Sign in before starting a subscription.");
   }
 
-  try {
-    const createCheckoutSession = httpsCallable<{ tier: SubscriptionTierId }, CheckoutSessionResponse>(
-      runtime.functions,
-      "createCheckoutSession"
-    );
-    const response = await createCheckoutSession({ tier });
-    const url = response.data.url;
-
-    if (url) {
-      return url;
-    }
-  } catch (error) {
-    const fallbackLink = checkoutFallbackLink(tier);
-
-    if (fallbackLink) {
-      return fallbackLink;
-    }
-
-    throw error;
+  if (tier === "free") {
+    throw new Error("Choose a paid subscription plan.");
   }
 
-  return checkoutFallbackLink(tier);
+  const createCheckoutSession = httpsCallable<{ tier: SubscriptionTierId }, CheckoutSessionResponse>(
+    runtime.functions,
+    "createCheckoutSession"
+  );
+  const response = await createCheckoutSession({ tier });
+  const url = response.data.url;
+
+  if (!url) {
+    throw new Error("Stripe did not return a checkout page.");
+  }
+
+  return url;
+}
+
+export async function createBillingPortalUrl() {
+  const runtime = getFirebaseRuntime();
+  const firebaseUser = runtime?.auth.currentUser;
+
+  if (!runtime || !firebaseUser) {
+    throw new Error("Sign in before managing billing.");
+  }
+
+  const createPortalSession = httpsCallable<Record<string, never>, CheckoutSessionResponse>(
+    runtime.functions,
+    "createBillingPortalSession"
+  );
+  const response = await createPortalSession({});
+
+  if (!response.data.url) {
+    throw new Error("Stripe did not return a billing portal page.");
+  }
+
+  return response.data.url;
 }

@@ -179,7 +179,7 @@ export type StudentPlacementQueue = {
   id: string;
   studentId: string;
   studentName: string;
-  studentEmail: string | null;
+  studentEmail?: string | null;
   status: StudentPlacementStatus;
   holdingTeacherName?: string | null;
   requestedTeacherId?: string | null;

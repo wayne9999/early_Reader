@@ -114,9 +114,13 @@ service cloud.firestore {
 
     match /teacherProfiles/{teacherId} {
       allow read: if ownsUserDocument(teacherId);
-      allow create, update: if ownsUserDocument(teacherId)
+      allow create: if ownsUserDocument(teacherId)
         && request.resource.data.uid == request.auth.uid
         && userRole() == "teacher";
+      allow update: if ownsUserDocument(teacherId)
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.activeStudentCount == resource.data.activeStudentCount
+        && request.resource.data.certificationStatus == resource.data.certificationStatus;
       allow delete: if false;
     }
 
@@ -124,9 +128,13 @@ service cloud.firestore {
       allow get: if isSignedIn();
       allow list: if isSignedIn()
         && request.query.limit <= 12;
-      allow create, update: if ownsUserDocument(teacherId)
+      allow create: if ownsUserDocument(teacherId)
         && request.resource.data.uid == request.auth.uid
         && userRole() == "teacher";
+      allow update: if ownsUserDocument(teacherId)
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.activeStudentCount == resource.data.activeStudentCount
+        && request.resource.data.certificationStatus == resource.data.certificationStatus;
       allow delete: if false;
     }
 
@@ -139,22 +147,11 @@ service cloud.firestore {
       allow read: if isSignedIn()
         && (resource.data.studentId == request.auth.uid || resource.data.teacherId == request.auth.uid);
       allow update: if isSignedIn()
-        && (
-          (
-            resource.data.studentId == request.auth.uid
-            && resource.data.status in ["requested", "active"]
-            && request.resource.data.studentId == resource.data.studentId
-            && request.resource.data.teacherId == resource.data.teacherId
-            && onlyChanged(["latestProgressSnapshot", "updatedAt"])
-          )
-          || (
-            resource.data.teacherId == request.auth.uid
-            && request.resource.data.studentId == resource.data.studentId
-            && request.resource.data.teacherId == resource.data.teacherId
-            && request.resource.data.status in ["active", "declined"]
-            && onlyChanged(["status", "updatedAt"])
-          )
-        );
+        && resource.data.studentId == request.auth.uid
+        && resource.data.status in ["requested", "active"]
+        && request.resource.data.studentId == resource.data.studentId
+        && request.resource.data.teacherId == resource.data.teacherId
+        && onlyChanged(["latestProgressSnapshot", "updatedAt"]);
       allow delete: if false;
     }
 

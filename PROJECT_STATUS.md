@@ -29,6 +29,7 @@
 - Added privacy/legal/refund/teacher terms pages and footer links.
 - Added go-live, Stripe, production environment, and deployment docs.
 - Added SEO metadata, sitemap, robots file, web manifest, Open Graph image, and static SEO pages.
+- Completed the first live authenticated release QA cycle; see `docs/qa-release-2026-06-25.md` for tested journeys, fixes, and remaining launch work.
 - Added GitHub Pages deployment workflow.
 - Added Firebase backend deployment workflow for rules, functions, secrets, and scheduled functions.
 - Deployed successfully to GitHub Pages.

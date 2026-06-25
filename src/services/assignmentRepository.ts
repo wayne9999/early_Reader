@@ -197,7 +197,6 @@ export async function upsertStudentPlacementQueue(
     id: student.id,
     studentId: student.id,
     studentName: studentProfile.displayName || student.name,
-    studentEmail: student.email ?? studentProfile.email ?? null,
     status: options.status,
     holdingTeacherName: options.status === "unassigned" ? "ReadNest holding space" : null,
     requestedTeacherId: options.requestedTeacher?.uid ?? null,
@@ -397,22 +396,11 @@ export async function updateTeacherAssignmentStatus(linkId: string, status: Teac
     return;
   }
 
-  await updateDoc(doc(runtime.db, "teacherStudentLinks", linkId), {
-    status,
-    updatedAt: serverTimestamp()
-  });
-
-  const assignments = await loadTeacherAssignments({
-    id: firebaseUser.uid,
-    name: firebaseUser.displayName ?? "Teacher",
-    email: firebaseUser.email ?? undefined
-  });
-  const activeStudentCount = assignments.filter((assignment) => assignment.status === "active").length;
-
-  await updateDoc(doc(runtime.db, "teacherDirectory", firebaseUser.uid), {
-    activeStudentCount,
-    updatedAt: serverTimestamp()
-  });
+  const callable = httpsCallable<
+    { linkId: string; status: TeacherStudentLink["status"] },
+    { linkId: string; status: TeacherStudentLink["status"] }
+  >(runtime.functions, "updateTeacherAssignmentStatus");
+  await callable({ linkId, status });
 }
 
 export async function syncAssignmentProgress(user: AppUser | null, progress: Progress) {

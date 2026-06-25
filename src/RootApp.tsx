@@ -524,7 +524,7 @@ export function RootApp() {
     }
 
     if (currentView === "support") {
-      return <SupportPage user={user} />;
+      return <SupportPage profile={profile} user={user} />;
     }
 
     if (
