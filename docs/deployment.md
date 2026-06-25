@@ -1,16 +1,25 @@
 # Deployment
 
-## Current Hosting
+## Production Hosting
 
-ReadNest deploys to GitHub Pages from `main`:
+The production target is Firebase Hosting:
+
+```text
+https://myreadnest.org/
+```
+
+The Firebase workflow supports `target=hosting` and builds with `VITE_BASE_PATH=/` before deploying `dist`.
+
+GitHub Pages remains available as a temporary fallback:
 
 ```text
 https://wayne9999.github.io/early_Reader/
 ```
 
-Workflow:
+Workflows:
 
 ```text
+.github/workflows/deploy-firebase.yml
 .github/workflows/deploy-pages.yml
 ```
 
@@ -51,7 +60,7 @@ The Firebase backend deploy workflow is:
 .github/workflows/deploy-firebase.yml
 ```
 
-Use `target=rules` for Firestore rules and indexes, `target=functions` for callable/webhook workers, and `target=all` for both. The `include_scheduler` option is off by default so routine deploys do not fail if the deploy service account is missing Cloud Scheduler permissions.
+Use `target=rules` for Firestore rules, `target=functions` for callable/webhook workers, `target=hosting` for the production web application, and `target=all` for all three. The `include_scheduler` option is off by default so routine deploys do not fail if the deploy service account is missing Cloud Scheduler permissions.
 
 Enable `include_scheduler=true` only after the deploy service account has permission to update scheduled jobs.
 
@@ -85,35 +94,30 @@ gcloud scheduler jobs describe firebase-schedule-enqueueDailyInsightJobs-us-cent
 
 1. Identify last known good commit.
 2. Revert the bad commit or push a hotfix.
-3. Confirm GitHub Pages workflow succeeds.
+3. Confirm the Firebase Hosting workflow succeeds.
 4. Smoke test the live app.
 5. If billing or rules are affected, also roll back Firebase Functions/rules from the Firebase console or CLI.
 
-## Custom Domain And CSP
+## Custom Domain And Security Headers
 
-GitHub Pages is fine for beta, but a production custom domain should sit behind hosting that supports response headers.
+Firebase Hosting serves `myreadnest.org`, provisions TLS, applies SPA rewrites, and sends the headers defined in `firebase.json`.
 
-Recommended Content Security Policy starting point:
+The configured baseline includes:
 
-```text
-default-src 'self';
-script-src 'self' https://www.gstatic.com https://apis.google.com https://js.stripe.com;
-connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://api.stripe.com;
-img-src 'self' data: https:;
-style-src 'self' 'unsafe-inline';
-frame-src https://js.stripe.com https://hooks.stripe.com;
-object-src 'none';
-base-uri 'self';
-form-action 'self';
-```
+- Content Security Policy
+- HSTS
+- `X-Content-Type-Options`
+- `X-Frame-Options`
+- `Referrer-Policy`
+- restricted browser permissions
+- immutable caching for fingerprinted assets
 
-Review this after adding Firebase Functions, analytics, or a custom CDN.
+Review the CSP whenever a new analytics, authentication, media, or payment provider is added.
 
-## Future Hosting
+## Future Rendering
 
-Consider Firebase Hosting or a SSR/prerender host when:
+Consider SSR or prerendered application routes when:
 
 - SEO needs unique rendered pages per route.
-- CSP/security headers become required.
-- Backend redirects or authenticated billing endpoints need same-origin routing.
-- PWA caching and offline sync are added.
+- marketing pages outgrow the current static SEO pages.
+- route-level social previews are required.

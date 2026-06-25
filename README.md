@@ -66,7 +66,7 @@ Test metrics:
 
 The app includes metadata, Open Graph/Twitter preview tags, structured data, `robots.txt`, `sitemap.xml`, a web manifest, a social preview image, crawlable static SEO pages, and a growth checklist in `docs/growth-seo-plan.md`.
 
-The current canonical base URL is `https://wayne9999.github.io/early_Reader/`. When ReadNest moves to a custom domain, update:
+The production canonical base URL is `https://myreadnest.org/`. The canonical URL is reflected in:
 
 - `index.html`
 - every crawlable page under `public/*/index.html`
@@ -92,7 +92,7 @@ For a larger production site, replace these static pages with prerendered or ser
 
 ## App Routes
 
-ReadNest uses hash-based routes so deep links work on GitHub Pages without a server rewrite. These are the current shareable app URLs:
+ReadNest currently uses hash-based routes so links remain portable across Firebase Hosting and the GitHub Pages fallback. These are the current shareable app URLs:
 
 - `#/reading`
 - `#/memory`

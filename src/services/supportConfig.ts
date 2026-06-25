@@ -1,5 +1,5 @@
 export const supportConfig = {
-  email: import.meta.env.VITE_SUPPORT_EMAIL || "support@readnest.app"
+  email: import.meta.env.VITE_SUPPORT_EMAIL || "support@myreadnest.org"
 };
 
 export function supportMailtoHref(subject = "ReadNest support request") {

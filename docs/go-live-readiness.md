@@ -61,7 +61,7 @@ Status labels:
 | --- | --- | --- |
 | Privacy-conscious analytics | Completed | `trackProductEvent` strips child-identifying metadata and stores event names only for signed-in Firebase users. |
 | Business metrics dashboard | Blocked | Needs backend aggregation for MRR, churn, active users, AI spend, and feature usage. |
-| SEO metadata | Completed | Static metadata, FAQ structured data, sitemap, robots, OG/Twitter previews, and crawlable pages exist for the current GitHub Pages domain. Custom domain and prerender/SSR should still be revisited before paid acquisition. |
+| SEO metadata | Completed | Static metadata, FAQ structured data, sitemap, robots, OG/Twitter previews, and crawlable pages use `myreadnest.org`. Prerender/SSR should still be revisited before paid acquisition. |
 | Pricing/FAQ/testimonials | Needs Work | Pricing and FAQ content exist; real screenshots, testimonials, case studies, and demo videos need user validation before broad marketing. |
 
 ## Legal, Privacy, And Operations
@@ -72,7 +72,7 @@ Status labels:
 | Legal review | Blocked | Counsel review is required before public child-directed launch. |
 | Parent consent | Completed | Parent/child profile creation requires an explicit consent checkbox and stores consent metadata on the user profile. |
 | Data deletion | Needs Work | Parents can submit a signed-in data deletion support case. Backend deletion/export fulfillment still needs implementation. |
-| Support operations | Needs Work | Support page, email path, and Firestore `supportCases` intake exist. Ticket routing, SLA, and status page need external setup. |
+| Support operations | Needs Work | Support page, email path, and Firestore `supportCases` intake exist. Verify `mail.myreadnest.org` in Resend before switching the production sender; ticket routing, SLA, and status page still need external setup. |
 
 ## Quality And Deployment
 
@@ -101,3 +101,5 @@ Status labels:
 11. Review mobile layouts on at least iPhone SE width, modern iPhone width, Android width, and tablet width.
 12. Confirm support email, Stripe portal, cancellation instructions, and refund policy are visible.
 13. Confirm skipped student signup creates `studentPlacementQueue/{uid}` and a Teacher Pro account can claim the student only while under capacity.
+14. Connect `myreadnest.org` to Firebase Hosting, add it to Firebase Auth and reCAPTCHA authorized domains, then verify HTTPS and security headers.
+15. Verify `mail.myreadnest.org` in Resend and change `SUPPORT_FROM_EMAIL` to `ReadNest Support <support@mail.myreadnest.org>`.

@@ -11,6 +11,7 @@ on:
         options:
           - rules
           - functions
+          - hosting
           - all
       include_scheduler:
         description: Include the scheduled AI insight function. Requires cloudscheduler.jobs.update permission.
@@ -47,6 +48,19 @@ jobs:
       READNEST_ENFORCE_APP_CHECK: ${{ vars.READNEST_ENFORCE_APP_CHECK }}
       SUPPORT_NOTIFICATION_EMAIL: ${{ vars.SUPPORT_NOTIFICATION_EMAIL }}
       SUPPORT_FROM_EMAIL: ${{ vars.SUPPORT_FROM_EMAIL }}
+      VITE_FIREBASE_API_KEY: ${{ vars.VITE_FIREBASE_API_KEY }}
+      VITE_FIREBASE_AUTH_DOMAIN: ${{ vars.VITE_FIREBASE_AUTH_DOMAIN }}
+      VITE_FIREBASE_PROJECT_ID: ${{ vars.VITE_FIREBASE_PROJECT_ID }}
+      VITE_FIREBASE_STORAGE_BUCKET: ${{ vars.VITE_FIREBASE_STORAGE_BUCKET }}
+      VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ vars.VITE_FIREBASE_MESSAGING_SENDER_ID }}
+      VITE_FIREBASE_APP_ID: ${{ vars.VITE_FIREBASE_APP_ID }}
+      VITE_FIREBASE_MEASUREMENT_ID: ${{ vars.VITE_FIREBASE_MEASUREMENT_ID }}
+      VITE_FIREBASE_APP_CHECK_SITE_KEY: ${{ vars.VITE_FIREBASE_APP_CHECK_SITE_KEY }}
+      VITE_STRIPE_DONATION_LINK: ${{ vars.VITE_STRIPE_DONATION_LINK }}
+      VITE_STRIPE_FAMILY_PLUS_LINK: ${{ vars.VITE_STRIPE_FAMILY_PLUS_LINK }}
+      VITE_STRIPE_TEACHER_PRO_LINK: ${{ vars.VITE_STRIPE_TEACHER_PRO_LINK }}
+      VITE_STRIPE_CUSTOMER_PORTAL_LINK: ${{ vars.VITE_STRIPE_CUSTOMER_PORTAL_LINK }}
+      VITE_SUPPORT_EMAIL: ${{ vars.VITE_SUPPORT_EMAIL }}
       STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
       STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -90,6 +104,12 @@ jobs:
         working-directory: functions
         run: npm run build
 
+      - name: Build production web app
+        if: ${{ inputs.target == 'hosting' || inputs.target == 'all' }}
+        run: npm run build
+        env:
+          VITE_BASE_PATH: /
+
       - name: Write functions runtime env
         if: ${{ inputs.target == 'functions' || inputs.target == 'all' }}
         working-directory: functions
@@ -105,8 +125,8 @@ jobs:
             echo "READNEST_AI_INPUT_COST_PER_1M_USD=${READNEST_AI_INPUT_COST_PER_1M_USD:-0}"
             echo "READNEST_AI_OUTPUT_COST_PER_1M_USD=${READNEST_AI_OUTPUT_COST_PER_1M_USD:-0}"
             echo "READNEST_ENFORCE_APP_CHECK=${READNEST_ENFORCE_APP_CHECK:-false}"
-            echo "SUPPORT_NOTIFICATION_EMAIL=${SUPPORT_NOTIFICATION_EMAIL:-support@readnest.app}"
-            echo "SUPPORT_FROM_EMAIL=${SUPPORT_FROM_EMAIL:-ReadNest Support <support@readnest.app>}"
+            echo "SUPPORT_NOTIFICATION_EMAIL=${SUPPORT_NOTIFICATION_EMAIL:-support@myreadnest.org}"
+            echo "SUPPORT_FROM_EMAIL=${SUPPORT_FROM_EMAIL:-ReadNest Support <support@mail.myreadnest.org>}"
           } > .env
 
       - name: Sync Stripe secret
@@ -146,3 +166,7 @@ jobs:
           --project "$FIREBASE_PROJECT_ID"
           --non-interactive
           --force
+
+      - name: Deploy Firebase Hosting
+        if: ${{ inputs.target == 'hosting' || inputs.target == 'all' }}
+        run: firebase deploy --only hosting --project "$FIREBASE_PROJECT_ID" --non-interactive

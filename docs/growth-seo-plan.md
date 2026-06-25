@@ -27,7 +27,7 @@ ReadNest should win trust before it asks families or teachers to pay. The growth
 
 ## Launch Actions
 
-1. Submit `https://wayne9999.github.io/early_Reader/sitemap.xml` in Google Search Console.
+1. Submit `https://myreadnest.org/sitemap.xml` in Google Search Console.
 2. Submit the same sitemap in Bing Webmaster Tools.
 3. Verify the homepage with Google's Rich Results Test for `SoftwareApplication` and `FAQPage`.
 4. Share the homepage and `/online-reading-games/` with parent groups, tutoring communities, and teacher communities.

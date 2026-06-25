@@ -8,7 +8,7 @@ Configure these under:
 GitHub repository > Settings > Secrets and variables > Actions > Variables
 ```
 
-- `VITE_BASE_PATH=/early_Reader/`
+- `VITE_BASE_PATH=/` for Firebase Hosting at `myreadnest.org`
 - `VITE_FIREBASE_API_KEY`
 - `VITE_FIREBASE_AUTH_DOMAIN`
 - `VITE_FIREBASE_PROJECT_ID`
@@ -67,6 +67,12 @@ Runtime environment values:
 - `SUPPORT_NOTIFICATION_EMAIL`
 - `SUPPORT_FROM_EMAIL`
 - `READNEST_ENFORCE_APP_CHECK` (`false` during monitoring, then `true` after App Check is verified)
+
+Production values after custom-domain verification:
+
+- `READNEST_APP_BASE_URL=https://myreadnest.org/`
+- `VITE_SUPPORT_EMAIL=support@myreadnest.org`
+- `SUPPORT_FROM_EMAIL=ReadNest Support <support@mail.myreadnest.org>`
 
 ## Production Authority
 

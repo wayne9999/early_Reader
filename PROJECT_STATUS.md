@@ -3,7 +3,8 @@
 ## Live
 
 - GitHub repo: https://github.com/wayne9999/early_Reader
-- Hosted app: https://wayne9999.github.io/early_Reader/
+- Production domain: https://myreadnest.org/
+- Temporary fallback: https://wayne9999.github.io/early_Reader/
 
 ## Completed
 
@@ -50,7 +51,7 @@
 - `npm run test`
 - `npm run test:e2e`
 - `npm run test:coverage`
-- `VITE_BASE_PATH=/early_Reader/ npm run build`
+- `VITE_BASE_PATH=/ npm run build`
 - `npm audit --audit-level=moderate`
 - GitHub Pages deployment succeeded.
 - Live URL returned HTTP 200.
