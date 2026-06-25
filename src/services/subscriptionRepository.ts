@@ -1,5 +1,6 @@
 import { doc, getDoc } from "firebase/firestore";
 import type { AppUser, SubscriptionRecord, UserProfile } from "../types";
+import { billingConfig } from "./billingConfig";
 import { getFirebaseRuntime } from "./firebase";
 
 export const freeSubscription: SubscriptionRecord = {
@@ -34,7 +35,8 @@ export async function loadTrustedSubscription(
     return profileSubscriptionFallback(profile);
   }
 
-  const snapshot = await getDoc(doc(runtime.db, "subscriptions", firebaseUser.uid));
+  const collectionName = billingConfig.stripeMode === "test" ? "testSubscriptions" : "subscriptions";
+  const snapshot = await getDoc(doc(runtime.db, collectionName, firebaseUser.uid));
 
   if (!snapshot.exists()) {
     return {

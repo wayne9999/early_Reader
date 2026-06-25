@@ -49,6 +49,7 @@ describe("firestore privacy rules", () => {
 
   it("keeps subscription authority backend-only", () => {
     expect(rules).toContain("match /subscriptions/{userId}");
+    expect(rules).toContain("match /testSubscriptions/{userId}");
     expect(rules).toContain("allow create, update, delete: if false;");
   });
 

@@ -1,0 +1,87 @@
+name: Deploy Live Stripe Billing
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: live-stripe-billing
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy approved live billing backend
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://myreadnest.org/
+    steps:
+      - name: Checkout production branch
+        uses: actions/checkout@v4
+        with:
+          ref: production
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.READNEST_FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Install and validate Functions
+        working-directory: functions
+        run: |
+          npm ci
+          npm run check
+          npm run build
+
+      - name: Validate live Stripe configuration
+        shell: bash
+        env:
+          FAMILY_PRICE: ${{ vars.PROD_STRIPE_FAMILY_PLUS_PRICE_ID }}
+          TEACHER_PRICE: ${{ vars.PROD_STRIPE_TEACHER_PRO_PRICE_ID }}
+          LIVE_SECRET: ${{ secrets.STRIPE_LIVE_SECRET_KEY }}
+          LIVE_WEBHOOK_SECRET: ${{ secrets.STRIPE_LIVE_WEBHOOK_SECRET }}
+        run: |
+          [[ "$FAMILY_PRICE" == price_* ]] || { echo "Missing live Family Plus price."; exit 1; }
+          [[ "$TEACHER_PRICE" == price_* ]] || { echo "Missing live Teacher Pro price."; exit 1; }
+          [[ "$LIVE_SECRET" == sk_live_* ]] || { echo "STRIPE_LIVE_SECRET_KEY is not a live key."; exit 1; }
+          [[ "$LIVE_WEBHOOK_SECRET" == whsec_* ]] || { echo "Missing live webhook signing secret."; exit 1; }
+
+      - name: Write live billing runtime env
+        working-directory: functions
+        env:
+          FAMILY_PRICE: ${{ vars.PROD_STRIPE_FAMILY_PLUS_PRICE_ID }}
+          TEACHER_PRICE: ${{ vars.PROD_STRIPE_TEACHER_PRO_PRICE_ID }}
+        run: |
+          {
+            echo "READNEST_APP_BASE_URL=https://myreadnest.org/"
+            echo "STRIPE_LIVE_FAMILY_PLUS_PRICE_ID=${FAMILY_PRICE}"
+            echo "STRIPE_LIVE_TEACHER_PRO_PRICE_ID=${TEACHER_PRICE}"
+          } > .env
+
+      - name: Sync live Stripe secrets
+        env:
+          LIVE_SECRET: ${{ secrets.STRIPE_LIVE_SECRET_KEY }}
+          LIVE_WEBHOOK_SECRET: ${{ secrets.STRIPE_LIVE_WEBHOOK_SECRET }}
+        run: |
+          printf '%s' "$LIVE_SECRET" | firebase functions:secrets:set STRIPE_LIVE_SECRET_KEY --project readnest-f9c67 --data-file - --non-interactive
+          printf '%s' "$LIVE_WEBHOOK_SECRET" | firebase functions:secrets:set STRIPE_LIVE_WEBHOOK_SECRET --project readnest-f9c67 --data-file - --non-interactive
+
+      - name: Deploy live Stripe functions
+        run: >
+          firebase deploy
+          --only functions:stripeWebhook,functions:createBillingPortalSession,functions:createCheckoutSession
+          --project readnest-f9c67
+          --non-interactive
+          --force

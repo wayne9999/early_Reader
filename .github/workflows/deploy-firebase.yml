@@ -118,6 +118,9 @@ jobs:
             echo "STRIPE_FAMILY_PLUS_PRICE_ID=${STRIPE_FAMILY_PLUS_PRICE_ID}"
             echo "STRIPE_TEACHER_PRO_PRICE_ID=${STRIPE_TEACHER_PRO_PRICE_ID}"
             echo "READNEST_APP_BASE_URL=${READNEST_APP_BASE_URL}"
+            echo "STRIPE_TEST_APP_BASE_URL=https://wayne9999.github.io/early_Reader/"
+            echo "STRIPE_LIVE_FAMILY_PLUS_PRICE_ID=${STRIPE_LIVE_FAMILY_PLUS_PRICE_ID}"
+            echo "STRIPE_LIVE_TEACHER_PRO_PRICE_ID=${STRIPE_LIVE_TEACHER_PRO_PRICE_ID}"
             echo "READNEST_AI_MODEL=${READNEST_AI_MODEL:-gpt-5.5}"
             echo "READNEST_AI_WARNING_LIMIT_USD=${READNEST_AI_WARNING_LIMIT_USD:-10}"
             echo "READNEST_AI_MONTHLY_LIMIT_USD=${READNEST_AI_MONTHLY_LIMIT_USD:-15}"
@@ -153,7 +156,7 @@ jobs:
         if: ${{ (inputs.target == 'functions' || inputs.target == 'all') && !inputs.include_scheduler }}
         run: >
           firebase deploy
-          --only functions:stripeWebhook,functions:createBillingPortalSession,functions:createCheckoutSession,functions:claimPlacementStudent,functions:updateTeacherAssignmentStatus,functions:createLearningRecommendation,functions:requestStudentInsight,functions:submitSupportCase,functions:updateLearningCoachState,functions:processAiAnalysisJob,functions:processSupportCase
+          --only functions:stripeWebhookTest,functions:createBillingPortalSessionTest,functions:createCheckoutSessionTest,functions:claimPlacementStudent,functions:updateTeacherAssignmentStatus,functions:createLearningRecommendation,functions:requestStudentInsight,functions:submitSupportCase,functions:updateLearningCoachState,functions:processAiAnalysisJob,functions:processSupportCase
           --project "$FIREBASE_PROJECT_ID"
           --non-interactive
           --force
@@ -162,7 +165,7 @@ jobs:
         if: ${{ (inputs.target == 'functions' || inputs.target == 'all') && inputs.include_scheduler }}
         run: >
           firebase deploy
-          --only functions:stripeWebhook,functions:createBillingPortalSession,functions:createCheckoutSession,functions:claimPlacementStudent,functions:updateTeacherAssignmentStatus,functions:createLearningRecommendation,functions:requestStudentInsight,functions:submitSupportCase,functions:updateLearningCoachState,functions:processAiAnalysisJob,functions:processSupportCase,functions:enqueueDailyInsightJobs
+          --only functions:stripeWebhookTest,functions:createBillingPortalSessionTest,functions:createCheckoutSessionTest,functions:claimPlacementStudent,functions:updateTeacherAssignmentStatus,functions:createLearningRecommendation,functions:requestStudentInsight,functions:submitSupportCase,functions:updateLearningCoachState,functions:processAiAnalysisJob,functions:processSupportCase,functions:enqueueDailyInsightJobs
           --project "$FIREBASE_PROJECT_ID"
           --non-interactive
           --force
