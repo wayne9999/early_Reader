@@ -100,7 +100,9 @@ jobs:
           node-version: 22
 
       - name: Install Firebase CLI
-        run: npm install -g firebase-tools
+        run: |
+          npm install -g firebase-tools@15.21.0
+          firebase --version
 
       - name: Download approved production artifact
         uses: actions/download-artifact@v4

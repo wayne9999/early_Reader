@@ -36,7 +36,9 @@ jobs:
           cache-dependency-path: functions/package-lock.json
 
       - name: Install Firebase CLI
-        run: npm install -g firebase-tools
+        run: |
+          npm install -g firebase-tools@15.21.0
+          firebase --version
 
       - name: Install and validate Functions
         working-directory: functions
