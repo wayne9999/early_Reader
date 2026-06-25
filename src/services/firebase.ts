@@ -1,7 +1,7 @@
 import { initializeApp, type FirebaseApp } from "firebase/app";
 import {
   initializeAppCheck,
-  ReCaptchaEnterpriseProvider,
+  ReCaptchaV3Provider,
   type AppCheck
 } from "firebase/app-check";
 import { getAnalytics, isSupported, type Analytics } from "firebase/analytics";
@@ -50,7 +50,7 @@ export function getFirebaseRuntime() {
     const app = initializeApp(firebaseConfig);
     const appCheck = appCheckSiteKey
       ? initializeAppCheck(app, {
-          provider: new ReCaptchaEnterpriseProvider(appCheckSiteKey),
+          provider: new ReCaptchaV3Provider(appCheckSiteKey),
           isTokenAutoRefreshEnabled: true
         })
       : null;

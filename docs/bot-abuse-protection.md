@@ -14,14 +14,14 @@
 
 ## Recommended Free-First Service
 
-Use Firebase App Check with reCAPTCHA Enterprise. It runs invisibly, so children do not have to solve image puzzles during activities. Google's reCAPTCHA Essentials tier currently includes up to 10,000 assessments per month at no assessment charge, although Google Cloud requires a billing instrument.
+Use Firebase App Check with standard reCAPTCHA v3. It runs invisibly, so children do not have to solve image puzzles during activities. The app also keeps server-side rate limiting and strict Firestore rules in place instead of depending on reCAPTCHA alone.
 
 Do not add a visible CAPTCHA to every activity. It creates accessibility and usability problems while protecting the least expensive part of the application. Add an interactive challenge only if monitoring later shows concentrated signup abuse that Firebase Auth and App Check do not stop.
 
 ## Activate App Check
 
 1. Open [Firebase App Check](https://console.firebase.google.com/project/readnest-f9c67/appcheck).
-2. Select the ReadNest web app and register the **reCAPTCHA Enterprise** provider.
+2. Select the ReadNest web app and register the **reCAPTCHA v3** provider.
 3. Add these allowed web domains:
    - `wayne9999.github.io`
    - the future ReadNest custom domain

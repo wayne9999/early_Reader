@@ -27,7 +27,7 @@ Status labels:
 | Incomplete social providers | Completed | Instagram sign-in is visibly marked as coming later under Firebase. |
 | Role lock | Completed | Firestore rules prevent users from changing profile role after creation. |
 | Teacher/student separation | Completed | Firestore rules restrict student data to the owner and active assigned teacher. |
-| Bot and automated abuse controls | Needs Work | Backend rate limits, support honeypot, strict event payloads, and App Check integration are implemented. Register the reCAPTCHA Enterprise site key, monitor valid traffic, then enable Firestore and Functions enforcement before broad launch. |
+| Bot and automated abuse controls | Needs Work | Backend rate limits, support honeypot, strict event payloads, and App Check integration are implemented. Register the reCAPTCHA v3 site key, monitor valid traffic, then enable Firestore and Functions enforcement before broad launch. |
 | Admin role | Needs Work | Rules include admin checks, but admin provisioning must be done by trusted backend/custom claims. |
 | Error boundaries | Needs Work | Friendly loading/error states exist in places; a global React error boundary still needs adding. |
 | XSS/export safety | Completed | Report exports escape user-visible text. Avoid `dangerouslySetInnerHTML` in app UI. |
@@ -89,7 +89,7 @@ Status labels:
 
 1. Deploy Firestore rules and verify denied reads for unassigned teacher/student cross-access.
 2. Deploy Firebase Functions with Stripe secrets and price IDs.
-3. Register Firebase App Check with reCAPTCHA Enterprise, deploy its public site key, verify valid metrics, and then enable enforcement.
+3. Register Firebase App Check with reCAPTCHA v3, deploy its public site key, verify valid metrics, and then enable enforcement.
 3. Configure Stripe webhook endpoint for `stripeWebhook`.
 4. Use Stripe test clocks/test cards to verify active, past-due, canceled, refunded, and disputed states.
 5. Confirm Family Plus and Teacher Pro docs appear in `subscriptions/{uid}` after backend-created checkout.

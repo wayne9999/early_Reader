@@ -79,7 +79,7 @@ Runtime environment values:
 - AI budget records under `aiBudget/**` are backend-only. If the monthly cap is reached, the backend uses the rule-based fallback instead of calling OpenAI.
 - Support requests are stored in `supportCases/{caseId}`. The backend support worker writes AI summary fields and a Firebase Console detail link to the same document.
 - Support submissions and costly callable operations use backend per-user rate limits. Rate-limit counters under `abuseRateLimits/**` are backend-only.
-- Firebase App Check uses reCAPTCHA Enterprise when `VITE_FIREBASE_APP_CHECK_SITE_KEY` is configured. Functions enforcement is controlled by `READNEST_ENFORCE_APP_CHECK`.
+- Firebase App Check uses reCAPTCHA v3 when `VITE_FIREBASE_APP_CHECK_SITE_KEY` is configured. Functions enforcement is controlled by `READNEST_ENFORCE_APP_CHECK`.
 - Operational logs are written to Cloud Logging and backend-authored `systemLogs/{logId}` documents. Client users cannot write operational logs; admins can read them through Firestore rules.
 
 ## Observability Queries
