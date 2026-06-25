@@ -25,6 +25,12 @@ Workflows:
 
 The branch promotion and approval process is documented in `docs/release-process.md`.
 
+Firebase deployment workflows pin Firebase CLI `15.21.0` and apply
+`scripts/patch-firebase-cli-transport.mjs`. This compatibility patch disables
+compressed keep-alive API responses that otherwise fail intermittently with
+`Premature close` during non-interactive service-account deployments. Remove
+the patch only after a newer Firebase CLI version is verified in GitHub Actions.
+
 The workflow runs:
 
 - `npm ci`

@@ -103,6 +103,7 @@ jobs:
         run: |
           npm install -g firebase-tools@15.21.0
           npm install --prefix "$(npm root -g)/firebase-tools" google-auth-library@10.7.0 --no-save --ignore-scripts
+          node scripts/patch-firebase-cli-transport.mjs "$(npm root -g)/firebase-tools"
           firebase --version
 
       - name: Download approved production artifact
