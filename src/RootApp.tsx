@@ -471,13 +471,14 @@ export function RootApp() {
           activityId={currentView}
           progress={progress}
           user={user}
+          profile={profile}
           onProgressChange={handleProgressChange}
         />
       );
     }
 
     if (currentView === "progress") {
-      return <ProgressDashboard progress={progress} user={user} onProgressChange={handleProgressChange} />;
+      return <ProgressDashboard progress={progress} user={user} profile={profile} onProgressChange={handleProgressChange} />;
     }
 
     if (currentView === "teacher") {

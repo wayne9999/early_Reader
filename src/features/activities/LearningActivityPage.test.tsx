@@ -1,8 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { defaultProgress } from "../../services/progressRepository";
-import { recordLearningEvent } from "../../services/learningEventRepository";
+import { loadLearningEvents, recordLearningEvent } from "../../services/learningEventRepository";
 import { learningActivities } from "../../data/content";
 import { LearningActivityPage } from "./LearningActivityPage";
 
@@ -13,10 +13,16 @@ vi.mock("../../shared/speech", () => ({
 }));
 
 vi.mock("../../services/learningEventRepository", () => ({
+  loadLearningEvents: vi.fn(),
   recordLearningEvent: vi.fn()
 }));
 
 describe("LearningActivityPage", () => {
+  beforeEach(() => {
+    vi.mocked(loadLearningEvents).mockResolvedValue([]);
+    vi.mocked(recordLearningEvent).mockReset();
+  });
+
   it("coaches wrong choices and records one completion after ten rounds", async () => {
     const user = userEvent.setup();
     const onProgressChange = vi.fn();

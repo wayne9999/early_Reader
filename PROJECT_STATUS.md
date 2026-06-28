@@ -24,6 +24,7 @@
 - Added Firebase Functions for Stripe webhooks, backend-created subscription checkout sessions, and billing portal sessions.
 - Added backend AI-learning workflow foundation with requestable/scheduled insight jobs, deterministic summaries, secure student insight storage, and teacher dashboard display.
 - Added OpenAI-backed insight adapter with backend budget guard, scheduled processing, and rule-based fallback.
+- Added personalized student setup and practice paths based on grade level, reading goal, saved learning events, and Learning Coach recommendations.
 - Added teacher invite-code creation scaffold.
 - Added parent/caregiver consent storage before child/student profile creation.
 - Added Firestore-backed support cases for billing, deletion, teacher verification, technical, and general requests.

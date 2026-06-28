@@ -29,6 +29,10 @@ export type SubscriptionStatus = "free" | "checkoutStarted" | "active" | "pastDu
 
 export type SubscriptionSource = "demo" | "stripe" | "adminGrant";
 
+export type StudentGradeLevel = "K" | "1" | "2";
+
+export type StudentReadingGoal = "confidence" | "phonics" | "sightWords" | "fluency";
+
 export type SubscriptionRecord = {
   userId: string;
   tier: SubscriptionTierId;
@@ -120,6 +124,9 @@ export type UserProfile = {
   maxStudentLoad?: number;
   activeStudentCount?: number;
   payModelNote?: string;
+  gradeLevel?: StudentGradeLevel;
+  readingGoal?: StudentReadingGoal;
+  preferredPracticeMinutes?: number;
   parentConsentAccepted?: boolean;
   parentConsentAcceptedAt?: unknown;
   parentConsentVersion?: string;

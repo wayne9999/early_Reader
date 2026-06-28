@@ -951,6 +951,64 @@ button {
   gap: 18px;
 }
 
+.personalized-plan-panel {
+  display: grid;
+  gap: 18px;
+  background: linear-gradient(135deg, #ffffff, #eef8ff 48%, #fff5c7);
+}
+
+.personalized-path-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(180px, 1fr));
+  gap: 14px;
+}
+
+.personalized-path-card {
+  display: grid;
+  gap: 8px;
+  min-height: 150px;
+  padding: 18px;
+  border: 2px solid rgba(27, 32, 56, 0.08);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--ink);
+  text-decoration: none;
+  box-shadow: 0 14px 34px rgba(21, 37, 54, 0.07);
+}
+
+.personalized-path-card.is-start {
+  border-color: rgba(255, 107, 107, 0.32);
+  background: linear-gradient(180deg, #ffffff, #fff0f0);
+}
+
+.personalized-path-card.is-practice {
+  border-color: rgba(49, 174, 232, 0.28);
+  background: linear-gradient(180deg, #ffffff, #eef8ff);
+}
+
+.personalized-path-card.is-stretch {
+  border-color: rgba(132, 190, 101, 0.32);
+  background: linear-gradient(180deg, #ffffff, #efffeb);
+}
+
+.personalized-path-card small {
+  color: var(--teal);
+  font-size: 0.72rem;
+  font-weight: 1000;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.personalized-path-card strong {
+  font-size: 1.25rem;
+}
+
+.personalized-path-card span {
+  color: var(--muted);
+  font-weight: 800;
+  line-height: 1.4;
+}
+
 .goal-spotlight {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
@@ -1396,6 +1454,35 @@ button {
   color: var(--muted);
   font-weight: 800;
   line-height: 1.45;
+}
+
+.personalization-setup-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(160px, 1fr));
+  gap: 12px;
+  padding: 14px;
+  border: 2px solid rgba(47, 128, 237, 0.12);
+  border-radius: 8px;
+  background: linear-gradient(135deg, #ffffff, #eef8ff);
+}
+
+.personalization-setup-grid label {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 900;
+}
+
+.personalization-setup-grid select {
+  min-height: 48px;
+  width: 100%;
+  border: 2px solid rgba(47, 128, 237, 0.16);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 900;
 }
 
 .form-error {
@@ -2742,6 +2829,8 @@ button {
   .learning-grid,
   .student-dashboard-grid,
   .student-hero-grid,
+  .personalized-path-list,
+  .personalization-setup-grid,
   .teacher-summary,
   .teacher-grid,
   .insight-columns,

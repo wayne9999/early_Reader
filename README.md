@@ -25,6 +25,7 @@ For Codex continuity and project handoff notes, see `.codex/project.md` and `PRO
 - Legal/support pages for privacy, terms, children's privacy, parent consent, teacher terms, refunds, billing help, and data deletion requests.
 - Firebase Auth account page with Google and Facebook support, plus an Instagram custom-provider placeholder.
 - Firebase Firestore profile, assignment, event, and progress repositories with local storage fallback for development.
+- Personalized student paths using grade, reading goal, recent learning events, and Learning Coach insights.
 - Shareable app URLs for each main page, including protected-page login redirects.
 - Responsive layout for desktop, tablet, and phone-sized screens.
 
@@ -192,6 +193,7 @@ Backend-only production values are documented in `docs/production-env.md` and `d
 - `docs/stripe-setup.md`
 - `docs/deployment.md`
 - `docs/firebase-setup.md`
+- `docs/personalization.md`
 
 Optional support value:
 

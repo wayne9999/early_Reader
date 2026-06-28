@@ -1,35 +1,68 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { learningActivities } from "../../data/content";
-import { recordLearningEvent } from "../../services/learningEventRepository";
+import { loadLearningEvents, recordLearningEvent } from "../../services/learningEventRepository";
+import { buildStudentPersonalizedPlan, personalizeActivityRounds } from "../../services/personalizationService";
 import { trackProductEvent } from "../../services/productAnalytics";
 import { recordActivityCompletion } from "../../services/progressRepository";
 import { celebrate, speak, speakSentence } from "../../shared/speech";
-import type { AppUser, LearningActivity, Progress } from "../../types";
+import type { AppUser, LearningActivity, LearningEvent, Progress, UserProfile } from "../../types";
 
 type LearningActivityPageProps = {
   activityId: LearningActivity["id"];
   progress: Progress;
   user: AppUser | null;
+  profile?: UserProfile | null;
   onProgressChange: (progress: Progress) => void;
 };
 
-export function LearningActivityPage({ activityId, progress, user, onProgressChange }: LearningActivityPageProps) {
+export function LearningActivityPage({ activityId, progress, user, profile, onProgressChange }: LearningActivityPageProps) {
   const activity = learningActivities.find((item) => item.id === activityId) ?? learningActivities[0];
   const [roundIndex, setRoundIndex] = useState(0);
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [answeredCorrectly, setAnsweredCorrectly] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
   const [feedback, setFeedback] = useState("Pick the answer that sounds or makes sense best.");
-  const currentRound = activity.rounds[roundIndex] ?? activity.rounds[0];
-  const roundCount = activity.rounds.length;
+  const [events, setEvents] = useState<LearningEvent[]>([]);
+  const personalizedPlan = useMemo(
+    () => buildStudentPersonalizedPlan({ profile, progress, events }),
+    [events, profile, progress]
+  );
+  const personalizedRounds = useMemo(
+    () => personalizeActivityRounds({
+      activity,
+      profile,
+      events,
+      focusAreas: personalizedPlan.focusAreas
+    }),
+    [activity, events, personalizedPlan.focusAreas, profile]
+  );
+  const currentRound = personalizedRounds.rounds[roundIndex] ?? personalizedRounds.rounds[0];
+  const roundCount = personalizedRounds.rounds.length;
+
+  useEffect(() => {
+    let isMounted = true;
+
+    loadLearningEvents(user).then((loadedEvents) => {
+      if (isMounted) {
+        setEvents(loadedEvents);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user, progress]);
 
   useEffect(() => {
     void recordLearningEvent(user, "activity_started", activity.title, activity.skill, {
       activityId: activity.id,
       rounds: roundCount,
-      currentRound: roundIndex + 1
+      currentRound: roundIndex + 1,
+      personalized: true,
+      personalizationReason: personalizedRounds.reason,
+      focusAreas: personalizedPlan.focusAreas.join(",")
     });
-  }, [activity.id, activity.skill, activity.title, roundCount, user]);
+  }, [activity.id, activity.skill, activity.title, personalizedPlan.focusAreas, personalizedRounds.reason, roundCount, roundIndex, user]);
 
   useEffect(() => {
     setRoundIndex(0);
@@ -52,7 +85,9 @@ export function LearningActivityPage({ activityId, progress, user, onProgressCha
       target: currentRound.target,
       selectedChoice: choice,
       correctChoice: currentRound.correctChoice,
-      correct: isCorrect
+      correct: isCorrect,
+      personalized: true,
+      personalizationReason: personalizedRounds.reason
     });
 
     if (!isCorrect) {
@@ -78,7 +113,9 @@ export function LearningActivityPage({ activityId, progress, user, onProgressCha
       rounds: roundCount,
       correctAnswers: nextCorrectAnswers,
       target: currentRound.target,
-      correctChoice: currentRound.correctChoice
+      correctChoice: currentRound.correctChoice,
+      personalized: true,
+      personalizationReason: personalizedRounds.reason
     });
     void trackProductEvent(user, "activity_completed", {
       activityId: activity.id,
@@ -94,7 +131,8 @@ export function LearningActivityPage({ activityId, progress, user, onProgressCha
       activityId: activity.id,
       fromRound: roundIndex + 1,
       toRound: nextRound + 1,
-      correctAnswers
+      correctAnswers,
+      personalized: true
     });
     setRoundIndex(nextRound);
     setAnsweredCorrectly(false);
@@ -111,7 +149,9 @@ export function LearningActivityPage({ activityId, progress, user, onProgressCha
       activityId: activity.id,
       rounds: roundCount,
       currentRound: 1,
-      action: "play_again"
+      action: "play_again",
+      personalized: true,
+      personalizationReason: personalizedRounds.reason
     });
   }
 
@@ -121,6 +161,9 @@ export function LearningActivityPage({ activityId, progress, user, onProgressCha
         <div>
           <p className="eyebrow">{activity.eyebrow}</p>
           <h2>{activity.title}</h2>
+          <p className="helper-text">
+            Personalized for {personalizedPlan.learnerName}: {personalizedRounds.reason}.
+          </p>
         </div>
         <button
           className="secondary-button"
@@ -131,7 +174,8 @@ export function LearningActivityPage({ activityId, progress, user, onProgressCha
               activityId: activity.id,
               round: roundIndex + 1,
               target: currentRound.target,
-              prompt: currentRound.prompt
+              prompt: currentRound.prompt,
+              personalized: true
             });
           }}
         >
@@ -145,7 +189,7 @@ export function LearningActivityPage({ activityId, progress, user, onProgressCha
           <h3>{currentRound.prompt}</h3>
           <p className="helper-text">{activity.intro}</p>
           <div className="activity-round-meter" aria-label={`${roundIndex + 1} of ${roundCount} rounds`}>
-            {activity.rounds.map((round, index) => (
+            {personalizedRounds.rounds.map((round, index) => (
               <span
                 className={index < roundIndex || (index === roundIndex && answeredCorrectly) ? "is-done" : ""}
                 key={`${round.prompt}-${index}`}
