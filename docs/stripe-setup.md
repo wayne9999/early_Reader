@@ -31,7 +31,7 @@ Repository/Firebase secrets:
 Test webhook:
 
 ```text
-https://us-central1-readnest-f9c67.cloudfunctions.net/stripeWebhookTest
+https://us-central1-readnest-dev-f9c67.cloudfunctions.net/stripeWebhookTest
 ```
 
 ## Production Stripe Configuration
@@ -94,16 +94,17 @@ Never store a short-lived `billing.stripe.com/p/session/...` URL in GitHub varia
 
 ## Production Activation Checklist
 
-1. Activate the Stripe account and complete business verification.
+1. Activate the Stripe account and complete business verification in [Stripe account onboarding](https://dashboard.stripe.com/account/onboarding).
 2. Switch Stripe Dashboard to live mode.
-3. Create live Family Plus and Teacher Pro recurring prices.
-4. Create a live donation Payment Link.
-5. Configure the live Customer Portal.
-6. Create the live webhook endpoint and copy its signing secret.
-7. Add production variables and secrets to the GitHub `production` environment.
-8. Run **Deploy Live Stripe Billing** and approve the environment gate.
-9. Promote the frontend release into `production`.
-10. Complete a low-value live transaction and refund it.
-11. Confirm `subscriptions/{uid}` updates and `testSubscriptions/{uid}` remains unchanged.
+3. Copy the live restricted or secret API key from [Stripe API keys](https://dashboard.stripe.com/apikeys). It must begin with `sk_live_`; store it as `STRIPE_LIVE_SECRET_KEY` in the GitHub `production` environment.
+4. Create live Family Plus and Teacher Pro recurring prices in [Stripe products](https://dashboard.stripe.com/products), then store their `price_...` IDs as `PROD_STRIPE_FAMILY_PLUS_PRICE_ID` and `PROD_STRIPE_TEACHER_PRO_PRICE_ID`.
+5. Create live hosted checkout/payment links in [Stripe payment links](https://dashboard.stripe.com/payment-links), then store them as `PROD_VITE_STRIPE_DONATION_LINK`, `PROD_VITE_STRIPE_FAMILY_PLUS_LINK`, and `PROD_VITE_STRIPE_TEACHER_PRO_LINK`.
+6. Configure the live Customer Portal in [Stripe customer portal settings](https://dashboard.stripe.com/settings/billing/portal), then store the production portal link as `PROD_VITE_STRIPE_CUSTOMER_PORTAL_LINK`.
+7. Create the live webhook endpoint in [Stripe webhooks](https://dashboard.stripe.com/webhooks) and copy its signing secret to `STRIPE_LIVE_WEBHOOK_SECRET`.
+8. Add production variables and secrets to the GitHub `production` environment.
+9. Run **Deploy Live Stripe Billing** and approve the environment gate.
+10. Promote the frontend release into `production`.
+11. Complete a low-value live transaction and refund it.
+12. Confirm `subscriptions/{uid}` updates and `testSubscriptions/{uid}` remains unchanged.
 
 Card data remains entirely on Stripe-hosted pages.
