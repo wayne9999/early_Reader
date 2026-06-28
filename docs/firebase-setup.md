@@ -242,7 +242,7 @@ In Firebase Console:
 
 ## Role And Assignment Flow
 
-Current MVP behavior:
+Current product behavior:
 
 1. A visitor chooses a signup path before sign-in: `parentChild` or `teacher`.
 2. After authentication, the selected path automatically creates the profile role. Parent/child creates a `student`; teacher creates a `teacher`.
@@ -308,7 +308,7 @@ For production, set privileged admin claims and paid access only from trusted ba
 
 ## AI Analysis Design
 
-The current teacher dashboard uses rule-based local analysis so the MVP can run without sending child data to an AI provider.
+The current teacher dashboard can use rule-based analysis and backend-generated insights so ReadNest can support teachers without exposing child data or AI provider keys in the browser.
 
 For production AI:
 

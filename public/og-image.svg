@@ -1,14 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
-  <title id="title">ReadNest early reading app</title>
-  <desc id="desc">Colorful preview image for ReadNest, a kids reading and memory practice app.</desc>
+  <title id="title">ReadNest personalized reading app</title>
+  <desc id="desc">Colorful preview image for ReadNest, a personalized kids reading and teacher insight app.</desc>
   <rect width="1200" height="630" fill="#fff7d7"/>
   <circle cx="120" cy="100" r="80" fill="#ff7ab6" opacity="0.35"/>
   <circle cx="1080" cy="540" r="110" fill="#2f80ed" opacity="0.22"/>
   <rect x="92" y="86" width="1016" height="458" rx="28" fill="#ffffff" stroke="#ffffff" stroke-width="10"/>
   <text x="140" y="210" fill="#1d5dbb" font-family="Arial, sans-serif" font-size="34" font-weight="700">READNEST</text>
-  <text x="140" y="320" fill="#202238" font-family="Arial, sans-serif" font-size="76" font-weight="900">Play with words.</text>
-  <text x="140" y="405" fill="#202238" font-family="Arial, sans-serif" font-size="76" font-weight="900">Grow your reading.</text>
-  <text x="145" y="478" fill="#586174" font-family="Arial, sans-serif" font-size="31">Sight words · Phonics · Fluency · Memory · Teacher insights</text>
+  <text x="140" y="320" fill="#202238" font-family="Arial, sans-serif" font-size="72" font-weight="900">A reading path</text>
+  <text x="140" y="405" fill="#202238" font-family="Arial, sans-serif" font-size="72" font-weight="900">for each child.</text>
+  <text x="145" y="478" fill="#586174" font-family="Arial, sans-serif" font-size="30">Personalized practice | Family Plus | Teacher Pro insights</text>
   <g transform="translate(845 160) rotate(-7)">
     <rect x="0" y="0" width="96" height="118" rx="14" fill="#ff6b6b"/>
     <text x="34" y="76" fill="#ffffff" font-family="Arial, sans-serif" font-size="46" font-weight="900">A</text>

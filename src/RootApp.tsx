@@ -439,10 +439,11 @@ export function RootApp() {
       if (studentActivityAccess(profile, currentView, subscription) === "locked") {
         return (
           <article className="practice-panel subscription-prompt">
-            <p className="eyebrow">Family Plus activity</p>
-            <h2>Subscribe to unlock this activity</h2>
+            <p className="eyebrow">Personalized path upgrade</p>
+            <h2>Unlock the next layer of practice</h2>
             <p className="helper-text">
-              This activity is part of the paid student path. Family Plus unlocks {paidStudentActivitiesDescription()}.
+              This activity is part of the paid student path. Family Plus unlocks {paidStudentActivitiesDescription()}
+              and keeps each learner moving through a more tailored practice plan.
             </p>
             <div className="subscription-actions">
               <button
@@ -485,11 +486,11 @@ export function RootApp() {
       if (teacherDashboardAccess(profile, subscription) === "locked") {
         return (
           <article className="practice-panel subscription-prompt">
-            <p className="eyebrow">Teacher Pro required</p>
-            <h2>Upgrade to unlock classroom tools</h2>
+            <p className="eyebrow">Teacher insight workspace</p>
+            <h2>Upgrade to review student growth signals</h2>
             <p className="helper-text">
               Teacher Pro unlocks the classroom dashboard, assigned-student analysis, report exports,
-              intervention planning, and future AI-assisted recommendations.
+              intervention planning, and AI-supported recommendations when enabled.
             </p>
             <div className="subscription-actions">
               <button
@@ -594,7 +595,7 @@ export function RootApp() {
             R
           </span>
           <div>
-            <p className="eyebrow">Early reader MVP</p>
+            <p className="eyebrow">Personalized reading paths</p>
             <h1>ReadNest</h1>
             <div className="identity-stack">
               <AccountStatusIndicator user={user} />
@@ -629,8 +630,8 @@ export function RootApp() {
 
         <section className="donation-card" aria-labelledby="donation-title">
           <p className="eyebrow">Mission fund</p>
-          <h2 id="donation-title">Help a child read</h2>
-          <p>Donations support free lessons, accessibility work, hosting, and classroom tools.</p>
+          <h2 id="donation-title">Keep practice open</h2>
+          <p>Donations support free starter activities, accessibility work, hosting, and classroom tools.</p>
           <button type="button" onClick={openDonationLink} disabled={!isStripeLinkCompatible(billingConfig.donationLink)}>
             Donate
           </button>
@@ -649,11 +650,11 @@ export function RootApp() {
       <main className="main-content">
         <section className="hero">
           <div>
-            <p className="eyebrow">A calm practice space</p>
-            <h2>Play with words. Grow your reading.</h2>
+            <p className="eyebrow">Personalized early reading</p>
+            <h2>A reading path that grows with each child.</h2>
             <p>
-              Built for kindergarten through grade 2 learners with large text, short turns, read-aloud
-              support, and caregiver-visible progress.
+              Short, playful activities adapt around grade level, reading goals, recent misses, and teacher-visible
+              progress so families know what to practice next.
             </p>
           </div>
           <div className="hero-scene" aria-hidden="true">

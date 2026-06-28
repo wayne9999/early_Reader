@@ -1,7 +1,7 @@
 {
-  "name": "ReadNest - Early Reading Practice",
+  "name": "ReadNest - Personalized Reading Practice",
   "short_name": "ReadNest",
-  "description": "Early reading, phonics, sight word, sentence fluency, memory practice, and teacher progress insights for young learners.",
+  "description": "Personalized early reading, phonics, sight word, sentence fluency, memory practice, and teacher progress insights for young learners.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

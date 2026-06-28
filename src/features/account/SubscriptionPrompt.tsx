@@ -28,10 +28,10 @@ export function SubscriptionPrompt({ user, profile, onProfileUpdated, onContinue
   const freeTitle = isTeacher ? "Free teacher account" : "Free student";
   const paidTitle = paidTier?.name ?? (isTeacher ? "Teacher Pro" : "Family Plus");
   const promptEyebrow = isTeacher ? "Teacher Pro" : "Family Plus";
-  const promptTitle = isTeacher ? "Unlock the full teaching workspace" : "Unlock the full student learning path";
+  const promptTitle = isTeacher ? "Unlock the student insight workspace" : "Unlock the full personalized path";
   const promptHelp = isTeacher
-    ? "Free teacher accounts can review the app and create a profile. Teacher Pro unlocks assigned-student data, reports, intervention planning, and AI-ready insight workflows."
-    : `Free student accounts can keep practicing with ${freeStudentActivitiesDescription()}. Family Plus unlocks more guided activities and premium learning support as the product grows.`;
+    ? "Free teacher accounts can review the app and create a profile. Teacher Pro unlocks assigned-student data, reports, intervention planning, and AI-supported insight workflows when enabled."
+    : `Free student accounts can keep practicing with ${freeStudentActivitiesDescription()}. Family Plus unlocks premium activities and a deeper path shaped around goals, missed words, and progress history.`;
 
   async function startPaidPlan() {
     setIsStartingCheckout(true);
@@ -80,7 +80,7 @@ export function SubscriptionPrompt({ user, profile, onProfileUpdated, onContinue
       <div className="subscription-compare-grid">
         <section>
           <p className="eyebrow">{freeTitle}</p>
-          <h3>{isTeacher ? "Create your profile" : "Start practicing"}</h3>
+          <h3>{isTeacher ? "Create your profile" : "Start the path"}</h3>
           <ul className="next-steps">
             {isTeacher ? (
               <>
@@ -91,7 +91,7 @@ export function SubscriptionPrompt({ user, profile, onProfileUpdated, onContinue
             ) : (
               <>
                 <li>{freeStudentActivitiesDescription()}</li>
-                <li>Basic progress saved to the student account</li>
+                <li>Basic personalized signals saved to the student account</li>
                 <li>Teacher request workflow and holding-space assignment</li>
               </>
             )}
@@ -99,7 +99,7 @@ export function SubscriptionPrompt({ user, profile, onProfileUpdated, onContinue
         </section>
         <section>
           <p className="eyebrow">{paidTitle}</p>
-          <h3>{isTeacher ? "Classroom tools unlocked" : "More practice unlocked"}</h3>
+          <h3>{isTeacher ? "Student insight unlocked" : "More personalized practice"}</h3>
           <ul className="next-steps">
             {(paidTier?.perks ?? [paidStudentActivitiesDescription()]).slice(0, 4).map((perk) => (
               <li key={perk}>{perk}</li>
@@ -127,6 +127,7 @@ export function SubscriptionPrompt({ user, profile, onProfileUpdated, onContinue
 
       <p className="helper-text">
         Paid access unlocks only after Stripe confirms checkout and Firebase receives the trusted subscription update.
+        Card details stay on Stripe-hosted checkout.
       </p>
     </article>
   );

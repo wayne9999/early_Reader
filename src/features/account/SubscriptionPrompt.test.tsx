@@ -77,7 +77,7 @@ describe("SubscriptionPrompt", () => {
       />
     );
 
-    expect(screen.getByRole("heading", { name: /unlock the full teaching workspace/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /unlock the student insight workspace/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /start teacher pro/i })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /start family plus/i })).not.toBeInTheDocument();
   });
