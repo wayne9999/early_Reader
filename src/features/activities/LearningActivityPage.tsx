@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { learningActivities } from "../../data/content";
+import { playActivityVoicePrompt } from "../../services/activityVoiceService";
 import { loadLearningEvents, recordLearningEvent } from "../../services/learningEventRepository";
 import { buildStudentPersonalizedPlan, personalizeActivityRounds } from "../../services/personalizationService";
 import { trackProductEvent } from "../../services/productAnalytics";
@@ -155,6 +156,27 @@ export function LearningActivityPage({ activityId, progress, user, profile, onPr
     });
   }
 
+  async function hearPrompt() {
+    const promptText = currentRound.voicePrompt ?? currentRound.prompt;
+    const voiceProvider = activity.voiceMode === "elevenLabs"
+      ? await playActivityVoicePrompt({
+          activityId: activity.id,
+          roundKey: `${roundIndex + 1}-${currentRound.target}`,
+          text: promptText
+        })
+      : (speakSentence(promptText), "browser");
+
+    void recordLearningEvent(user, "activity_prompt_listened", `${activity.title}: ${currentRound.target}`, activity.skill, {
+      activityId: activity.id,
+      round: roundIndex + 1,
+      target: currentRound.target,
+      prompt: promptText,
+      personalized: true,
+      premiumVoice: activity.voiceMode === "elevenLabs",
+      voiceProvider
+    });
+  }
+
   return (
     <>
       <div className="section-heading">
@@ -168,18 +190,9 @@ export function LearningActivityPage({ activityId, progress, user, profile, onPr
         <button
           className="secondary-button"
           type="button"
-          onClick={() => {
-            speakSentence(currentRound.prompt);
-            void recordLearningEvent(user, "activity_prompt_listened", `${activity.title}: ${currentRound.target}`, activity.skill, {
-              activityId: activity.id,
-              round: roundIndex + 1,
-              target: currentRound.target,
-              prompt: currentRound.prompt,
-              personalized: true
-            });
-          }}
+          onClick={() => void hearPrompt()}
         >
-          Hear prompt
+          {activity.voiceMode === "elevenLabs" ? "Hear story voice" : "Hear prompt"}
         </button>
       </div>
 

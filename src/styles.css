@@ -789,6 +789,14 @@ button {
   background: linear-gradient(135deg, #ffffff, #eaffec 46%, #fffdf2);
 }
 
+.activity-echoReader {
+  background: linear-gradient(135deg, #ffffff, #e7f0ff 48%, #ffe6f4);
+}
+
+.activity-voiceQuest {
+  background: linear-gradient(135deg, #ffffff, #fff3c7 48%, #dcf8ff);
+}
+
 .activity-hero h3 {
   font-size: clamp(1.8rem, 4vw, 3.2rem);
   line-height: 1;

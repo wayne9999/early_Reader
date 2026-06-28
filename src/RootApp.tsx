@@ -43,7 +43,9 @@ const activityNavItems: NavItem[] = [
   { id: "soundSort", label: "Sounds" },
   { id: "sentenceBuilder", label: "Sentences" },
   { id: "storyOrder", label: "Story" },
-  { id: "wordMeaning", label: "Words" }
+  { id: "wordMeaning", label: "Words" },
+  { id: "echoReader", label: "Echo" },
+  { id: "voiceQuest", label: "Voice Quest" }
 ];
 
 const legalNavItems: NavItem[] = [
@@ -434,30 +436,35 @@ export function RootApp() {
       currentView === "soundSort" ||
       currentView === "sentenceBuilder" ||
       currentView === "storyOrder" ||
-      currentView === "wordMeaning"
+      currentView === "wordMeaning" ||
+      currentView === "echoReader" ||
+      currentView === "voiceQuest"
     ) {
       if (studentActivityAccess(profile, currentView, subscription) === "locked") {
+        const activityUpgradeTier = profile?.role === "teacher" ? "teacherPro" : "familyPlus";
+        const activityUpgradeName = profile?.role === "teacher" ? "Teacher Pro" : "Family Plus";
+
         return (
           <article className="practice-panel subscription-prompt">
             <p className="eyebrow">Personalized path upgrade</p>
             <h2>Unlock the next layer of practice</h2>
             <p className="helper-text">
-              This activity is part of the paid student path. Family Plus unlocks {paidStudentActivitiesDescription()}
-              and keeps each learner moving through a more tailored practice plan.
+              This activity is part of the paid path. {activityUpgradeName} unlocks {paidStudentActivitiesDescription()}
+              {profile?.role === "teacher" ? " for teacher review and student support." : " for students."}
             </p>
             <div className="subscription-actions">
               <button
                 className="primary-button"
                 type="button"
                 onClick={() => {
-                  void startSubscriptionCheckout("familyPlus").then((checkoutUrl) => {
+                  void startSubscriptionCheckout(activityUpgradeTier).then((checkoutUrl) => {
                     if (checkoutUrl) {
                       window.open(checkoutUrl, "_blank", "noopener,noreferrer");
                     }
                   });
                 }}
               >
-                Start Family Plus
+                Start {activityUpgradeName}
               </button>
               <button className="secondary-button" type="button" onClick={() => navigateToView("rhymes")}>
                 Use free activities

@@ -37,6 +37,8 @@ describe("appRoutes", () => {
     expect(parseAppRoute("#/find-teacher")).toEqual({ view: "findTeacher", nextView: null });
     expect(parseAppRoute("#/children-privacy")).toEqual({ view: "childrenPrivacy", nextView: null });
     expect(parseAppRoute("#/sentence-builder")).toEqual({ view: "sentenceBuilder", nextView: null });
+    expect(parseAppRoute("#/echo-reader")).toEqual({ view: "echoReader", nextView: null });
+    expect(parseAppRoute("#/voice-quest")).toEqual({ view: "voiceQuest", nextView: null });
     expect(parseAppRoute("#/account?next=teacher")).toEqual({ view: "account", nextView: "teacher" });
     expect(parseAppRoute("")).toEqual({ view: "reading", nextView: null });
   });
@@ -45,6 +47,7 @@ describe("appRoutes", () => {
     expect(hashForView("support")).toBe("#/support");
     expect(hashForView("refundPolicy")).toBe("#/refund-policy");
     expect(hashForView("soundSort")).toBe("#/sound-sort");
+    expect(hashForView("voiceQuest")).toBe("#/voice-quest");
     expect(hashForView("account", "progress")).toBe("#/account?next=progress");
   });
 
@@ -55,6 +58,7 @@ describe("appRoutes", () => {
     expect(requiresAuthentication("rhymes")).toBe(true);
     expect(canAccessView(studentProfile, "progress")).toBe(true);
     expect(canAccessView(studentProfile, "wordMeaning")).toBe(true);
+    expect(canAccessView(studentProfile, "echoReader")).toBe(true);
     expect(canAccessView(studentProfile, "teacher")).toBe(false);
     expect(canAccessView(teacherProfile, "teacher")).toBe(true);
     expect(canAccessView(teacherProfile, "storyOrder")).toBe(true);

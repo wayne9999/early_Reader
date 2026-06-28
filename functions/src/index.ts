@@ -18,6 +18,7 @@ const stripeLiveSecretKey = defineSecret("STRIPE_LIVE_SECRET_KEY");
 const stripeLiveWebhookSecret = defineSecret("STRIPE_LIVE_WEBHOOK_SECRET");
 const openAiApiKey = defineSecret("OPENAI_API_KEY");
 const resendApiKey = defineSecret("RESEND_API_KEY");
+const elevenLabsApiKey = defineSecret("ELEVENLABS_API_KEY");
 const appBaseUrl = process.env.READNEST_APP_BASE_URL ?? "https://myreadnest.org/";
 const aiModel = process.env.READNEST_AI_MODEL ?? "gpt-5.5";
 const supportNotificationEmail = process.env.SUPPORT_NOTIFICATION_EMAIL ?? "support@myreadnest.org";
@@ -66,7 +67,8 @@ type RateLimitAction =
   | "manageAssignment"
   | "learningRecommendation"
   | "studentInsight"
-  | "supportCase";
+  | "supportCase"
+  | "voiceClip";
 
 async function enforceUserRateLimit(options: {
   userId: string;
@@ -380,6 +382,48 @@ async function assertCanRequestStudentInsight(requesterId: string, studentId: st
 
   throw new HttpsError("permission-denied", "Only assigned teachers, admins, or the student account can request this insight.");
 }
+
+function subscriptionCollectionName() {
+  return readnestEnvironment === "production" ? "subscriptions" : "testSubscriptions";
+}
+
+async function assertCanCreateVoiceClip(userId: string) {
+  const db = getFirestore();
+  const [userDoc, subscriptionDoc] = await Promise.all([
+    db.doc(`users/${userId}`).get(),
+    db.doc(`${subscriptionCollectionName()}/${userId}`).get()
+  ]);
+  const role = userDoc.data()?.role;
+  const subscription = subscriptionDoc.data() ?? {};
+  const tier = subscription.tier;
+  const status = subscription.status;
+
+  if (role === "admin") {
+    return;
+  }
+
+  if (role === "student" && tier === "familyPlus" && status === "active") {
+    return;
+  }
+
+  if (role === "teacher" && tier === "teacherPro" && status === "active") {
+    return;
+  }
+
+  throw new HttpsError("permission-denied", "Premium voice activities require an active Family Plus or Teacher Pro subscription.");
+}
+
+function sanitizeVoiceText(value: unknown) {
+  const text = cleanUserText(value, 260);
+
+  if (text.length < 3) {
+    throw new HttpsError("invalid-argument", "Voice text is too short.");
+  }
+
+  return text;
+}
+
+const premiumVoiceActivityIds = new Set(["echoReader", "voiceQuest"]);
 
 function estimateOpenAiCost(inputTokens: number, outputTokens: number) {
   const inputCost = (inputTokens / 1_000_000) * aiEstimatedInputTokenCostPerMillionUsd;
@@ -1608,6 +1652,108 @@ export const createLearningRecommendation = onCall(
       jobId,
       status: "queued",
       message: "Recommendation request recorded. The backend worker will generate an evidence-based summary asynchronously."
+    };
+  }
+);
+
+export const createActivityVoiceClip = onCall(
+  {
+    region: "us-central1",
+    enforceAppCheck,
+    secrets: [elevenLabsApiKey],
+    maxInstances: 10,
+    timeoutSeconds: 30,
+    memory: "256MiB"
+  },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Sign in before using premium voice activities.");
+    }
+
+    const userId = request.auth.uid;
+    const activityId = cleanUserText(request.data?.activityId, 60);
+    const roundKey = cleanUserText(request.data?.roundKey, 100);
+    const text = sanitizeVoiceText(request.data?.text);
+
+    if (!premiumVoiceActivityIds.has(activityId)) {
+      throw new HttpsError("invalid-argument", "Voice narration is available only for premium voice activities.");
+    }
+
+    await enforceUserRateLimit({
+      userId,
+      action: "voiceClip",
+      maxAttempts: 20,
+      windowMs: 60 * 60 * 1000
+    });
+    await assertCanCreateVoiceClip(userId);
+
+    const apiKey = elevenLabsApiKey.value();
+
+    if (!apiKey) {
+      throw new HttpsError("failed-precondition", "Premium voice provider is not configured yet.");
+    }
+
+    const voiceId = process.env.ELEVENLABS_VOICE_ID ?? "EXAVITQu4vr4xnSDxMaL";
+    const modelId = process.env.ELEVENLABS_MODEL_ID ?? "eleven_multilingual_v2";
+    const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "xi-api-key": apiKey
+      },
+      body: JSON.stringify({
+        text,
+        model_id: modelId,
+        voice_settings: {
+          stability: 0.58,
+          similarity_boost: 0.78,
+          style: 0.25,
+          use_speaker_boost: true
+        }
+      })
+    });
+
+    if (!response.ok) {
+      const providerMessage = await response.text().catch(() => "");
+
+      await writeOperationalLog({
+        severity: "warning",
+        eventName: "elevenlabs_voice_clip_failed",
+        message: `ElevenLabs returned ${response.status}.`,
+        resourceType: "activityVoiceClip",
+        resourceId: `${activityId}:${roundKey}`,
+        metadata: {
+          userId,
+          activityId,
+          status: response.status,
+          providerMessage: providerMessage.slice(0, 240)
+        }
+      });
+
+      throw new HttpsError("unavailable", "Premium voice could not be created right now.");
+    }
+
+    const contentType = response.headers.get("content-type") ?? "audio/mpeg";
+    const audioBytes = Buffer.from(await response.arrayBuffer());
+
+    await writeOperationalLog({
+      severity: "info",
+      eventName: "elevenlabs_voice_clip_created",
+      message: "Premium activity voice clip created.",
+      resourceType: "activityVoiceClip",
+      resourceId: `${activityId}:${roundKey}`,
+      metadata: {
+        userId,
+        activityId,
+        byteLength: audioBytes.byteLength,
+        modelId
+      }
+    });
+
+    return {
+      provider: "elevenLabs",
+      audioMimeType: contentType,
+      audioBase64: audioBytes.toString("base64")
     };
   }
 );

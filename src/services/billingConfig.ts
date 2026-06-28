@@ -46,7 +46,7 @@ export const subscriptionTiers: SubscriptionTier[] = [
     description: "A useful starter path for one young reader.",
     perks: [
       "Guest Reading and Memory activities",
-      "Signed-in Rhymes, Sounds, and Sentences practice",
+      "Signed-in Rhymes and Sounds practice",
       "Basic personalized dashboard signals",
       "Read-aloud support"
     ],
@@ -60,6 +60,7 @@ export const subscriptionTiers: SubscriptionTier[] = [
     description: "A richer personalized path for home reading growth.",
     perks: [
       "Unlock premium Story Steps and Word Garden practice",
+      "Unlock Echo Reader and Voice Quest premium voice games",
       "More guided packs shaped around missed words and goals",
       "Cloud progress sync across devices",
       "Printable weekly practice plans",
@@ -76,6 +77,7 @@ export const subscriptionTiers: SubscriptionTier[] = [
     description: "Actionable student insight for targeted reading support.",
     perks: [
       "Assigned-student roster and classroom dashboard",
+      "Premium activity review including voice-powered practice",
       "Strength and growth-area analysis",
       "Intervention group planning",
       "Exportable progress summaries",

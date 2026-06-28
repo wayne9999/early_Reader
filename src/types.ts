@@ -8,6 +8,8 @@ export type AppView =
   | "sentenceBuilder"
   | "storyOrder"
   | "wordMeaning"
+  | "echoReader"
+  | "voiceQuest"
   | "teacher"
   | "donate"
   | "support"
@@ -224,19 +226,21 @@ export type SocialProvider = "google" | "facebook" | "instagram";
 export type SkillArea = "phonics" | "sightWords" | "fluency" | "workingMemory" | "consistency";
 
 export type LearningActivity = {
-  id: "rhymes" | "soundSort" | "sentenceBuilder" | "storyOrder" | "wordMeaning";
+  id: "rhymes" | "soundSort" | "sentenceBuilder" | "storyOrder" | "wordMeaning" | "echoReader" | "voiceQuest";
   title: string;
   shortLabel: string;
   routeLabel: string;
   eyebrow: string;
   skill: SkillArea;
   intro: string;
+  voiceMode?: "standard" | "elevenLabs";
   rounds: LearningActivityRound[];
 };
 
 export type LearningActivityRound = {
   prompt: string;
   target: string;
+  voicePrompt?: string;
   choices: string[];
   correctChoice: string;
   successMessage: string;
