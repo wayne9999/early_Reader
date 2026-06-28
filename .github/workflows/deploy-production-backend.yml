@@ -42,6 +42,8 @@ jobs:
       READNEST_ENFORCE_APP_CHECK: ${{ vars.READNEST_ENFORCE_APP_CHECK }}
       SUPPORT_NOTIFICATION_EMAIL: ${{ vars.SUPPORT_NOTIFICATION_EMAIL }}
       SUPPORT_FROM_EMAIL: ${{ vars.SUPPORT_FROM_EMAIL }}
+      PROD_STRIPE_FAMILY_PLUS_PRICE_ID: ${{ vars.PROD_STRIPE_FAMILY_PLUS_PRICE_ID }}
+      PROD_STRIPE_TEACHER_PRO_PRICE_ID: ${{ vars.PROD_STRIPE_TEACHER_PRO_PRICE_ID }}
     steps:
       - name: Checkout production branch
         uses: actions/checkout@v4
@@ -80,6 +82,13 @@ jobs:
           npm run check --prefix functions
           npm run build --prefix functions
 
+      - name: Validate production Stripe price IDs
+        if: ${{ inputs.target == 'functions' || inputs.target == 'all' }}
+        shell: bash
+        run: |
+          [[ "$PROD_STRIPE_FAMILY_PLUS_PRICE_ID" == price_* ]] || { echo "Missing PROD_STRIPE_FAMILY_PLUS_PRICE_ID."; exit 1; }
+          [[ "$PROD_STRIPE_TEACHER_PRO_PRICE_ID" == price_* ]] || { echo "Missing PROD_STRIPE_TEACHER_PRO_PRICE_ID."; exit 1; }
+
       - name: Write production Functions environment
         if: ${{ inputs.target == 'functions' || inputs.target == 'all' }}
         working-directory: functions
@@ -88,6 +97,8 @@ jobs:
             echo "READNEST_ENVIRONMENT=production"
             echo "READNEST_EXPECTED_FIREBASE_PROJECT_ID=readnest-f9c67"
             echo "READNEST_APP_BASE_URL=https://myreadnest.org/"
+            echo "STRIPE_LIVE_FAMILY_PLUS_PRICE_ID=${PROD_STRIPE_FAMILY_PLUS_PRICE_ID}"
+            echo "STRIPE_LIVE_TEACHER_PRO_PRICE_ID=${PROD_STRIPE_TEACHER_PRO_PRICE_ID}"
             echo "READNEST_AI_MODEL=${READNEST_AI_MODEL:-gpt-5.5}"
             echo "READNEST_AI_WARNING_LIMIT_USD=${READNEST_AI_WARNING_LIMIT_USD:-10}"
             echo "READNEST_AI_MONTHLY_LIMIT_USD=${READNEST_AI_MONTHLY_LIMIT_USD:-15}"

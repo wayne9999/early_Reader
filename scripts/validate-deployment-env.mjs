@@ -4,6 +4,9 @@ const firebaseProjectId = process.env.VITE_FIREBASE_PROJECT_ID;
 const expectedFirebaseProjectId = process.env.VITE_EXPECTED_FIREBASE_PROJECT_ID;
 const forbiddenFirebaseProjectId = process.env.VITE_FORBIDDEN_FIREBASE_PROJECT_ID;
 const donationLink = process.env.VITE_STRIPE_DONATION_LINK ?? "";
+const familyPlusLink = process.env.VITE_STRIPE_FAMILY_PLUS_LINK ?? "";
+const teacherProLink = process.env.VITE_STRIPE_TEACHER_PRO_LINK ?? "";
+const customerPortalLink = process.env.VITE_STRIPE_CUSTOMER_PORTAL_LINK ?? "";
 
 const errors = [];
 
@@ -47,12 +50,21 @@ if (appEnvironment === "development" && stripeMode !== "test") {
   errors.push("Development builds must use VITE_STRIPE_MODE=test.");
 }
 
-if (stripeMode === "live" && donationLink.includes("/test_")) {
-  errors.push("Production donation link points to a Stripe test Payment Link.");
-}
+const stripeLinks = [
+  ["donation", donationLink],
+  ["Family Plus", familyPlusLink],
+  ["Teacher Pro", teacherProLink],
+  ["customer portal", customerPortalLink]
+].filter(([, link]) => Boolean(link));
 
-if (stripeMode === "test" && donationLink && !donationLink.includes("/test_")) {
-  errors.push("Development donation link must point to a Stripe test Payment Link.");
+for (const [name, link] of stripeLinks) {
+  if (stripeMode === "live" && link.includes("/test_")) {
+    errors.push(`Production ${name} link points to a Stripe test URL.`);
+  }
+
+  if (stripeMode === "test" && !link.includes("/test_")) {
+    errors.push(`Development ${name} link must point to a Stripe test URL.`);
+  }
 }
 
 if (errors.length) {
