@@ -5,9 +5,10 @@ export type AppRouteState = {
   nextView: AppView | null;
 };
 
-export const defaultView: AppView = "reading";
+export const defaultView: AppView = "home";
 
 export const routePathByView: Record<AppView, string> = {
+  home: "home",
   reading: "reading",
   memory: "memory",
   progress: "progress",
@@ -36,6 +37,7 @@ const viewByRoutePath = Object.fromEntries(
 ) as Record<string, AppView>;
 
 const guestViews = new Set<AppView>([
+  "home",
   "reading",
   "memory",
   "donate",
@@ -52,6 +54,7 @@ const pendingAuthRouteKey = "readnest-pending-auth-route-v1";
 
 const viewsByRole: Record<UserRole, Set<AppView>> = {
   student: new Set([
+    "home",
     "reading",
     "memory",
     "progress",
@@ -74,6 +77,7 @@ const viewsByRole: Record<UserRole, Set<AppView>> = {
     "account"
   ]),
   teacher: new Set([
+    "home",
     "teacher",
     "reading",
     "memory",
@@ -95,6 +99,7 @@ const viewsByRole: Record<UserRole, Set<AppView>> = {
     "account"
   ]),
   admin: new Set([
+    "home",
     "teacher",
     "reading",
     "memory",
