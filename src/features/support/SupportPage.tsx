@@ -30,18 +30,18 @@ export function SupportPage({ initialFocus = "plans", profile = null, user = nul
 const donationImpact = [
   {
     amount: "$5",
-    title: "Keep practice online",
-    text: "Helps cover reliable hosting so families can open ReadNest whenever practice time appears."
+    title: "Keep free practice online",
+    text: "Helps cover reliable hosting so families can open starter activities whenever practice time appears."
   },
   {
     amount: "$15",
-    title: "Grow the lesson shelf",
-    text: "Supports new sight-word sets, sentence practice, memory themes, and read-aloud content."
+    title: "Grow personalized lessons",
+    text: "Supports new sight-word sets, sentence practice, memory themes, and content that adapts to learner needs."
   },
   {
     amount: "$30",
-    title: "Help classrooms",
-    text: "Funds teacher tools, accessibility testing, progress views, and kid-friendly improvements."
+    title: "Strengthen teacher insight",
+    text: "Funds dashboard improvements, accessibility testing, progress views, and kid-friendly learning design."
   }
 ];
 
@@ -52,7 +52,7 @@ const supportTopics = [
   },
   {
     title: "Student progress",
-    text: "Understand reading history, memory practice, daily goals, strengths, and areas needing review."
+    text: "Understand personalized practice history, daily goals, strengths, and areas needing review."
   },
   {
     title: "Teacher setup",
@@ -60,7 +60,7 @@ const supportTopics = [
   },
   {
     title: "Billing and packages",
-    text: "Review family and teacher plans, donation checkout, and what is included before upgrading."
+    text: "Review Family Plus, Teacher Pro, donation checkout, and what is included before upgrading."
   },
   {
     title: "Cancel or update billing",
@@ -113,16 +113,16 @@ function DonationPage() {
       <div className="section-heading">
         <div>
           <p className="eyebrow">Donate to ReadNest</p>
-          <h2>Help children keep reading practice within reach</h2>
+          <h2>Help every child keep a reading path within reach</h2>
         </div>
       </div>
 
       <section className="donation-hero practice-panel">
         <div className="donation-hero-copy">
           <p className="eyebrow">Mission fund</p>
-          <h3>Every gift helps a young reader get one more calm, playful practice moment.</h3>
+          <h3>Every gift helps keep starter practice open while ReadNest grows smarter for each learner.</h3>
           <p className="helper-text">
-            Donations help keep ReadNest accessible while funding lessons, accessibility improvements,
+            Donations help fund free starter activities, personalized lesson content, accessibility improvements,
             teacher tools, hosting, and friendly reading experiences for early elementary learners.
           </p>
           <div className="donation-actions">
@@ -158,10 +158,10 @@ function DonationPage() {
       <section className="donation-use-panel practice-panel">
         <div>
           <p className="eyebrow">Where gifts go</p>
-          <h3>Built around kids, caregivers, and classrooms.</h3>
+          <h3>Built around personalized practice and adult clarity.</h3>
           <p className="helper-text">
-            The goal is simple: make short reading practice feel inviting, track progress clearly, and help
-            adults know where a child needs support next.
+            The goal is simple: make short reading practice feel inviting, personalize the next step, and help
+            adults know where a child needs support next without guessing.
           </p>
         </div>
         <ul className="donation-use-list">
@@ -260,17 +260,17 @@ function SupportCenterPage({ profile, user }: { profile: UserProfile | null; use
       <div className="section-heading">
         <div>
           <p className="eyebrow">ReadNest support</p>
-          <h2>Support center for families and teachers</h2>
+          <h2>Support for families, teachers, and subscriptions</h2>
         </div>
       </div>
 
       <section className="support-center-hero practice-panel">
         <div>
           <p className="eyebrow">How can we help?</p>
-          <h3>Get help with accounts, learners, progress, and packages.</h3>
+          <h3>Get help with accounts, personalized paths, progress, and billing.</h3>
           <p className="helper-text">
             Start here when something feels unclear. ReadNest separates guest, student, teacher, and admin
-            experiences so each person sees the right tools and the right learning data.
+            experiences so each person sees the right tools, paid access, and learning data.
           </p>
         </div>
         <a className="support-action" href={supportMailtoHref()}>
@@ -292,7 +292,7 @@ function SupportCenterPage({ profile, user }: { profile: UserProfile | null; use
           <p className="eyebrow">Contact us</p>
           <h3>Send a message to ReadNest support</h3>
           <p className="helper-text">
-            Signed-in families and teachers can send billing, deletion, teacher verification, or technical messages.
+            Signed-in families and teachers can send billing, deletion, teacher verification, personalization, or technical messages.
             ReadNest stores the request in Firebase and alerts the support team when backend email is configured.
           </p>
           <form className="support-case-form" onSubmit={(event) => void submitSupportCase(event)}>
@@ -390,8 +390,8 @@ function SupportCenterPage({ profile, user }: { profile: UserProfile | null; use
             <h3>Upgrade when you need more support</h3>
           </div>
           <p className="helper-text">
-            Free practice stays available. Paid plans add more family and classroom tools when a learner needs
-            deeper history, planning, and reporting.
+            Free practice stays available. Paid plans add deeper personalization for families and richer classroom
+            insight for teachers when a learner needs more structured support.
           </p>
         </div>
 

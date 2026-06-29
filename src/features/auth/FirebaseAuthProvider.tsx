@@ -1,3 +1,4 @@
+import { FirebaseError } from "firebase/app";
 import {
   createUserWithEmailAndPassword,
   FacebookAuthProvider,
@@ -63,13 +64,22 @@ export function FirebaseReadNestAuthProvider({ children }: PropsWithChildren) {
           return;
         }
 
-        if (provider === "instagram") {
-          window.alert("Instagram sign-in needs a custom provider or Auth0 connection. Google and Facebook are ready for Firebase.");
-          return;
+        const authProvider = provider === "google" ? new GoogleAuthProvider() : new FacebookAuthProvider();
+
+        if (provider === "facebook") {
+          authProvider.addScope("email");
+          authProvider.addScope("public_profile");
         }
 
-        const authProvider = provider === "google" ? new GoogleAuthProvider() : new FacebookAuthProvider();
-        await signInWithPopup(runtime.auth, authProvider);
+        try {
+          await signInWithPopup(runtime.auth, authProvider);
+        } catch (error) {
+          if (error instanceof FirebaseError && error.code === "auth/operation-not-allowed") {
+            throw new Error("Facebook sign-in is not enabled in Firebase yet. Enable Facebook under Firebase Auth sign-in providers.");
+          }
+
+          throw error;
+        }
       },
       async signInWithEmail(input) {
         if (!runtime) {

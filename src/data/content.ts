@@ -567,5 +567,209 @@ export const learningActivities: LearningActivity[] = [
         coachMessage: "Look for something kids can play with."
       }
     ]
+  },
+  {
+    id: "echoReader",
+    title: "Echo Reader",
+    shortLabel: "Echo",
+    routeLabel: "Echo Reader",
+    eyebrow: "Listen, echo, choose",
+    skill: "fluency",
+    intro: "Premium voice practice helps children hear smooth expression before choosing the matching sentence.",
+    voiceMode: "elevenLabs",
+    rounds: [
+      {
+        prompt: "Listen to the sentence. Which one did you hear?",
+        target: "The sun is up.",
+        voicePrompt: "The sun is up.",
+        choices: ["The sun is up.", "The dog is up.", "The sun is red.", "The cup is up."],
+        correctChoice: "The sun is up.",
+        successMessage: "Yes. You matched the sentence you heard.",
+        coachMessage: "Listen for the exact words from the voice."
+      },
+      {
+        prompt: "Listen to the sentence. Which one did you hear?",
+        target: "I can hop.",
+        voicePrompt: "I can hop.",
+        choices: ["I can hop.", "I can help.", "I can nap.", "I see hop."],
+        correctChoice: "I can hop.",
+        successMessage: "Right. I can hop is the sentence.",
+        coachMessage: "Try again and listen for the action word."
+      },
+      {
+        prompt: "Listen to the sentence. Which one did you hear?",
+        target: "The fish can swim.",
+        voicePrompt: "The fish can swim.",
+        choices: ["The fish can swim.", "The ship can swim.", "The fish can sit.", "A fish can jump."],
+        correctChoice: "The fish can swim.",
+        successMessage: "Great listening. Fish and swim belong together.",
+        coachMessage: "Listen for who the sentence is about and what it can do."
+      },
+      {
+        prompt: "Listen to the sentence. Which one did you hear?",
+        target: "We read a book.",
+        voicePrompt: "We read a book.",
+        choices: ["We read a book.", "We red a book.", "We ride a bike.", "We see a book."],
+        correctChoice: "We read a book.",
+        successMessage: "Correct. You heard read a book.",
+        coachMessage: "Listen for the middle action word."
+      },
+      {
+        prompt: "Listen to the sentence. Which one did you hear?",
+        target: "My hat is red.",
+        voicePrompt: "My hat is red.",
+        choices: ["My hat is red.", "My cat is red.", "My hat is big.", "The hat is red."],
+        correctChoice: "My hat is red.",
+        successMessage: "Yes. My hat is red matches the voice.",
+        coachMessage: "Listen for the first word and the color word."
+      },
+      {
+        prompt: "Listen to the sentence. Which one did you hear?",
+        target: "The frog can jump.",
+        voicePrompt: "The frog can jump.",
+        choices: ["The frog can jump.", "The dog can jump.", "The frog can run.", "A frog can hop."],
+        correctChoice: "The frog can jump.",
+        successMessage: "Nice work. Frog can jump is correct.",
+        coachMessage: "Listen for the animal and the action."
+      },
+      {
+        prompt: "Listen to the sentence. Which one did you hear?",
+        target: "Dad has a map.",
+        voicePrompt: "Dad has a map.",
+        choices: ["Dad has a map.", "Dad has a mop.", "Mom has a map.", "Dad had a map."],
+        correctChoice: "Dad has a map.",
+        successMessage: "Right. You matched dad has a map.",
+        coachMessage: "Listen for who has something and what it is."
+      },
+      {
+        prompt: "Listen to the sentence. Which one did you hear?",
+        target: "The green leaf fell.",
+        voicePrompt: "The green leaf fell.",
+        choices: ["The green leaf fell.", "The green leaf is big.", "The leaf is green.", "The green frog fell."],
+        correctChoice: "The green leaf fell.",
+        successMessage: "Correct. The green leaf fell is the sentence.",
+        coachMessage: "Listen for the describing word and what happened."
+      },
+      {
+        prompt: "Listen to the sentence. Which one did you hear?",
+        target: "I like the story.",
+        voicePrompt: "I like the story.",
+        choices: ["I like the story.", "I write the story.", "I like the store.", "I see the story."],
+        correctChoice: "I like the story.",
+        successMessage: "Yes. You heard I like the story.",
+        coachMessage: "Listen for the word after I."
+      },
+      {
+        prompt: "Listen to the sentence. Which one did you hear?",
+        target: "Can you help me?",
+        voicePrompt: "Can you help me?",
+        choices: ["Can you help me?", "Can you hear me?", "Can you hop with me?", "Can I help you?"],
+        correctChoice: "Can you help me?",
+        successMessage: "Excellent. You matched the question.",
+        coachMessage: "Listen for the words can you and help me."
+      }
+    ]
+  },
+  {
+    id: "voiceQuest",
+    title: "Voice Quest",
+    shortLabel: "Voice",
+    routeLabel: "Voice Quest",
+    eyebrow: "Hear a clue, pick the answer",
+    skill: "sightWords",
+    intro: "Premium narrated clues turn vocabulary and comprehension practice into a quick listening quest.",
+    voiceMode: "elevenLabs",
+    rounds: [
+      {
+        prompt: "Listen to the clue. Which word fits?",
+        target: "Something bright in the sky",
+        voicePrompt: "I am bright. I shine in the sky. You can see me in the daytime.",
+        choices: ["sun", "map", "fish", "hat"],
+        correctChoice: "sun",
+        successMessage: "Yes. The sun is bright in the sky.",
+        coachMessage: "Think about what shines during the day."
+      },
+      {
+        prompt: "Listen to the clue. Which word fits?",
+        target: "Something you read",
+        voicePrompt: "I have pages. You can read my words and look at my pictures.",
+        choices: ["book", "shoe", "cup", "rain"],
+        correctChoice: "book",
+        successMessage: "Right. A book has pages to read.",
+        coachMessage: "Listen for pages, words, and pictures."
+      },
+      {
+        prompt: "Listen to the clue. Which word fits?",
+        target: "An animal that can bark",
+        voicePrompt: "I am an animal. I can bark and wag my tail.",
+        choices: ["dog", "leaf", "pen", "cake"],
+        correctChoice: "dog",
+        successMessage: "Correct. A dog can bark.",
+        coachMessage: "Think about the animal that barks."
+      },
+      {
+        prompt: "Listen to the clue. Which word fits?",
+        target: "Something you use to write",
+        voicePrompt: "You hold me in your hand. I help you write letters and words.",
+        choices: ["pencil", "apple", "frog", "bed"],
+        correctChoice: "pencil",
+        successMessage: "Yes. A pencil helps you write.",
+        coachMessage: "Listen for the tool used for writing."
+      },
+      {
+        prompt: "Listen to the clue. Which word fits?",
+        target: "Something you wear on your head",
+        voicePrompt: "I can sit on your head. I help keep sun out of your eyes.",
+        choices: ["hat", "map", "fish", "desk"],
+        correctChoice: "hat",
+        successMessage: "Right. A hat goes on your head.",
+        coachMessage: "Think about what you wear on your head."
+      },
+      {
+        prompt: "Listen to the clue. Which word fits?",
+        target: "A place to play outside",
+        voicePrompt: "You can swing, run, and play outside here.",
+        choices: ["park", "sock", "milk", "chair"],
+        correctChoice: "park",
+        successMessage: "Correct. A park is a place to play.",
+        coachMessage: "Listen for the place where you can play outside."
+      },
+      {
+        prompt: "Listen to the clue. Which word fits?",
+        target: "Something wet from the sky",
+        voicePrompt: "I fall from clouds. I make puddles on the ground.",
+        choices: ["rain", "ball", "ship", "green"],
+        correctChoice: "rain",
+        successMessage: "Yes. Rain falls from clouds.",
+        coachMessage: "Think about what falls from clouds."
+      },
+      {
+        prompt: "Listen to the clue. Which word fits?",
+        target: "A color of grass",
+        voicePrompt: "I am a color. Grass and leaves can be this color.",
+        choices: ["green", "jump", "book", "hand"],
+        correctChoice: "green",
+        successMessage: "Right. Grass and leaves can be green.",
+        coachMessage: "Listen for the color clue."
+      },
+      {
+        prompt: "Listen to the clue. Which word fits?",
+        target: "Something you can throw and catch",
+        voicePrompt: "You can roll me, throw me, kick me, or catch me.",
+        choices: ["ball", "soap", "leaf", "desk"],
+        correctChoice: "ball",
+        successMessage: "Correct. A ball can be thrown and caught.",
+        coachMessage: "Think about the toy you can roll or throw."
+      },
+      {
+        prompt: "Listen to the clue. Which word fits?",
+        target: "A part of your body",
+        voicePrompt: "I am part of your body. I help you wave, clap, and hold things.",
+        choices: ["hand", "cup", "frog", "chair"],
+        correctChoice: "hand",
+        successMessage: "Excellent. A hand can wave, clap, and hold things.",
+        coachMessage: "Listen for the body part that helps you hold things."
+      }
+    ]
   }
 ];

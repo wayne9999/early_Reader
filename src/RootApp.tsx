@@ -33,32 +33,34 @@ import { loadTrustedSubscription } from "./services/subscriptionRepository";
 import { loadUserProfile } from "./services/userProfileRepository";
 import type { AppUser, AppView, Progress, SignupPath, SubscriptionRecord, UserProfile, UserRole } from "./types";
 
-type NavItem = { id: AppView; label: string };
+type NavItem = { id: AppView; label: string; icon: string; badge?: string };
 type NavGroup = { title: string; items: NavItem[]; defaultOpen?: boolean };
 
 const activityNavItems: NavItem[] = [
-  { id: "reading", label: "Reading" },
-  { id: "memory", label: "Memory" },
-  { id: "rhymes", label: "Rhymes" },
-  { id: "soundSort", label: "Sounds" },
-  { id: "sentenceBuilder", label: "Sentences" },
-  { id: "storyOrder", label: "Story" },
-  { id: "wordMeaning", label: "Words" }
+  { id: "reading", label: "Reading", icon: "Aa" },
+  { id: "memory", label: "Memory", icon: "?" },
+  { id: "rhymes", label: "Rhymes", icon: "=" },
+  { id: "soundSort", label: "Sounds", icon: ">" },
+  { id: "sentenceBuilder", label: "Sentences", icon: "." },
+  { id: "storyOrder", label: "Story", icon: "1" },
+  { id: "wordMeaning", label: "Words", icon: "!" },
+  { id: "echoReader", label: "Echo", icon: ">" },
+  { id: "voiceQuest", label: "Voice Quest", icon: "*" }
 ];
 
 const legalNavItems: NavItem[] = [
-  { id: "privacy", label: "Privacy" },
-  { id: "terms", label: "Terms" },
-  { id: "childrenPrivacy", label: "Children" },
-  { id: "refundPolicy", label: "Refunds" }
+  { id: "privacy", label: "Privacy", icon: "i" },
+  { id: "terms", label: "Terms", icon: "#" },
+  { id: "childrenPrivacy", label: "Children", icon: "K" },
+  { id: "refundPolicy", label: "Refunds", icon: "$" }
 ];
 
 const studentNavGroups: NavGroup[] = [
   {
     title: "My space",
     items: [
-      { id: "progress", label: "Dashboard" },
-      { id: "findTeacher", label: "Find Teacher" }
+      { id: "progress", label: "Dashboard", icon: "^" },
+      { id: "findTeacher", label: "Find Teacher", icon: "T" }
     ],
     defaultOpen: true
   },
@@ -66,9 +68,9 @@ const studentNavGroups: NavGroup[] = [
   {
     title: "Help",
     items: [
-      { id: "donate", label: "Donate" },
-      { id: "support", label: "Support" },
-      { id: "account", label: "Account" }
+      { id: "donate", label: "Donate", icon: "$", badge: "Mission" },
+      { id: "support", label: "Support", icon: "?" },
+      { id: "account", label: "Account", icon: "R" }
     ],
     defaultOpen: true
   },
@@ -76,14 +78,14 @@ const studentNavGroups: NavGroup[] = [
 ];
 
 const teacherNavGroups: NavGroup[] = [
-  { title: "Workspace", items: [{ id: "teacher", label: "Dashboard" }], defaultOpen: true },
+  { title: "Workspace", items: [{ id: "teacher", label: "Dashboard", icon: "^" }], defaultOpen: true },
   { title: "Activities", items: activityNavItems, defaultOpen: true },
   {
     title: "Help",
     items: [
-      { id: "support", label: "Support" },
-      { id: "donate", label: "Donate" },
-      { id: "account", label: "Account" }
+      { id: "support", label: "Support", icon: "?" },
+      { id: "donate", label: "Donate", icon: "$", badge: "Mission" },
+      { id: "account", label: "Account", icon: "R" }
     ],
     defaultOpen: true
   },
@@ -91,13 +93,13 @@ const teacherNavGroups: NavGroup[] = [
 ];
 
 const adminNavGroups: NavGroup[] = [
-  { title: "Workspace", items: [{ id: "teacher", label: "Admin View" }], defaultOpen: true },
+  { title: "Workspace", items: [{ id: "teacher", label: "Admin View", icon: "^" }], defaultOpen: true },
   {
     title: "Help",
     items: [
-      { id: "support", label: "Support" },
-      { id: "donate", label: "Donate" },
-      { id: "account", label: "Account" }
+      { id: "support", label: "Support", icon: "?" },
+      { id: "donate", label: "Donate", icon: "$", badge: "Mission" },
+      { id: "account", label: "Account", icon: "R" }
     ],
     defaultOpen: true
   },
@@ -108,17 +110,17 @@ const publicNavGroups: NavGroup[] = [
   {
     title: "Try now",
     items: [
-      { id: "reading", label: "Reading" },
-      { id: "memory", label: "Memory" }
+      { id: "reading", label: "Reading", icon: "Aa" },
+      { id: "memory", label: "Memory", icon: "?" }
     ],
     defaultOpen: true
   },
   {
     title: "Help",
     items: [
-      { id: "donate", label: "Donate" },
-      { id: "support", label: "Support" },
-      { id: "account", label: "Account" }
+      { id: "donate", label: "Donate", icon: "$", badge: "Mission" },
+      { id: "support", label: "Support", icon: "?" },
+      { id: "account", label: "Account", icon: "R" }
     ],
     defaultOpen: true
   },
@@ -434,29 +436,35 @@ export function RootApp() {
       currentView === "soundSort" ||
       currentView === "sentenceBuilder" ||
       currentView === "storyOrder" ||
-      currentView === "wordMeaning"
+      currentView === "wordMeaning" ||
+      currentView === "echoReader" ||
+      currentView === "voiceQuest"
     ) {
       if (studentActivityAccess(profile, currentView, subscription) === "locked") {
+        const activityUpgradeTier = profile?.role === "teacher" ? "teacherPro" : "familyPlus";
+        const activityUpgradeName = profile?.role === "teacher" ? "Teacher Pro" : "Family Plus";
+
         return (
           <article className="practice-panel subscription-prompt">
-            <p className="eyebrow">Family Plus activity</p>
-            <h2>Subscribe to unlock this activity</h2>
+            <p className="eyebrow">Personalized path upgrade</p>
+            <h2>Unlock the next layer of practice</h2>
             <p className="helper-text">
-              This activity is part of the paid student path. Family Plus unlocks {paidStudentActivitiesDescription()}.
+              This activity is part of the paid path. {activityUpgradeName} unlocks {paidStudentActivitiesDescription()}
+              {profile?.role === "teacher" ? " for teacher review and student support." : " for students."}
             </p>
             <div className="subscription-actions">
               <button
                 className="primary-button"
                 type="button"
                 onClick={() => {
-                  void startSubscriptionCheckout("familyPlus").then((checkoutUrl) => {
+                  void startSubscriptionCheckout(activityUpgradeTier).then((checkoutUrl) => {
                     if (checkoutUrl) {
                       window.open(checkoutUrl, "_blank", "noopener,noreferrer");
                     }
                   });
                 }}
               >
-                Start Family Plus
+                Start {activityUpgradeName}
               </button>
               <button className="secondary-button" type="button" onClick={() => navigateToView("rhymes")}>
                 Use free activities
@@ -471,24 +479,25 @@ export function RootApp() {
           activityId={currentView}
           progress={progress}
           user={user}
+          profile={profile}
           onProgressChange={handleProgressChange}
         />
       );
     }
 
     if (currentView === "progress") {
-      return <ProgressDashboard progress={progress} user={user} onProgressChange={handleProgressChange} />;
+      return <ProgressDashboard progress={progress} user={user} profile={profile} onProgressChange={handleProgressChange} />;
     }
 
     if (currentView === "teacher") {
       if (teacherDashboardAccess(profile, subscription) === "locked") {
         return (
           <article className="practice-panel subscription-prompt">
-            <p className="eyebrow">Teacher Pro required</p>
-            <h2>Upgrade to unlock classroom tools</h2>
+            <p className="eyebrow">Teacher insight workspace</p>
+            <h2>Upgrade to review student growth signals</h2>
             <p className="helper-text">
               Teacher Pro unlocks the classroom dashboard, assigned-student analysis, report exports,
-              intervention planning, and future AI-assisted recommendations.
+              intervention planning, and AI-supported recommendations when enabled.
             </p>
             <div className="subscription-actions">
               <button
@@ -541,8 +550,8 @@ export function RootApp() {
     if (currentView === "account") {
       return (
         <>
-          <SignInPanel redirectView={requestedAuthView} />
           {profile ? <SubscriptionManagement profile={profile} subscription={subscription} /> : null}
+          <SignInPanel redirectView={requestedAuthView} />
         </>
       );
     }
@@ -593,7 +602,7 @@ export function RootApp() {
             R
           </span>
           <div>
-            <p className="eyebrow">Early reader MVP</p>
+            <p className="eyebrow">Personalized reading paths</p>
             <h1>ReadNest</h1>
             <div className="identity-stack">
               <AccountStatusIndicator user={user} />
@@ -601,6 +610,19 @@ export function RootApp() {
             </div>
           </div>
         </div>
+
+        {!user ? (
+          <div className="sidebar-auth-actions" aria-label="Account shortcuts">
+            <button type="button" onClick={() => navigateToView("account")}>
+              <span aria-hidden="true">+</span>
+              Create
+            </button>
+            <button type="button" onClick={() => navigateToView("account")}>
+              <span aria-hidden="true">-&gt;</span>
+              Login
+            </button>
+          </div>
+        ) : null}
 
         <nav className="nav-tabs" aria-label="Main navigation">
           {navGroups.map((group) => {
@@ -617,7 +639,9 @@ export function RootApp() {
                       type="button"
                       onClick={() => navigateToView(item.id)}
                     >
-                      {item.label}
+                      <span className="nav-icon" aria-hidden="true">{item.icon}</span>
+                      <span>{item.label}</span>
+                      {item.badge ? <small>{item.badge}</small> : null}
                     </button>
                   ))}
                 </div>
@@ -628,8 +652,8 @@ export function RootApp() {
 
         <section className="donation-card" aria-labelledby="donation-title">
           <p className="eyebrow">Mission fund</p>
-          <h2 id="donation-title">Help a child read</h2>
-          <p>Donations support free lessons, accessibility work, hosting, and classroom tools.</p>
+          <h2 id="donation-title">Keep practice open</h2>
+          <p>Donations support free starter activities, accessibility work, hosting, and classroom tools.</p>
           <button type="button" onClick={openDonationLink} disabled={!isStripeLinkCompatible(billingConfig.donationLink)}>
             Donate
           </button>
@@ -648,11 +672,11 @@ export function RootApp() {
       <main className="main-content">
         <section className="hero">
           <div>
-            <p className="eyebrow">A calm practice space</p>
-            <h2>Play with words. Grow your reading.</h2>
+            <p className="eyebrow">Personalized early reading</p>
+            <h2>A reading path that grows with each child.</h2>
             <p>
-              Built for kindergarten through grade 2 learners with large text, short turns, read-aloud
-              support, and caregiver-visible progress.
+              Short, playful activities adapt around grade level, reading goals, recent misses, and teacher-visible
+              progress so families know what to practice next.
             </p>
           </div>
           <div className="hero-scene" aria-hidden="true">

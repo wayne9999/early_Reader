@@ -24,6 +24,9 @@ describe("userProfileRepository", () => {
       signupPath: "parentChild",
       subscriptionTier: "free",
       subscriptionStatus: "free",
+      gradeLevel: "K",
+      readingGoal: "confidence",
+      preferredPracticeMinutes: 5,
       parentConsentAccepted: true,
       parentConsentVersion: "parent-consent-v1"
     });

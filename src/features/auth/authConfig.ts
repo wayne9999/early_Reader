@@ -5,8 +5,7 @@ export const authConfig = {
   redirectUri: import.meta.env.VITE_AUTH0_REDIRECT_URI || window.location.origin,
   connections: {
     google: import.meta.env.VITE_AUTH0_GOOGLE_CONNECTION || "google-oauth2",
-    facebook: import.meta.env.VITE_AUTH0_FACEBOOK_CONNECTION || "facebook",
-    instagram: import.meta.env.VITE_AUTH0_INSTAGRAM_CONNECTION || "instagram"
+    facebook: import.meta.env.VITE_AUTH0_FACEBOOK_CONNECTION || "facebook"
   }
 };
 

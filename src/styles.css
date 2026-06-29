@@ -286,11 +286,36 @@ button {
 }
 
 .nav-tab {
-  padding: 13px 16px;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
   background: transparent;
   color: var(--navy-muted);
   text-align: left;
   box-shadow: none;
+}
+
+.nav-icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 1000;
+}
+
+.nav-tab small {
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: var(--coral);
+  color: white;
+  font-size: 0.68rem;
+  font-weight: 900;
 }
 
 .nav-tab.is-active {
@@ -314,13 +339,45 @@ button {
 }
 
 .nav-tab.nav-donate::after {
-  content: "Mission";
-  float: right;
-  padding: 4px 8px;
-  border-radius: 999px;
+  content: "";
+  display: none;
+}
+
+.sidebar-auth-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.sidebar-auth-actions button {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  min-height: 48px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: #fff2b8;
+  color: #4f3500;
+  font-weight: 1000;
+  box-shadow: 0 10px 20px rgba(255, 203, 71, 0.12);
+}
+
+.sidebar-auth-actions button:last-child {
+  background: #eef8ff;
+  color: #183d75;
+}
+
+.sidebar-auth-actions span {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
   background: var(--coral);
-  color: white;
-  font-size: 0.68rem;
+  color: #ffffff;
+  font-weight: 900;
 }
 
 .nav-tab.nav-donate.is-active {
@@ -637,8 +694,49 @@ button {
 }
 
 .sound-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   justify-self: center;
   min-width: 150px;
+}
+
+.child-action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-width: 150px;
+}
+
+.button-symbol,
+.choice-mark {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--blue-dark);
+  font-size: 1.1rem;
+  font-weight: 1000;
+  box-shadow: 0 4px 0 rgba(21, 37, 54, 0.08);
+}
+
+.success-action {
+  background: linear-gradient(135deg, var(--green), var(--teal));
+  box-shadow: 0 9px 0 rgba(8, 127, 140, 0.22);
+}
+
+.success-action:hover {
+  background: linear-gradient(135deg, #46b84c, var(--teal-dark));
+}
+
+.next-action .button-symbol {
+  background: var(--coral);
+  color: #ffffff;
 }
 
 .sound-chips {
@@ -789,6 +887,14 @@ button {
   background: linear-gradient(135deg, #ffffff, #eaffec 46%, #fffdf2);
 }
 
+.activity-echoReader {
+  background: linear-gradient(135deg, #ffffff, #e7f0ff 48%, #ffe6f4);
+}
+
+.activity-voiceQuest {
+  background: linear-gradient(135deg, #ffffff, #fff3c7 48%, #dcf8ff);
+}
+
 .activity-hero h3 {
   font-size: clamp(1.8rem, 4vw, 3.2rem);
   line-height: 1;
@@ -836,6 +942,10 @@ button {
 }
 
 .activity-choice {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
   min-height: 110px;
   padding: 18px;
   border: 3px solid rgba(255, 255, 255, 0.9);
@@ -845,6 +955,18 @@ button {
   font-size: 1.35rem;
   font-weight: 900;
   box-shadow: 0 10px 24px rgba(54, 74, 102, 0.08);
+}
+
+.activity-choice .choice-mark {
+  width: 42px;
+  height: 42px;
+  background: var(--gold);
+  color: #5a3f00;
+}
+
+.activity-choice.is-correct .choice-mark {
+  background: var(--green);
+  color: #ffffff;
 }
 
 .activity-choice:nth-child(2) {
@@ -949,6 +1071,64 @@ button {
   display: grid;
   grid-template-columns: minmax(320px, 1.6fr) minmax(280px, 0.8fr);
   gap: 18px;
+}
+
+.personalized-plan-panel {
+  display: grid;
+  gap: 18px;
+  background: linear-gradient(135deg, #ffffff, #eef8ff 48%, #fff5c7);
+}
+
+.personalized-path-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(180px, 1fr));
+  gap: 14px;
+}
+
+.personalized-path-card {
+  display: grid;
+  gap: 8px;
+  min-height: 150px;
+  padding: 18px;
+  border: 2px solid rgba(27, 32, 56, 0.08);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--ink);
+  text-decoration: none;
+  box-shadow: 0 14px 34px rgba(21, 37, 54, 0.07);
+}
+
+.personalized-path-card.is-start {
+  border-color: rgba(255, 107, 107, 0.32);
+  background: linear-gradient(180deg, #ffffff, #fff0f0);
+}
+
+.personalized-path-card.is-practice {
+  border-color: rgba(49, 174, 232, 0.28);
+  background: linear-gradient(180deg, #ffffff, #eef8ff);
+}
+
+.personalized-path-card.is-stretch {
+  border-color: rgba(132, 190, 101, 0.32);
+  background: linear-gradient(180deg, #ffffff, #efffeb);
+}
+
+.personalized-path-card small {
+  color: var(--teal);
+  font-size: 0.72rem;
+  font-weight: 1000;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.personalized-path-card strong {
+  font-size: 1.25rem;
+}
+
+.personalized-path-card span {
+  color: var(--muted);
+  font-weight: 800;
+  line-height: 1.4;
 }
 
 .goal-spotlight {
@@ -1398,6 +1578,35 @@ button {
   line-height: 1.45;
 }
 
+.personalization-setup-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(160px, 1fr));
+  gap: 12px;
+  padding: 14px;
+  border: 2px solid rgba(47, 128, 237, 0.12);
+  border-radius: 8px;
+  background: linear-gradient(135deg, #ffffff, #eef8ff);
+}
+
+.personalization-setup-grid label {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 900;
+}
+
+.personalization-setup-grid select {
+  min-height: 48px;
+  width: 100%;
+  border: 2px solid rgba(47, 128, 237, 0.16);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 900;
+}
+
 .form-error {
   margin: 0;
   padding: 12px 14px;
@@ -1839,10 +2048,6 @@ button {
 
 .facebook-button {
   background: linear-gradient(135deg, #1877f2, #145dbd);
-}
-
-.instagram-button {
-  background: linear-gradient(135deg, #f58529, #dd2a7b 52%, #8134af);
 }
 
 .account-card {
@@ -2647,24 +2852,24 @@ button {
 
   .mobile-menu-button {
     position: fixed;
-    top: 14px;
-    left: 14px;
+    top: max(10px, env(safe-area-inset-top));
+    left: max(10px, env(safe-area-inset-left));
     z-index: 70;
     display: inline-grid;
-    gap: 5px;
+    gap: 4px;
     place-content: center;
-    width: 48px;
-    height: 48px;
+    width: 42px;
+    height: 42px;
     border: 0;
-    border-radius: 8px;
+    border-radius: 12px;
     background: linear-gradient(135deg, var(--purple), var(--blue));
     box-shadow: 0 12px 24px rgba(21, 37, 54, 0.22);
   }
 
   .mobile-menu-button span {
     display: block;
-    width: 22px;
-    height: 3px;
+    width: 20px;
+    height: 2px;
     border-radius: 999px;
     background: #ffffff;
   }
@@ -2690,9 +2895,9 @@ button {
     position: fixed;
     inset: 0 auto 0 0;
     z-index: 60;
-    width: min(340px, calc(100vw - 42px));
+    width: min(320px, 86vw);
     gap: 14px;
-    padding: 18px;
+    padding: calc(60px + env(safe-area-inset-top)) 16px 16px;
     overflow-y: auto;
     border-right: 4px solid rgba(47, 128, 237, 0.12);
     transform: translateX(-105%);
@@ -2721,7 +2926,7 @@ button {
 
   .daily-goal {
     display: grid;
-    grid-template-columns: auto minmax(140px, 1fr) auto;
+    grid-template-columns: 1fr;
     gap: 10px;
     align-items: center;
     margin-top: 0;
@@ -2738,10 +2943,16 @@ button {
     display: none;
   }
 
+  .daily-goal strong {
+    font-size: 0.95rem;
+  }
+
   .hero,
   .learning-grid,
   .student-dashboard-grid,
   .student-hero-grid,
+  .personalized-path-list,
+  .personalization-setup-grid,
   .teacher-summary,
   .teacher-grid,
   .insight-columns,
@@ -2789,7 +3000,7 @@ button {
 
 @media (max-width: 560px) {
   .main-content {
-    padding: 16px;
+    padding: 70px 16px 16px;
   }
 
   .hero {
@@ -2886,6 +3097,17 @@ button {
   .email-auth-form,
   .social-buttons {
     margin-top: 12px;
+  }
+
+  .child-action-button,
+  .sound-button {
+    width: 100%;
+  }
+
+  .activity-choice {
+    grid-template-columns: 38px minmax(0, 1fr);
+    min-height: 92px;
+    padding: 14px;
   }
 }
 

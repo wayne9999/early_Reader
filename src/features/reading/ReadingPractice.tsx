@@ -120,16 +120,19 @@ export function ReadingPractice({ progress, user, onProgressChange }: ReadingPra
               void recordLearningEvent(user, "word_listened", word.text, "sightWords", wordMetadata());
             }}
           >
-            Listen
+            <span className="button-symbol" aria-hidden="true">▶</span>
+            <span>Listen</span>
           </button>
           <p className="big-word">{word.text}</p>
           <p className="helper-text">{word.hint}</p>
           <div className="button-row">
-            <button className="primary-button" type="button" onClick={handleKnownWord}>
-              I know it
+            <button className="primary-button child-action-button success-action" type="button" onClick={handleKnownWord}>
+              <span className="button-symbol" aria-hidden="true">✓</span>
+              <span>I know it</span>
             </button>
-            <button className="secondary-button" type="button" onClick={skipWord}>
-              Next word
+            <button className="secondary-button child-action-button next-action" type="button" onClick={skipWord}>
+              <span>Next word</span>
+              <span className="button-symbol" aria-hidden="true">→</span>
             </button>
           </div>
         </article>
@@ -159,7 +162,7 @@ export function ReadingPractice({ progress, user, onProgressChange }: ReadingPra
             ))}
           </div>
           <button
-            className="secondary-button"
+            className="secondary-button child-action-button"
             type="button"
             onClick={() => {
               speakSounds(word.phonics.sounds, word.phonics.word);
@@ -170,7 +173,8 @@ export function ReadingPractice({ progress, user, onProgressChange }: ReadingPra
               });
             }}
           >
-            Hear sounds
+            <span className="button-symbol" aria-hidden="true">▶</span>
+            <span>Hear sounds</span>
           </button>
         </article>
 
@@ -179,7 +183,7 @@ export function ReadingPractice({ progress, user, onProgressChange }: ReadingPra
           <p className="sentence">{word.sentence}</p>
           <div className="button-row">
             <button
-              className="secondary-button"
+              className="secondary-button child-action-button"
               type="button"
               onClick={() => {
                 speakSentence(word.sentence);
@@ -188,10 +192,12 @@ export function ReadingPractice({ progress, user, onProgressChange }: ReadingPra
                 });
               }}
             >
-              Listen
+              <span className="button-symbol" aria-hidden="true">▶</span>
+              <span>Listen</span>
             </button>
-            <button className="primary-button" type="button" onClick={handleCompleteReading}>
-              Complete reading
+            <button className="primary-button child-action-button success-action" type="button" onClick={handleCompleteReading}>
+              <span className="button-symbol" aria-hidden="true">✓</span>
+              <span>Complete reading</span>
             </button>
           </div>
         </article>

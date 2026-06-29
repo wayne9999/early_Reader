@@ -2,7 +2,7 @@
 
 ## Goal
 
-Create a functional MVP that helps early elementary students improve reading fluency and memory through short, repeatable practice activities, while giving caregivers and teachers clear visibility into progress.
+Create a personalized reading platform that helps early elementary students improve reading fluency and memory through short, repeatable practice activities, while giving caregivers and teachers clear visibility into progress and next steps.
 
 ## Audience
 
@@ -11,15 +11,15 @@ Create a functional MVP that helps early elementary students improve reading flu
 
 ## Design Principles
 
-- Keep activities short and predictable.
+- Keep activities short, predictable, and personalized by grade, goal, and recent practice.
 - Use large text and high-contrast controls.
 - Prefer encouragement through progress visibility instead of scores or penalties.
-- Use demo/local fallback until auth and database credentials are configured.
+- Use demo/local fallback only for development; production authority belongs in Firebase and backend services.
 - Store content separately from feature logic so lessons can expand safely.
 - Keep child data access role-based and auditable.
 - Treat AI as teacher decision support, not diagnosis.
 
-## MVP Scope
+## Current Product Scope
 
 1. Reading practice
    - Sight word recognition.
@@ -37,29 +37,29 @@ Create a functional MVP that helps early elementary students improve reading flu
    - Reading sessions.
    - Memory wins.
    - Daily goal progress.
-   - Caregiver next-step tips.
+   - Personalized caregiver next-step tips.
 
 4. Teacher/admin dashboard
    - Classroom roster.
    - Student-level strengths and growth areas.
    - Intervention plan suggestions.
-   - AI-analysis boundary that can later move to a secure backend.
+   - Backend AI-analysis boundary with rule-based fallback and auditability.
 
 ## Technical Choices
 
 - React, TypeScript, and Vite for scalable frontend structure.
-- Firebase Firestore-ready repository with browser `localStorage` fallback.
-- Auth0-ready social login boundary for Google, Facebook, and Instagram.
+- Firebase Auth and Firestore repositories with browser `localStorage` fallback for development.
+- Social login boundary for supported providers, with incomplete providers clearly labeled.
 - Browser `SpeechSynthesis` for read-aloud support.
 - Modular feature folders and service boundaries for long-term maintainability.
 
 ## Scaling Path
 
-- Add Auth0-to-Firebase custom-token bridge or switch to Firebase Auth as primary auth.
-- Replace demo classroom data with Firestore classroom enrollment records.
+- Continue hardening Firebase Auth as the primary production auth path.
+- Replace remaining demo classroom fallback data with Firestore enrollment records.
 - Move `content.ts` to CMS-managed JSON.
 - Add route-based navigation when the app grows beyond three views.
-- Add backend AI endpoint for evidence-based analysis and teacher recommendations.
+- Expand backend AI workflow for evidence-based analysis and teacher recommendations.
 - Store AI outputs with model, source data window, and timestamps for auditability.
 - Add automated browser tests around learning flows.
 - Wrap the web app in Capacitor or React Native WebView if mobile app distribution becomes important.

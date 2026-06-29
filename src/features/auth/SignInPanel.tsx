@@ -6,8 +6,7 @@ import { useAuth } from "./AuthProvider";
 
 const providers: Array<{ id: SocialProvider; label: string; className: string; productionReady: boolean }> = [
   { id: "google", label: "Continue with Google", className: "google-button", productionReady: true },
-  { id: "facebook", label: "Continue with Facebook", className: "facebook-button", productionReady: true },
-  { id: "instagram", label: "Instagram sign-in coming later", className: "instagram-button", productionReady: false }
+  { id: "facebook", label: "Continue with Facebook", className: "facebook-button", productionReady: true }
 ];
 
 type SignInPanelProps = {
@@ -52,10 +51,10 @@ export function SignInPanel({ redirectView = null }: SignInPanelProps) {
     <div className="auth-grid">
       <article className="practice-panel auth-panel">
         <p className="eyebrow">Choose account type</p>
-        <h2>Sign up for the right workspace</h2>
+        <h2>Choose the right learning workspace</h2>
         <p className="helper-text">
-          Parents create a child learning account for practice and progress. Teachers create a classroom
-          account for student requests, history, and intervention planning.
+          Parents set up a personalized reading path for a child. Teachers create an insight workspace
+          for assigned students, progress signals, and next-step planning.
         </p>
 
         {redirectView ? (
@@ -87,8 +86,8 @@ export function SignInPanel({ redirectView = null }: SignInPanelProps) {
                 onClick={() => setSelectedPath("parentChild")}
               >
                 <span>Parent / Child</span>
-                <strong>Set up a child reader</strong>
-                <small>Practice reading, save progress, and request a teacher later.</small>
+                <strong>Build a child reading path</strong>
+                <small>Save goals, personalize practice, and connect with a teacher when ready.</small>
               </button>
               <button
                 className={`signup-choice teacher-choice${selectedPath === "teacher" ? " is-selected" : ""}`}
@@ -98,8 +97,8 @@ export function SignInPanel({ redirectView = null }: SignInPanelProps) {
                 onClick={() => setSelectedPath("teacher")}
               >
                 <span>Teacher</span>
-                <strong>Set up classroom tools</strong>
-                <small>Review assigned students, learning history, and next steps.</small>
+                <strong>Set up student insights</strong>
+                <small>Review assigned learners, growth patterns, and support plans.</small>
               </button>
             </div>
 
@@ -108,7 +107,7 @@ export function SignInPanel({ redirectView = null }: SignInPanelProps) {
               <span>
                 {selectedPath === "teacher"
                   ? "This creates a teacher role after sign-in."
-                  : "This creates a student role for the child learning space after sign-in."}
+                  : "This creates a student role for the child personalized learning space after sign-in."}
               </span>
             </div>
 
@@ -131,7 +130,7 @@ export function SignInPanel({ redirectView = null }: SignInPanelProps) {
               </div>
               {emailMode === "signUp" ? (
                 <label>
-                  <span>Parent, teacher, or child display name</span>
+                  <span>Parent, teacher, or learner display name</span>
                   <input
                     autoComplete="name"
                     value={displayName}

@@ -64,6 +64,9 @@ jobs:
       STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+      ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+      ELEVENLABS_VOICE_ID: ${{ vars.ELEVENLABS_VOICE_ID }}
+      ELEVENLABS_MODEL_ID: ${{ vars.ELEVENLABS_MODEL_ID }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -80,6 +83,17 @@ jobs:
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.READNEST_DEV_FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: Report Google Cloud deploy identity
+        run: |
+          echo "Active Google Cloud account:"
+          gcloud config get-value account || true
+          node -e 'const fs=require("fs"); const path=process.env.GOOGLE_APPLICATION_CREDENTIALS; const data=JSON.parse(fs.readFileSync(path,"utf8")); const target=data.client_email || (data.service_account_impersonation_url || "").match(/serviceAccounts\/([^:]+)/)?.[1] || "unknown"; console.log(`Credential target: ${target}`);'
+          echo "Target Firebase project: ${FIREBASE_PROJECT_ID}"
+
+      - name: Ensure Cloud Billing API
+        if: ${{ inputs.target == 'functions' || inputs.target == 'all' }}
+        run: gcloud services enable cloudbilling.googleapis.com --project "$FIREBASE_PROJECT_ID"
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -135,6 +149,8 @@ jobs:
             echo "READNEST_ENFORCE_APP_CHECK=${READNEST_ENFORCE_APP_CHECK:-false}"
             echo "SUPPORT_NOTIFICATION_EMAIL=${SUPPORT_NOTIFICATION_EMAIL:-support@myreadnest.org}"
             echo "SUPPORT_FROM_EMAIL=${SUPPORT_FROM_EMAIL:-ReadNest Support <support@myreadnest.org>}"
+            echo "ELEVENLABS_VOICE_ID=${ELEVENLABS_VOICE_ID:-EXAVITQu4vr4xnSDxMaL}"
+            echo "ELEVENLABS_MODEL_ID=${ELEVENLABS_MODEL_ID:-eleven_multilingual_v2}"
           } > .env
 
       - name: Sync Stripe secret
@@ -153,6 +169,10 @@ jobs:
         if: ${{ inputs.sync_secrets && (inputs.target == 'functions' || inputs.target == 'all') && env.RESEND_API_KEY != '' }}
         run: printf '%s' "$RESEND_API_KEY" | firebase functions:secrets:set RESEND_API_KEY --project "$FIREBASE_PROJECT_ID" --data-file - --non-interactive
 
+      - name: Sync ElevenLabs secret
+        if: ${{ inputs.sync_secrets && (inputs.target == 'functions' || inputs.target == 'all') && env.ELEVENLABS_API_KEY != '' }}
+        run: printf '%s' "$ELEVENLABS_API_KEY" | firebase functions:secrets:set ELEVENLABS_API_KEY --project "$FIREBASE_PROJECT_ID" --data-file - --non-interactive
+
       - name: Deploy Firestore rules
         if: ${{ inputs.target == 'rules' || inputs.target == 'all' }}
         run: node functions/scripts/deploy-firestore-rules.mjs
@@ -161,7 +181,7 @@ jobs:
         if: ${{ (inputs.target == 'functions' || inputs.target == 'all') && !inputs.include_scheduler }}
         run: >
           firebase deploy
-          --only functions:stripeWebhookTest,functions:createBillingPortalSessionTest,functions:createCheckoutSessionTest,functions:claimPlacementStudent,functions:updateTeacherAssignmentStatus,functions:createLearningRecommendation,functions:requestStudentInsight,functions:submitSupportCase,functions:updateLearningCoachState,functions:processAiAnalysisJob,functions:processSupportCase
+          --only functions:stripeWebhookTest,functions:createBillingPortalSessionTest,functions:createCheckoutSessionTest,functions:claimPlacementStudent,functions:updateTeacherAssignmentStatus,functions:createLearningRecommendation,functions:requestStudentInsight,functions:submitSupportCase,functions:updateLearningCoachState,functions:createActivityVoiceClip,functions:processAiAnalysisJob,functions:processSupportCase
           --project "$FIREBASE_PROJECT_ID"
           --non-interactive
           --force
@@ -170,7 +190,7 @@ jobs:
         if: ${{ (inputs.target == 'functions' || inputs.target == 'all') && inputs.include_scheduler }}
         run: >
           firebase deploy
-          --only functions:stripeWebhookTest,functions:createBillingPortalSessionTest,functions:createCheckoutSessionTest,functions:claimPlacementStudent,functions:updateTeacherAssignmentStatus,functions:createLearningRecommendation,functions:requestStudentInsight,functions:submitSupportCase,functions:updateLearningCoachState,functions:processAiAnalysisJob,functions:processSupportCase,functions:enqueueDailyInsightJobs
+          --only functions:stripeWebhookTest,functions:createBillingPortalSessionTest,functions:createCheckoutSessionTest,functions:claimPlacementStudent,functions:updateTeacherAssignmentStatus,functions:createLearningRecommendation,functions:requestStudentInsight,functions:submitSupportCase,functions:updateLearningCoachState,functions:createActivityVoiceClip,functions:processAiAnalysisJob,functions:processSupportCase,functions:enqueueDailyInsightJobs
           --project "$FIREBASE_PROJECT_ID"
           --non-interactive
           --force

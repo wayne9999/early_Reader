@@ -1,13 +1,13 @@
 import type { AppView, SubscriptionRecord, UserProfile } from "../types";
 import { hasActiveFamilyPlus, hasActiveTeacherPro } from "./subscriptionRepository";
 
-const freeStudentActivityViews = new Set<AppView>(["rhymes", "soundSort", "sentenceBuilder"]);
+const registeredActivityViews = new Set<AppView>(["rhymes", "soundSort"]);
 const paidStudentActivityViews = new Set<AppView>([
-  "rhymes",
-  "soundSort",
   "sentenceBuilder",
   "storyOrder",
-  "wordMeaning"
+  "wordMeaning",
+  "echoReader",
+  "voiceQuest"
 ]);
 
 export function isPaidFamilyProfile(profile: UserProfile | null, subscription?: SubscriptionRecord | null) {
@@ -18,7 +18,7 @@ export function isPaidFamilyProfile(profile: UserProfile | null, subscription?: 
 }
 
 export function studentActivityAccess(profile: UserProfile | null, view: AppView, subscription?: SubscriptionRecord | null) {
-  if (!paidStudentActivityViews.has(view)) {
+  if (!registeredActivityViews.has(view) && !paidStudentActivityViews.has(view)) {
     return "notActivity" as const;
   }
 
@@ -26,23 +26,27 @@ export function studentActivityAccess(profile: UserProfile | null, view: AppView
     return "locked" as const;
   }
 
-  if (profile.role === "teacher" || profile.role === "admin") {
+  if (profile.role === "admin") {
     return "allowed" as const;
   }
 
-  if (isPaidFamilyProfile(profile, subscription)) {
+  if (registeredActivityViews.has(view)) {
     return "allowed" as const;
   }
 
-  return freeStudentActivityViews.has(view) ? "allowed" as const : "locked" as const;
+  if (profile.role === "teacher") {
+    return hasActiveTeacherPro(subscription ?? null) ? "allowed" as const : "locked" as const;
+  }
+
+  return isPaidFamilyProfile(profile, subscription) ? "allowed" as const : "locked" as const;
 }
 
 export function freeStudentActivitiesDescription() {
-  return "Reading, Memory, Rhymes, Sounds, and Sentences";
+  return "Reading, Memory, Rhymes, and Sounds";
 }
 
 export function paidStudentActivitiesDescription() {
-  return "Story Steps, Word Garden, full progress history, and future premium packs";
+  return "Sentences, Story Steps, Word Garden, Echo Reader, Voice Quest, full progress history, and future premium packs";
 }
 
 export function teacherDashboardAccess(profile: UserProfile | null, subscription?: SubscriptionRecord | null) {

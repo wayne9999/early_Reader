@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createUserProfile } from "../../services/userProfileRepository";
 import { labelFromSignupPath, roleFromSignupPath } from "../../services/signupIntent";
-import type { AppUser, SignupPath, UserProfile, UserRole } from "../../types";
+import type { AppUser, SignupPath, StudentGradeLevel, StudentReadingGoal, UserProfile, UserRole } from "../../types";
 
 type RoleSetupProps = {
   user: AppUser | null;
@@ -13,6 +13,9 @@ export function RoleSetup({ user, preferredSignupPath, onProfileCreated }: RoleS
   const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [parentConsentAccepted, setParentConsentAccepted] = useState(false);
+  const [gradeLevel, setGradeLevel] = useState<StudentGradeLevel>("K");
+  const [readingGoal, setReadingGoal] = useState<StudentReadingGoal>("confidence");
+  const [preferredPracticeMinutes, setPreferredPracticeMinutes] = useState(5);
   const preferredRole = preferredSignupPath ? roleFromSignupPath(preferredSignupPath) : null;
   const autoCreateStarted = useRef(false);
 
@@ -27,7 +30,10 @@ export function RoleSetup({ user, preferredSignupPath, onProfileCreated }: RoleS
 
     try {
       onProfileCreated(await createUserProfile(user, role, signupPath, {
-        parentConsentAccepted: role === "student" ? parentConsentAccepted : undefined
+        parentConsentAccepted: role === "student" ? parentConsentAccepted : undefined,
+        gradeLevel: role === "student" ? gradeLevel : undefined,
+        readingGoal: role === "student" ? readingGoal : undefined,
+        preferredPracticeMinutes: role === "student" ? preferredPracticeMinutes : undefined
       }));
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "Could not create profile.");
@@ -110,6 +116,38 @@ export function RoleSetup({ user, preferredSignupPath, onProfileCreated }: RoleS
           </button>
         </div>
       )}
+      {preferredRole === "student" || !preferredSignupPath ? (
+        <div className="personalization-setup-grid" aria-label="Personalized reading setup">
+          <label>
+            <span>Grade level</span>
+            <select value={gradeLevel} onChange={(event) => setGradeLevel(event.target.value as StudentGradeLevel)}>
+              <option value="K">Kindergarten</option>
+              <option value="1">Grade 1</option>
+              <option value="2">Grade 2</option>
+            </select>
+          </label>
+          <label>
+            <span>Reading goal</span>
+            <select value={readingGoal} onChange={(event) => setReadingGoal(event.target.value as StudentReadingGoal)}>
+              <option value="confidence">Build confidence</option>
+              <option value="phonics">Sound out words</option>
+              <option value="sightWords">Remember sight words</option>
+              <option value="fluency">Read smoother sentences</option>
+            </select>
+          </label>
+          <label>
+            <span>Practice time</span>
+            <select
+              value={preferredPracticeMinutes}
+              onChange={(event) => setPreferredPracticeMinutes(Number(event.target.value))}
+            >
+              <option value={5}>5 minutes</option>
+              <option value={7}>7 minutes</option>
+              <option value={10}>10 minutes</option>
+            </select>
+          </label>
+        </div>
+      ) : null}
       {preferredRole === "student" || !preferredSignupPath ? (
         <label className="consent-check">
           <input

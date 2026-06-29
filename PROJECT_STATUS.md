@@ -12,7 +12,7 @@
 - Added reading, phonics, sentence, and memory practice.
 - Added caregiver progress dashboard.
 - Added teacher/admin dashboard with rule-based analysis.
-- Added Auth0-ready account page for Google, Facebook, and Instagram.
+- Added Firebase-ready account page for email/password, Google, and Facebook.
 - Added Firebase Auth profile roles for student and teacher accounts.
 - Added Firestore progress, learning-event history, teacher profile, and teacher-student assignment repositories.
 - Added student teacher-search and assignment request flow.
@@ -24,6 +24,7 @@
 - Added Firebase Functions for Stripe webhooks, backend-created subscription checkout sessions, and billing portal sessions.
 - Added backend AI-learning workflow foundation with requestable/scheduled insight jobs, deterministic summaries, secure student insight storage, and teacher dashboard display.
 - Added OpenAI-backed insight adapter with backend budget guard, scheduled processing, and rule-based fallback.
+- Added personalized student setup and practice paths based on grade level, reading goal, saved learning events, and Learning Coach recommendations.
 - Added teacher invite-code creation scaffold.
 - Added parent/caregiver consent storage before child/student profile creation.
 - Added Firestore-backed support cases for billing, deletion, teacher verification, technical, and general requests.
@@ -38,7 +39,7 @@
 
 ## Not Yet Fully Connected
 
-- Facebook and Instagram sign-in still need provider setup/custom-provider work.
+- Facebook sign-in needs Firebase Console provider setup with the Meta app ID and secret before live use.
 - Stripe webhook code is deployed with secrets, but it still needs Stripe Dashboard endpoint registration and end-to-end test events.
 - Teacher-created invitation codes can be created, but invite acceptance/revocation/admin tooling still needs completion.
 - AI insight generation uses a backend OpenAI adapter with a rule-based fallback. Legal review, prompt evaluation, and production monitoring are still needed before broad launch.
