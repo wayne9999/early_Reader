@@ -25,6 +25,7 @@ const supportNotificationEmail = process.env.SUPPORT_NOTIFICATION_EMAIL ?? "supp
 const supportFromEmail = process.env.SUPPORT_FROM_EMAIL ?? "ReadNest Support <support@myreadnest.org>";
 const enforceAppCheck = process.env.READNEST_ENFORCE_APP_CHECK === "true";
 const readnestEnvironment = process.env.READNEST_ENVIRONMENT;
+const isProductionEnvironment = readnestEnvironment === "production";
 const expectedFirebaseProjectId = process.env.READNEST_EXPECTED_FIREBASE_PROJECT_ID;
 const runtimeFirebaseProjectId = process.env.GCLOUD_PROJECT ?? process.env.GOOGLE_CLOUD_PROJECT ?? process.env.FIREBASE_PROJECT_ID;
 const aiWarningLimitUsd = parseBudgetLimit(process.env.READNEST_AI_WARNING_LIMIT_USD, 10);
@@ -881,7 +882,7 @@ function createStripeWebhook(runtime: BillingRuntime) {
   );
 }
 
-export const stripeWebhook = createStripeWebhook(liveBillingRuntime);
+export const stripeWebhook = isProductionEnvironment ? createStripeWebhook(liveBillingRuntime) : undefined;
 export const stripeWebhookTest = createStripeWebhook(testBillingRuntime);
 
 function createPortalFunction(runtime: BillingRuntime) {
@@ -922,7 +923,7 @@ function createPortalFunction(runtime: BillingRuntime) {
   );
 }
 
-export const createBillingPortalSession = createPortalFunction(liveBillingRuntime);
+export const createBillingPortalSession = isProductionEnvironment ? createPortalFunction(liveBillingRuntime) : undefined;
 export const createBillingPortalSessionTest = createPortalFunction(testBillingRuntime);
 
 function createCheckoutFunction(runtime: BillingRuntime) {
@@ -1058,7 +1059,7 @@ function createCheckoutFunction(runtime: BillingRuntime) {
   );
 }
 
-export const createCheckoutSession = createCheckoutFunction(liveBillingRuntime);
+export const createCheckoutSession = isProductionEnvironment ? createCheckoutFunction(liveBillingRuntime) : undefined;
 export const createCheckoutSessionTest = createCheckoutFunction(testBillingRuntime);
 
 /*
