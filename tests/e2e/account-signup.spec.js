@@ -4,8 +4,9 @@ test("visitor can distinguish guest state and choose a teacher signup path", asy
   await page.goto("/");
 
   await expect(page.getByLabel("Browsing as guest")).toBeVisible();
-  await expect(page.getByRole("navigation", { name: "Main navigation" }).getByRole("button", { name: "Rhymes" })).toHaveCount(0);
-  await page.getByRole("button", { name: "Account" }).click();
+  const mainNavigation = page.getByRole("navigation", { name: "Main navigation" });
+  await expect(mainNavigation.getByRole("button", { name: "Rhymes" })).toHaveCount(0);
+  await mainNavigation.getByRole("button", { name: "Account", exact: true }).click();
 
   await expect(page.getByRole("heading", { name: "Choose the right learning workspace" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Choose Parent / Child signup" })).toBeVisible();
@@ -21,7 +22,7 @@ test("account signup choices align cleanly on mobile", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 900 });
   await page.goto("/");
   await page.getByRole("button", { name: "Open menu" }).click();
-  await page.getByRole("button", { name: "Account" }).click();
+  await page.getByRole("navigation", { name: "Main navigation" }).getByRole("button", { name: "Account", exact: true }).click();
 
   const parentChoice = page.getByRole("button", { name: "Choose Parent / Child signup" });
   const teacherChoice = page.getByRole("button", { name: "Choose Teacher signup" });
