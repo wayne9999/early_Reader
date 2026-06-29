@@ -4,6 +4,8 @@ type HomePageProps = {
   onNavigate: (view: AppView) => void;
 };
 
+const birdBookImageSrc = `${import.meta.env.BASE_URL}brand/readnest-bird-book.png`;
+
 const parentBenefits = [
   {
     icon: "1",
@@ -109,11 +111,8 @@ export function HomePage({ onNavigate }: HomePageProps) {
         <div className="home-story-card" aria-hidden="true">
           <div className="home-story-badge home-story-badge-left">+3 stars earned!</div>
           <div className="home-story-scene">
+            <img className="home-story-image" src={birdBookImageSrc} alt="" loading="eager" />
             <span className="scene-sun">A</span>
-            <span className="scene-book">read</span>
-            <span className="scene-child one">smile</span>
-            <span className="scene-child two">sound</span>
-            <span className="scene-child three">word</span>
             <span className="scene-tree">B</span>
             <span className="scene-owl">go</span>
           </div>
