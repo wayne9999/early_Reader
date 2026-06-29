@@ -1,4 +1,5 @@
 export type AppView =
+  | "home"
   | "reading"
   | "memory"
   | "progress"
