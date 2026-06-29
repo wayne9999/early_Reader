@@ -84,6 +84,12 @@ jobs:
         with:
           credentials_json: ${{ secrets.READNEST_DEV_FIREBASE_SERVICE_ACCOUNT }}
 
+      - name: Report Google Cloud deploy identity
+        run: |
+          echo "Active Google Cloud account:"
+          gcloud auth list --filter=status:ACTIVE --format="value(account)"
+          echo "Target Firebase project: ${FIREBASE_PROJECT_ID}"
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
