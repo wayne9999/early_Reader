@@ -37,6 +37,8 @@ import type { AppUser, AppView, Progress, SignupPath, SubscriptionRecord, UserPr
 type NavItem = { id: AppView; label: string; icon: string; badge?: string };
 type NavGroup = { title: string; items: NavItem[]; defaultOpen?: boolean };
 
+const brandIconSrc = `${import.meta.env.BASE_URL}brand/readnest-icon-192.png`;
+
 const activityNavItems: NavItem[] = [
   { id: "reading", label: "Reading", icon: "Aa" },
   { id: "memory", label: "Memory", icon: "?" },
@@ -608,7 +610,7 @@ export function RootApp() {
       <aside className="sidebar" id="main-menu" aria-label="Learning areas">
         <div className="brand">
           <span className="brand-mark" aria-hidden="true">
-            R
+            <img src={brandIconSrc} alt="" />
           </span>
           <div>
             <p className="eyebrow">Personalized reading paths</p>
