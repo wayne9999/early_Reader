@@ -33,34 +33,34 @@ import { loadTrustedSubscription } from "./services/subscriptionRepository";
 import { loadUserProfile } from "./services/userProfileRepository";
 import type { AppUser, AppView, Progress, SignupPath, SubscriptionRecord, UserProfile, UserRole } from "./types";
 
-type NavItem = { id: AppView; label: string };
+type NavItem = { id: AppView; label: string; icon: string; badge?: string };
 type NavGroup = { title: string; items: NavItem[]; defaultOpen?: boolean };
 
 const activityNavItems: NavItem[] = [
-  { id: "reading", label: "Reading" },
-  { id: "memory", label: "Memory" },
-  { id: "rhymes", label: "Rhymes" },
-  { id: "soundSort", label: "Sounds" },
-  { id: "sentenceBuilder", label: "Sentences" },
-  { id: "storyOrder", label: "Story" },
-  { id: "wordMeaning", label: "Words" },
-  { id: "echoReader", label: "Echo" },
-  { id: "voiceQuest", label: "Voice Quest" }
+  { id: "reading", label: "Reading", icon: "Aa" },
+  { id: "memory", label: "Memory", icon: "?" },
+  { id: "rhymes", label: "Rhymes", icon: "=" },
+  { id: "soundSort", label: "Sounds", icon: ">" },
+  { id: "sentenceBuilder", label: "Sentences", icon: "." },
+  { id: "storyOrder", label: "Story", icon: "1" },
+  { id: "wordMeaning", label: "Words", icon: "!" },
+  { id: "echoReader", label: "Echo", icon: ">" },
+  { id: "voiceQuest", label: "Voice Quest", icon: "*" }
 ];
 
 const legalNavItems: NavItem[] = [
-  { id: "privacy", label: "Privacy" },
-  { id: "terms", label: "Terms" },
-  { id: "childrenPrivacy", label: "Children" },
-  { id: "refundPolicy", label: "Refunds" }
+  { id: "privacy", label: "Privacy", icon: "i" },
+  { id: "terms", label: "Terms", icon: "#" },
+  { id: "childrenPrivacy", label: "Children", icon: "K" },
+  { id: "refundPolicy", label: "Refunds", icon: "$" }
 ];
 
 const studentNavGroups: NavGroup[] = [
   {
     title: "My space",
     items: [
-      { id: "progress", label: "Dashboard" },
-      { id: "findTeacher", label: "Find Teacher" }
+      { id: "progress", label: "Dashboard", icon: "^" },
+      { id: "findTeacher", label: "Find Teacher", icon: "T" }
     ],
     defaultOpen: true
   },
@@ -68,9 +68,9 @@ const studentNavGroups: NavGroup[] = [
   {
     title: "Help",
     items: [
-      { id: "donate", label: "Donate" },
-      { id: "support", label: "Support" },
-      { id: "account", label: "Account" }
+      { id: "donate", label: "Donate", icon: "$", badge: "Mission" },
+      { id: "support", label: "Support", icon: "?" },
+      { id: "account", label: "Account", icon: "R" }
     ],
     defaultOpen: true
   },
@@ -78,14 +78,14 @@ const studentNavGroups: NavGroup[] = [
 ];
 
 const teacherNavGroups: NavGroup[] = [
-  { title: "Workspace", items: [{ id: "teacher", label: "Dashboard" }], defaultOpen: true },
+  { title: "Workspace", items: [{ id: "teacher", label: "Dashboard", icon: "^" }], defaultOpen: true },
   { title: "Activities", items: activityNavItems, defaultOpen: true },
   {
     title: "Help",
     items: [
-      { id: "support", label: "Support" },
-      { id: "donate", label: "Donate" },
-      { id: "account", label: "Account" }
+      { id: "support", label: "Support", icon: "?" },
+      { id: "donate", label: "Donate", icon: "$", badge: "Mission" },
+      { id: "account", label: "Account", icon: "R" }
     ],
     defaultOpen: true
   },
@@ -93,13 +93,13 @@ const teacherNavGroups: NavGroup[] = [
 ];
 
 const adminNavGroups: NavGroup[] = [
-  { title: "Workspace", items: [{ id: "teacher", label: "Admin View" }], defaultOpen: true },
+  { title: "Workspace", items: [{ id: "teacher", label: "Admin View", icon: "^" }], defaultOpen: true },
   {
     title: "Help",
     items: [
-      { id: "support", label: "Support" },
-      { id: "donate", label: "Donate" },
-      { id: "account", label: "Account" }
+      { id: "support", label: "Support", icon: "?" },
+      { id: "donate", label: "Donate", icon: "$", badge: "Mission" },
+      { id: "account", label: "Account", icon: "R" }
     ],
     defaultOpen: true
   },
@@ -110,17 +110,17 @@ const publicNavGroups: NavGroup[] = [
   {
     title: "Try now",
     items: [
-      { id: "reading", label: "Reading" },
-      { id: "memory", label: "Memory" }
+      { id: "reading", label: "Reading", icon: "Aa" },
+      { id: "memory", label: "Memory", icon: "?" }
     ],
     defaultOpen: true
   },
   {
     title: "Help",
     items: [
-      { id: "donate", label: "Donate" },
-      { id: "support", label: "Support" },
-      { id: "account", label: "Account" }
+      { id: "donate", label: "Donate", icon: "$", badge: "Mission" },
+      { id: "support", label: "Support", icon: "?" },
+      { id: "account", label: "Account", icon: "R" }
     ],
     defaultOpen: true
   },
@@ -550,8 +550,8 @@ export function RootApp() {
     if (currentView === "account") {
       return (
         <>
-          <SignInPanel redirectView={requestedAuthView} />
           {profile ? <SubscriptionManagement profile={profile} subscription={subscription} /> : null}
+          <SignInPanel redirectView={requestedAuthView} />
         </>
       );
     }
@@ -611,6 +611,19 @@ export function RootApp() {
           </div>
         </div>
 
+        {!user ? (
+          <div className="sidebar-auth-actions" aria-label="Account shortcuts">
+            <button type="button" onClick={() => navigateToView("account")}>
+              <span aria-hidden="true">+</span>
+              Create
+            </button>
+            <button type="button" onClick={() => navigateToView("account")}>
+              <span aria-hidden="true">-&gt;</span>
+              Login
+            </button>
+          </div>
+        ) : null}
+
         <nav className="nav-tabs" aria-label="Main navigation">
           {navGroups.map((group) => {
             const isGroupActive = group.items.some((item) => item.id === currentView);
@@ -626,7 +639,9 @@ export function RootApp() {
                       type="button"
                       onClick={() => navigateToView(item.id)}
                     >
-                      {item.label}
+                      <span className="nav-icon" aria-hidden="true">{item.icon}</span>
+                      <span>{item.label}</span>
+                      {item.badge ? <small>{item.badge}</small> : null}
                     </button>
                   ))}
                 </div>

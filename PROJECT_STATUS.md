@@ -12,7 +12,7 @@
 - Added reading, phonics, sentence, and memory practice.
 - Added caregiver progress dashboard.
 - Added teacher/admin dashboard with rule-based analysis.
-- Added Auth0-ready account page for Google, Facebook, and Instagram.
+- Added Firebase-ready account page for email/password, Google, and Facebook.
 - Added Firebase Auth profile roles for student and teacher accounts.
 - Added Firestore progress, learning-event history, teacher profile, and teacher-student assignment repositories.
 - Added student teacher-search and assignment request flow.
@@ -39,7 +39,7 @@
 
 ## Not Yet Fully Connected
 
-- Facebook and Instagram sign-in still need provider setup/custom-provider work.
+- Facebook sign-in needs Firebase Console provider setup with the Meta app ID and secret before live use.
 - Stripe webhook code is deployed with secrets, but it still needs Stripe Dashboard endpoint registration and end-to-end test events.
 - Teacher-created invitation codes can be created, but invite acceptance/revocation/admin tooling still needs completion.
 - AI insight generation uses a backend OpenAI adapter with a rule-based fallback. Legal review, prompt evaluation, and production monitoring are still needed before broad launch.

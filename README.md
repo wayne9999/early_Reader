@@ -24,7 +24,7 @@ For Codex continuity and project handoff notes, see `.codex/project.md` and `PRO
 - Teacher Pro gating for classroom dashboard, student analysis, reports, intervention planning, paid activity review, and AI-supported recommendations when enabled.
 - Teacher-created invite-code scaffold for families.
 - Legal/support pages for privacy, terms, children's privacy, parent consent, teacher terms, refunds, billing help, and data deletion requests.
-- Firebase Auth account page with Google and Facebook support, plus an Instagram custom-provider placeholder.
+- Firebase Auth account page with email, Google, and Facebook support.
 - Firebase Firestore profile, assignment, event, and progress repositories with local storage fallback for development.
 - Shareable app URLs for each main page, including protected-page login redirects.
 - Responsive layout for desktop, tablet, and phone-sized screens.
@@ -227,7 +227,6 @@ Suggested subscriptions:
 - Add a parent-facing personalization editor for grade, reading goal, and preferred practice time.
 - Register and verify the Stripe webhook endpoint with test events.
 - Finish Firebase Auth provider setup in Firebase Console.
-- Add Instagram through a custom provider or Auth0 bridge if that remains a requirement.
 - Complete invite acceptance/revocation UI.
 - Add backend payout reporting for teachers based on active assigned students and approved pay rules.
 - Replace remaining demo classroom fallback data with fully live Firestore enrollment data.

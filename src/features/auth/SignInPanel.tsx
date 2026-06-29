@@ -6,8 +6,7 @@ import { useAuth } from "./AuthProvider";
 
 const providers: Array<{ id: SocialProvider; label: string; className: string; productionReady: boolean }> = [
   { id: "google", label: "Continue with Google", className: "google-button", productionReady: true },
-  { id: "facebook", label: "Continue with Facebook", className: "facebook-button", productionReady: true },
-  { id: "instagram", label: "Instagram sign-in coming later", className: "instagram-button", productionReady: false }
+  { id: "facebook", label: "Continue with Facebook", className: "facebook-button", productionReady: true }
 ];
 
 type SignInPanelProps = {

@@ -16,9 +16,8 @@ profiles, learning history, support messages, or teacher data into development.
 
 The app is now structured for:
 
-- Firebase Authentication for Google and Facebook sign-in.
+- Firebase Authentication for email/password, Google, and Facebook sign-in.
 - Firebase Firestore for user profile, role, subscription authority, progress, event history, invites, and teacher assignment storage.
-- Auth0/custom-provider path for Instagram if that remains a product requirement.
 - Local storage fallback when Firebase/Auth0 environment values are missing.
 
 ## Firestore Collections
@@ -205,7 +204,6 @@ VITE_AUTH0_AUDIENCE=
 VITE_AUTH0_REDIRECT_URI=http://localhost:4173
 VITE_AUTH0_GOOGLE_CONNECTION=google-oauth2
 VITE_AUTH0_FACEBOOK_CONNECTION=facebook
-VITE_AUTH0_INSTAGRAM_CONNECTION=instagram
 
 VITE_FIREBASE_API_KEY=
 VITE_FIREBASE_AUTH_DOMAIN=
@@ -220,12 +218,12 @@ VITE_FIREBASE_MEASUREMENT_ID=
 
 Firestore security rules use `request.auth.uid`. That means production Firestore writes need a Firebase-authenticated user identity.
 
-The app now uses Firebase Authentication first when Firebase env values exist. Google and Facebook are Firebase-native sign-in targets. Instagram still needs a custom provider or Auth0 connection.
+The app now uses Firebase Authentication first when Firebase env values exist. Email/password, Google, and Facebook are the supported sign-in targets.
 
 The current code is ready for Firestore SDK usage and stores data at the correct paths when a Firebase-authenticated session exists. If Auth0 is later used as the identity provider, production should add one of these before enabling live child data:
 
 1. Auth0 to Firebase custom-token exchange through a backend endpoint or Cloud Function.
-2. Firebase Authentication as the primary auth provider for Google/Facebook, with a custom provider strategy for Instagram.
+2. Firebase Authentication as the primary auth provider for email/password, Google, and Facebook.
 
 The frontend fallback is intentionally safe for development: when Firebase/Auth0 values are missing, or when there is no Firebase-authenticated session yet, it stores progress in browser local storage and does not send child data anywhere.
 

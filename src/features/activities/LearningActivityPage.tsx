@@ -188,11 +188,12 @@ export function LearningActivityPage({ activityId, progress, user, profile, onPr
           </p>
         </div>
         <button
-          className="secondary-button"
+          className="secondary-button child-action-button"
           type="button"
           onClick={() => void hearPrompt()}
         >
-          {activity.voiceMode === "elevenLabs" ? "Hear story voice" : "Hear prompt"}
+          <span className="button-symbol" aria-hidden="true">▶</span>
+          <span>{activity.voiceMode === "elevenLabs" ? "Hear story voice" : "Hear prompt"}</span>
         </button>
       </div>
 
@@ -224,6 +225,7 @@ export function LearningActivityPage({ activityId, progress, user, profile, onPr
             type="button"
             onClick={() => chooseAnswer(choice)}
           >
+            <span className="choice-mark" aria-hidden="true">{answeredCorrectly && choice === currentRound.correctChoice ? "✓" : "?"}</span>
             <span>{choice}</span>
           </button>
         ))}
@@ -240,13 +242,15 @@ export function LearningActivityPage({ activityId, progress, user, profile, onPr
               : "Try the answer that matches the sound, meaning, or story clue."}
         </p>
         {!isCompleted && answeredCorrectly ? (
-          <button className="primary-button" type="button" onClick={goToNextRound}>
-            Next round
+          <button className="primary-button child-action-button next-action" type="button" onClick={goToNextRound}>
+            <span>Next round</span>
+            <span className="button-symbol" aria-hidden="true">→</span>
           </button>
         ) : null}
         {isCompleted ? (
-          <button className="primary-button" type="button" onClick={restartActivity}>
-            Play again
+          <button className="primary-button child-action-button" type="button" onClick={restartActivity}>
+            <span className="button-symbol" aria-hidden="true">↻</span>
+            <span>Play again</span>
           </button>
         ) : null}
       </article>

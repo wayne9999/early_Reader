@@ -221,7 +221,7 @@ export type TeacherInvite = {
 
 export type TeacherLoadStatus = "open" | "nearlyFull" | "full";
 
-export type SocialProvider = "google" | "facebook" | "instagram";
+export type SocialProvider = "google" | "facebook";
 
 export type SkillArea = "phonics" | "sightWords" | "fluency" | "workingMemory" | "consistency";
 
