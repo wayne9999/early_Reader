@@ -12,10 +12,12 @@ import { sendSupportSummaryEmail, summarizeSupportCase } from "./supportWorkflow
 
 initializeApp();
 
+const readnestEnvironment = process.env.READNEST_ENVIRONMENT;
+const isProductionEnvironment = readnestEnvironment === "production";
 const stripeSecretKey = defineSecret("STRIPE_SECRET_KEY");
 const stripeWebhookSecret = defineSecret("STRIPE_WEBHOOK_SECRET");
-const stripeLiveSecretKey = defineSecret("STRIPE_LIVE_SECRET_KEY");
-const stripeLiveWebhookSecret = defineSecret("STRIPE_LIVE_WEBHOOK_SECRET");
+const stripeLiveSecretKey = isProductionEnvironment ? defineSecret("STRIPE_LIVE_SECRET_KEY") : stripeSecretKey;
+const stripeLiveWebhookSecret = isProductionEnvironment ? defineSecret("STRIPE_LIVE_WEBHOOK_SECRET") : stripeWebhookSecret;
 const openAiApiKey = defineSecret("OPENAI_API_KEY");
 const resendApiKey = defineSecret("RESEND_API_KEY");
 const elevenLabsApiKey = defineSecret("ELEVENLABS_API_KEY");
@@ -24,8 +26,6 @@ const aiModel = process.env.READNEST_AI_MODEL ?? "gpt-5.5";
 const supportNotificationEmail = process.env.SUPPORT_NOTIFICATION_EMAIL ?? "support@myreadnest.org";
 const supportFromEmail = process.env.SUPPORT_FROM_EMAIL ?? "ReadNest Support <support@myreadnest.org>";
 const enforceAppCheck = process.env.READNEST_ENFORCE_APP_CHECK === "true";
-const readnestEnvironment = process.env.READNEST_ENVIRONMENT;
-const isProductionEnvironment = readnestEnvironment === "production";
 const expectedFirebaseProjectId = process.env.READNEST_EXPECTED_FIREBASE_PROJECT_ID;
 const runtimeFirebaseProjectId = process.env.GCLOUD_PROJECT ?? process.env.GOOGLE_CLOUD_PROJECT ?? process.env.FIREBASE_PROJECT_ID;
 const aiWarningLimitUsd = parseBudgetLimit(process.env.READNEST_AI_WARNING_LIMIT_USD, 10);
