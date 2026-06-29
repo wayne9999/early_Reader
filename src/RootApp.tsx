@@ -5,6 +5,7 @@ import { SubscriptionPrompt } from "./features/account/SubscriptionPrompt";
 import { LearningActivityPage } from "./features/activities/LearningActivityPage";
 import { SignInPanel } from "./features/auth/SignInPanel";
 import { useAuth } from "./features/auth/AuthProvider";
+import { HomePage } from "./features/home/HomePage";
 import { LegalPage } from "./features/legal/LegalPage";
 import { MemoryGame } from "./features/memory/MemoryGame";
 import { ProgressDashboard } from "./features/progress/ProgressDashboard";
@@ -56,6 +57,7 @@ const legalNavItems: NavItem[] = [
 ];
 
 const studentNavGroups: NavGroup[] = [
+  { title: "Start", items: [{ id: "home", label: "Home", icon: "R" }], defaultOpen: true },
   {
     title: "My space",
     items: [
@@ -78,6 +80,7 @@ const studentNavGroups: NavGroup[] = [
 ];
 
 const teacherNavGroups: NavGroup[] = [
+  { title: "Start", items: [{ id: "home", label: "Home", icon: "R" }], defaultOpen: true },
   { title: "Workspace", items: [{ id: "teacher", label: "Dashboard", icon: "^" }], defaultOpen: true },
   { title: "Activities", items: activityNavItems, defaultOpen: true },
   {
@@ -93,6 +96,7 @@ const teacherNavGroups: NavGroup[] = [
 ];
 
 const adminNavGroups: NavGroup[] = [
+  { title: "Start", items: [{ id: "home", label: "Home", icon: "R" }], defaultOpen: true },
   { title: "Workspace", items: [{ id: "teacher", label: "Admin View", icon: "^" }], defaultOpen: true },
   {
     title: "Help",
@@ -107,6 +111,7 @@ const adminNavGroups: NavGroup[] = [
 ];
 
 const publicNavGroups: NavGroup[] = [
+  { title: "Start", items: [{ id: "home", label: "Home", icon: "R" }], defaultOpen: true },
   {
     title: "Try now",
     items: [
@@ -228,7 +233,7 @@ export function RootApp() {
     const syncRoute = () => setRouteState(parseAppRoute(window.location.hash));
 
     if (!window.location.hash) {
-      navigateToView("reading", { replace: true });
+      navigateToView("home", { replace: true });
     }
 
     window.addEventListener("hashchange", syncRoute);
@@ -425,6 +430,10 @@ export function RootApp() {
           <h2>Taking you to the right page...</h2>
         </article>
       );
+    }
+
+    if (currentView === "home") {
+      return <HomePage onNavigate={navigateToView} />;
     }
 
     if (currentView === "memory") {
@@ -670,6 +679,7 @@ export function RootApp() {
       </aside>
 
       <main className="main-content">
+        {currentView !== "home" ? (
         <section className="hero">
           <div>
             <p className="eyebrow">Personalized early reading</p>
@@ -688,6 +698,7 @@ export function RootApp() {
             </div>
           </div>
         </section>
+        ) : null}
 
         <section className="view-root" aria-live="polite">
           {view}

@@ -7,6 +7,7 @@ For Codex continuity and project handoff notes, see `.codex/project.md` and `PRO
 ## What ReadNest Includes
 
 - Reading practice with level-based sight words, phonics blending, and short sentences.
+- A polished home page that explains the parent value, student experience, free starter path, and paid upgrade options before families enter activities.
 - Browser read-aloud support using the built-in SpeechSynthesis API.
 - Memory matching using school-ready concepts like healthy habits, kind words, and classroom routines.
 - Seven logged-in student activities across rhyming, beginning sounds, sentence order, story sequencing, word meaning, and premium voice-powered practice.

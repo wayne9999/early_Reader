@@ -39,11 +39,13 @@ describe("appRoutes", () => {
     expect(parseAppRoute("#/sentence-builder")).toEqual({ view: "sentenceBuilder", nextView: null });
     expect(parseAppRoute("#/echo-reader")).toEqual({ view: "echoReader", nextView: null });
     expect(parseAppRoute("#/voice-quest")).toEqual({ view: "voiceQuest", nextView: null });
+    expect(parseAppRoute("#/home")).toEqual({ view: "home", nextView: null });
     expect(parseAppRoute("#/account?next=teacher")).toEqual({ view: "account", nextView: "teacher" });
-    expect(parseAppRoute("")).toEqual({ view: "reading", nextView: null });
+    expect(parseAppRoute("")).toEqual({ view: "home", nextView: null });
   });
 
   it("builds hash routes that work on static hosting", () => {
+    expect(hashForView("home")).toBe("#/home");
     expect(hashForView("support")).toBe("#/support");
     expect(hashForView("refundPolicy")).toBe("#/refund-policy");
     expect(hashForView("soundSort")).toBe("#/sound-sort");
@@ -52,11 +54,13 @@ describe("appRoutes", () => {
   });
 
   it("identifies protected and role-specific pages", () => {
+    expect(requiresAuthentication("home")).toBe(false);
     expect(requiresAuthentication("reading")).toBe(false);
     expect(requiresAuthentication("privacy")).toBe(false);
     expect(requiresAuthentication("teacher")).toBe(true);
     expect(requiresAuthentication("rhymes")).toBe(true);
     expect(canAccessView(studentProfile, "progress")).toBe(true);
+    expect(canAccessView(studentProfile, "home")).toBe(true);
     expect(canAccessView(studentProfile, "wordMeaning")).toBe(true);
     expect(canAccessView(studentProfile, "echoReader")).toBe(true);
     expect(canAccessView(studentProfile, "teacher")).toBe(false);
