@@ -46,7 +46,12 @@ describe("RoleSetup", () => {
         { id: "student-1", name: "Jayden", email: "jayden@example.com" },
         "student",
         "parentChild",
-        { parentConsentAccepted: true }
+        {
+          parentConsentAccepted: true,
+          gradeLevel: "K",
+          readingGoal: "confidence",
+          preferredPracticeMinutes: 5
+        }
       );
     });
     expect(onProfileCreated).toHaveBeenCalledWith(expect.objectContaining({ role: "student" }));
@@ -76,7 +81,12 @@ describe("RoleSetup", () => {
         { id: "teacher-1", name: "Mrs. Baker", email: "teacher@example.com" },
         "teacher",
         "teacher",
-        { parentConsentAccepted: undefined }
+        {
+          parentConsentAccepted: undefined,
+          gradeLevel: undefined,
+          readingGoal: undefined,
+          preferredPracticeMinutes: undefined
+        }
       );
     });
   });

@@ -1,29 +1,30 @@
 # ReadNest
 
-ReadNest is a React MVP for children in kindergarten through grade 2 who are practicing early reading and age-appropriate memory skills.
+ReadNest is a personalized early reading web app for kindergarten through grade 2 learners. It combines short child-friendly practice, parent progress summaries, teacher insight tools, and paid Family Plus / Teacher Pro paths for deeper support.
 
 For Codex continuity and project handoff notes, see `.codex/project.md` and `PROJECT_STATUS.md`.
 
-## What The MVP Includes
+## What ReadNest Includes
 
 - Reading practice with level-based sight words, phonics blending, and short sentences.
 - Browser read-aloud support using the built-in SpeechSynthesis API.
 - Memory matching using school-ready concepts like healthy habits, kind words, and classroom routines.
-- Five extra logged-in student activities for rhyming, beginning sounds, sentence order, story sequencing, and word meaning.
-- Caregiver progress view with known words, reading sessions, memory boards, and next-step suggestions.
+- Seven logged-in student activities across rhyming, beginning sounds, sentence order, story sequencing, word meaning, and premium voice-powered practice.
+- Personalized student paths using grade level, reading goal, recent misses, saved learning events, and Learning Coach insights.
+- Caregiver progress view with known words, reading sessions, memory boards, strengths, needs practice, and next-step suggestions.
 - Role-aware student and teacher workspaces with signup-path auto assignment after authentication.
 - Student learning-event history for reading, sentence, and memory interactions.
-- Teacher dashboard with assigned-student roster, approval requests, strengths, growth areas, history, and intervention planning.
+- Teacher dashboard with assigned-student roster, approval requests, strengths, growth areas, history, report exports, and intervention planning.
 - Teacher accounts can also open the student-facing reading, memory, and skill activities so they can review the learner experience.
 - Downloadable teacher report cards for assigned students with quarter and annual goal comparisons for parent sharing.
 - Student teacher selection with teacher bios, grade fit, specialties, visible workload, and request approval.
 - Donation and subscription support page using Stripe Payment Links.
 - Trusted subscription architecture using `subscriptions/{userId}` as the production paid-access source of truth.
-- Free vs paid student activity access: free students get Reading, Memory, Rhymes, Sounds, and Sentences; Family Plus is the paid path for Story Steps, Word Garden, printable plans, and future premium packs.
-- Teacher Pro gating for classroom dashboard, student analysis, reports, intervention planning, and future AI recommendations.
+- Activity tiers: guests get Reading and Memory; registered free users get Rhymes and Sounds; Family Plus / Teacher Pro unlock Sentences, Story Steps, Word Garden, Echo Reader, and Voice Quest.
+- Teacher Pro gating for classroom dashboard, student analysis, reports, intervention planning, paid activity review, and AI-supported recommendations when enabled.
 - Teacher-created invite-code scaffold for families.
 - Legal/support pages for privacy, terms, children's privacy, parent consent, teacher terms, refunds, billing help, and data deletion requests.
-- Firebase Auth account page with Google and Facebook support, plus an Instagram custom-provider placeholder.
+- Firebase Auth account page with email, Google, and Facebook support.
 - Firebase Firestore profile, assignment, event, and progress repositories with local storage fallback for development.
 - Shareable app URLs for each main page, including protected-page login redirects.
 - Responsive layout for desktop, tablet, and phone-sized screens.
@@ -108,9 +109,11 @@ are the current shareable app URLs:
 - `#/sentence-builder` for signed-in students
 - `#/story-order` for signed-in students
 - `#/word-meaning` for signed-in students
+- `#/echo-reader` for paid students and paid teachers
+- `#/voice-quest` for paid students and paid teachers
 - `#/teacher` for signed-in teachers and admins
 
-Guest-accessible routes open directly. Guests can use Reading and Memory as the open practice activities. The five added skill activities are student-only, so protected activity links redirect guests to the neutral Account page at `#/account?next={route}` and save the requested route in session storage. The Account page does not assume whether the link is meant for a student or teacher; the user still chooses the correct account path. After sign-in and role setup, ReadNest opens the saved route when that role is allowed to access it, otherwise it sends the user to the correct home page for their role.
+Guest-accessible routes open directly. Guests can use Reading and Memory as the open practice activities. Rhymes and Sounds are registered free activities. Sentences, Story Steps, Word Garden, Echo Reader, and Voice Quest are paid activities for active Family Plus students or active Teacher Pro teachers. Protected activity links redirect guests to the neutral Account page at `#/account?next={route}` and save the requested route in session storage. The Account page does not assume whether the link is meant for a student or teacher; the user still chooses the correct account path. After sign-in and role setup, ReadNest opens the saved route when that role is allowed to access it, otherwise it sends the user to the correct home page for their role.
 
 ## Architecture
 
@@ -164,17 +167,18 @@ Current behavior:
 - Teachers approve or decline requests from their dashboard; approved students become active assignments.
 - Teacher workload is tracked through `activeStudentCount` and `maxStudentLoad` so students are guided toward teachers with available capacity.
 - Student interaction history is stored under `users/{studentId}/learningEvents/{eventId}`, including answer attempts, memory attempts, completions, and read-aloud interactions.
-- Student dashboard summarizes their own progress, recent activity, practiced skill areas, accuracy, and a next practice suggestion.
-- Active assigned teachers can read assigned student event history through Firestore rules and see richer evaluation data: interactions, accuracy, review moments, practiced areas, reading, memory, and logged-in activity completions.
+- Student dashboard summarizes their own progress, recent activity, practiced skill areas, accuracy, and a personalized next practice suggestion.
+- Active assigned teachers can read assigned student event history through Firestore rules and see richer evaluation data: interactions, accuracy, review moments, practiced areas, reading, memory, logged-in activity completions, and personalized path signals.
 - Teachers can download a concise HTML report card for each active assigned student. The report is generated in-browser from the teacher-visible data and escapes report text before writing the file.
 - Production paid access reads `subscriptions/{userId}`. Firestore rules prevent client writes to subscription authority.
+- Premium voice activities call the backend `createActivityVoiceClip` Firebase Function. The function checks paid access, rate limits requests, calls ElevenLabs with `ELEVENLABS_API_KEY`, and falls back to browser speech on the client if provider audio is unavailable.
 - Teacher compensation should be calculated on trusted backend data from active assignments before real payouts are made.
 - Firebase Functions in `functions/` handle Stripe webhooks, billing portal sessions, AI insight jobs, scheduled processing, OpenAI budget guarding, and rule-based fallback.
 - Signed-in support requests are stored in `supportCases`, including billing, data deletion, teacher verification, technical, and general help. Backend deletion/export fulfillment still needs an operations process.
 
 ## Donations And Subscriptions
 
-The app uses Stripe Payment Links for donations and subscriptions so payment details are handled by Stripe-hosted checkout pages. Student cancellation should use Stripe Customer Portal so families can stop monthly billing, update cards, and view invoices. `VITE_STRIPE_CUSTOMER_PORTAL_LINK` must be a durable Stripe portal login link or an app backend endpoint that creates a fresh portal session; do not store a short-lived `billing.stripe.com/p/session/...` URL because Stripe portal sessions expire. Production paid access and cancellation are designed to be granted or removed by Stripe Checkout/Billing webhook events that update `subscriptions/{userId}` and Firebase custom claims; frontend-only entitlement changes are not sufficient for real paid access enforcement.
+The app uses Stripe-hosted checkout for donations and monthly plans so payment details stay with Stripe. Student cancellation should use Stripe Customer Portal so families can stop monthly billing, update cards, and view invoices. `VITE_STRIPE_CUSTOMER_PORTAL_LINK` must be a durable Stripe portal login link or an app backend endpoint that creates a fresh portal session; do not store a short-lived `billing.stripe.com/p/session/...` URL because Stripe portal sessions expire. Production paid access and cancellation are designed to be granted or removed by Stripe Checkout/Billing webhook events that update `subscriptions/{userId}` and Firebase custom claims; frontend-only entitlement changes are not sufficient for real paid access enforcement.
 
 Required production values:
 
@@ -182,6 +186,9 @@ Required production values:
 - `VITE_STRIPE_FAMILY_PLUS_LINK`
 - `VITE_STRIPE_TEACHER_PRO_LINK`
 - `VITE_STRIPE_CUSTOMER_PORTAL_LINK`: durable Stripe portal login link or backend billing endpoint, not a temporary portal session URL
+- `ELEVENLABS_API_KEY`: Firebase Functions secret for paid voice activities
+- `ELEVENLABS_VOICE_ID`: backend runtime value for the selected narrator voice
+- `ELEVENLABS_MODEL_ID`: backend runtime value, default `eleven_multilingual_v2`
 
 Backend-only production values are documented in `docs/production-env.md` and `docs/stripe-setup.md`.
 
@@ -192,6 +199,8 @@ Backend-only production values are documented in `docs/production-env.md` and `d
 - `docs/stripe-setup.md`
 - `docs/deployment.md`
 - `docs/firebase-setup.md`
+- `docs/personalization.md`
+- `docs/elevenlabs-setup.md`
 
 Optional support value:
 
@@ -199,15 +208,15 @@ Optional support value:
 
 Suggested subscriptions:
 
-- Free Reader: Reading, Memory, Rhymes, Sounds, and Sentences.
-- Family Plus: Story Steps, Word Garden, future premium packs, cloud sync, printable plans.
-- Teacher Pro: classroom dashboard, student analysis, intervention planning, exports, AI-ready recommendations.
+- Free Reader: Reading, Memory, Rhymes, Sounds, and basic personalized signals.
+- Family Plus: deeper personalized paths, Sentences, Story Steps, Word Garden, Echo Reader, Voice Quest, future premium packs, cloud sync, and printable plans.
+- Teacher Pro: classroom dashboard, paid activity review, student analysis, intervention planning, exports, and AI-supported recommendations when enabled.
 
 ## Product Plan
 
-### MVP
+### Current Foundation
 
-- Short reading practice loops for young attention spans.
+- Personalized short reading practice loops for young attention spans.
 - Read-aloud support and large typography.
 - Memory matching with familiar, developmentally appropriate concepts.
 - Local fallback so the app can be tested before cloud credentials are connected.
@@ -215,13 +224,13 @@ Suggested subscriptions:
 ### Next Milestone
 
 - Add full multi-child parent profile UI.
+- Add a parent-facing personalization editor for grade, reading goal, and preferred practice time.
 - Register and verify the Stripe webhook endpoint with test events.
 - Finish Firebase Auth provider setup in Firebase Console.
-- Add Instagram through a custom provider or Auth0 bridge if that remains a requirement.
 - Complete invite acceptance/revocation UI.
 - Add backend payout reporting for teachers based on active assigned students and approved pay rules.
 - Replace remaining demo classroom fallback data with fully live Firestore enrollment data.
-- Add production monitoring and prompt evaluation for AI-assisted teacher recommendations.
+- Add production monitoring and prompt evaluation for AI-supported teacher recommendations.
 - Add a content editor for caregivers or teachers.
 - Track accuracy separately from completion.
 - Add printable practice sheets.
@@ -229,7 +238,7 @@ Suggested subscriptions:
 
 ### Long-Term Direction
 
-- Introduce adaptive practice based on missed words.
+- Expand adaptive practice based on missed words, patterns, goals, and teacher interventions.
 - Support multiple languages and dialect-aware pronunciation.
 - Add teacher dashboards with classroom-level insights.
 - Add audit trails for AI-generated recommendations.

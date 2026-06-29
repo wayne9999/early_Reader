@@ -51,7 +51,7 @@ service cloud.firestore {
 
       match /learningEvents/{eventId} {
         allow create: if ownsUserDocument(userId)
-          && request.resource.data.keys().hasOnly(["userId", "type", "label", "area", "metadata", "createdAt"])
+          && request.resource.data.keys().hasOnly(["userId", "type", "label", "area", "metadata", "createdAt", "environment", "firebaseProjectId"])
           && request.resource.data.userId == request.auth.uid
           && request.resource.data.type in [
             "reading_started",

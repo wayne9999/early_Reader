@@ -8,6 +8,8 @@ export type AppView =
   | "sentenceBuilder"
   | "storyOrder"
   | "wordMeaning"
+  | "echoReader"
+  | "voiceQuest"
   | "teacher"
   | "donate"
   | "support"
@@ -28,6 +30,10 @@ export type SubscriptionTierId = "free" | "familyPlus" | "teacherPro";
 export type SubscriptionStatus = "free" | "checkoutStarted" | "active" | "pastDue" | "canceled";
 
 export type SubscriptionSource = "demo" | "stripe" | "adminGrant";
+
+export type StudentGradeLevel = "K" | "1" | "2";
+
+export type StudentReadingGoal = "confidence" | "phonics" | "sightWords" | "fluency";
 
 export type SubscriptionRecord = {
   userId: string;
@@ -120,6 +126,9 @@ export type UserProfile = {
   maxStudentLoad?: number;
   activeStudentCount?: number;
   payModelNote?: string;
+  gradeLevel?: StudentGradeLevel;
+  readingGoal?: StudentReadingGoal;
+  preferredPracticeMinutes?: number;
   parentConsentAccepted?: boolean;
   parentConsentAcceptedAt?: unknown;
   parentConsentVersion?: string;
@@ -212,24 +221,26 @@ export type TeacherInvite = {
 
 export type TeacherLoadStatus = "open" | "nearlyFull" | "full";
 
-export type SocialProvider = "google" | "facebook" | "instagram";
+export type SocialProvider = "google" | "facebook";
 
 export type SkillArea = "phonics" | "sightWords" | "fluency" | "workingMemory" | "consistency";
 
 export type LearningActivity = {
-  id: "rhymes" | "soundSort" | "sentenceBuilder" | "storyOrder" | "wordMeaning";
+  id: "rhymes" | "soundSort" | "sentenceBuilder" | "storyOrder" | "wordMeaning" | "echoReader" | "voiceQuest";
   title: string;
   shortLabel: string;
   routeLabel: string;
   eyebrow: string;
   skill: SkillArea;
   intro: string;
+  voiceMode?: "standard" | "elevenLabs";
   rounds: LearningActivityRound[];
 };
 
 export type LearningActivityRound = {
   prompt: string;
   target: string;
+  voicePrompt?: string;
   choices: string[];
   correctChoice: string;
   successMessage: string;

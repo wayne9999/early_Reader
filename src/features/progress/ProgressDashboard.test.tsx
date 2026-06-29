@@ -68,7 +68,7 @@ describe("ProgressDashboard", () => {
       expect(screen.getByRole("heading", { name: "Practice sounds and phonics" })).toBeInTheDocument();
     });
 
-    expect(screen.getByText("Short vowel sounds need one more confident try.")).toBeInTheDocument();
+    expect(screen.getAllByText("Short vowel sounds need one more confident try.").length).toBeGreaterThan(0);
     expect(screen.getByRole("link", { name: "Start activity" })).toHaveAttribute("href", "#/sound-sort");
     expect(screen.getByText("Practice short vowel sounds for five minutes.")).toBeInTheDocument();
     expect(screen.getByText("Say the sound, tap the word, then read it.")).toBeInTheDocument();

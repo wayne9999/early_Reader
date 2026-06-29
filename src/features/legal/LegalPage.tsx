@@ -30,7 +30,7 @@ const legalContent: Record<LegalPageProps["page"], { eyebrow: string; title: str
     sections: [
       {
         heading: "Educational support",
-        body: "ReadNest provides reading practice and progress support. It is not medical advice, a diagnosis, or a replacement for a licensed professional evaluation."
+        body: "ReadNest provides personalized reading practice and progress support. It is not medical advice, a diagnosis, or a replacement for a licensed professional evaluation."
       },
       {
         heading: "Accounts",
@@ -48,7 +48,7 @@ const legalContent: Record<LegalPageProps["page"], { eyebrow: string; title: str
     sections: [
       {
         heading: "Parent control",
-        body: "A parent or caregiver should create and manage child learning access. The app should collect only the minimum data needed to provide reading practice and progress tracking."
+        body: "A parent or caregiver should create and manage child learning access. The app should collect only the minimum data needed to provide personalized reading practice and progress tracking."
       },
       {
         heading: "Teacher access",

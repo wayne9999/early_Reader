@@ -59,7 +59,7 @@ export function SubscriptionManagement({ profile, subscription }: SubscriptionMa
   const rolePlanLabel = profile.role === "teacher" ? "Teacher Pro" : "Family Plus";
   const freeLabel = profile.role === "teacher" ? "Free teacher profile" : "Free access";
   const paidDescription = profile.role === "teacher"
-    ? "Classroom dashboard, assigned-student analysis, report exports, intervention planning, and AI-ready recommendations."
+    ? "Classroom dashboard, assigned-student analysis, report exports, intervention planning, and AI-supported recommendations when enabled."
     : paidStudentActivitiesDescription();
   const isPaidActive = useMemo(
     () => (subscription?.tier ?? profile.subscriptionTier) === rolePlanId
@@ -116,7 +116,7 @@ export function SubscriptionManagement({ profile, subscription }: SubscriptionMa
           <p className="helper-text">
             {profile.role === "teacher"
               ? "Create a teacher profile, review public pages, and preview activities before subscribing."
-              : freeStudentActivitiesDescription()}
+              : `${freeStudentActivitiesDescription()} with basic personalized progress signals.`}
           </p>
         </section>
         <section>

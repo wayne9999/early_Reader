@@ -3,16 +3,18 @@ import { progressTips } from "../../data/content";
 import { loadLatestStudentInsight, loadLearningCoachState } from "../../services/aiInsightRepository";
 import { loadLearningEvents } from "../../services/learningEventRepository";
 import { formatEventTime, nextStudentPractice, summarizeByArea, summarizeEvents } from "../../services/learningEventSummary";
+import { activityTitleForView, buildStudentPersonalizedPlan } from "../../services/personalizationService";
 import { clearProgress } from "../../services/progressRepository";
-import type { AppUser, LearningCoachState, LearningEvent, Progress, StudentAiInsight } from "../../types";
+import type { AppUser, LearningCoachState, LearningEvent, Progress, StudentAiInsight, UserProfile } from "../../types";
 
 type ProgressDashboardProps = {
   progress: Progress;
   user: AppUser | null;
+  profile?: UserProfile | null;
   onProgressChange: (progress: Progress) => void;
 };
 
-export function ProgressDashboard({ progress, user, onProgressChange }: ProgressDashboardProps) {
+export function ProgressDashboard({ progress, user, profile, onProgressChange }: ProgressDashboardProps) {
   const [events, setEvents] = useState<LearningEvent[]>([]);
   const [coachInsight, setCoachInsight] = useState<StudentAiInsight | null>(null);
   const [coachState, setCoachState] = useState<LearningCoachState | null>(null);
@@ -24,6 +26,16 @@ export function ProgressDashboard({ progress, user, onProgressChange }: Progress
   const areaSummaries = useMemo(() => allAreaSummaries.filter((area) => area.interactions > 0), [allAreaSummaries]);
   const nextPractice = useMemo(() => nextStudentPractice(events), [events]);
   const coachRecommendation = coachInsight?.nextBestActivity ?? coachState?.currentRecommendation ?? null;
+  const personalizedPlan = useMemo(
+    () => buildStudentPersonalizedPlan({
+      profile,
+      progress,
+      events,
+      coachInsight,
+      coachState
+    }),
+    [coachInsight, coachState, events, profile, progress]
+  );
   const dailyGoal = 3;
   const goalCompleted = Math.min(progress.completedToday, dailyGoal);
   const goalPercent = Math.round((goalCompleted / dailyGoal) * 100);
@@ -158,10 +170,10 @@ export function ProgressDashboard({ progress, user, onProgressChange }: Progress
 
         <article className="practice-panel next-best-card">
           <p className="eyebrow">Next best for you</p>
-          <h3>{coachRecommendation?.title ?? nextPractice}</h3>
-          <p>{coachRecommendation?.reason ?? "Start now and grow one skill today."}</p>
-          {coachRecommendation?.route ? (
-            <a className="secondary-button" href={coachRecommendation.route}>
+          <h3>{coachRecommendation?.title ?? personalizedPlan.recommendations[0]?.title ?? nextPractice}</h3>
+          <p>{coachRecommendation?.reason ?? personalizedPlan.recommendations[0]?.reason ?? "Start now and grow one skill today."}</p>
+          {coachRecommendation?.route || personalizedPlan.recommendations[0]?.route ? (
+            <a className="secondary-button" href={coachRecommendation?.route ?? personalizedPlan.recommendations[0]?.route}>
               Start activity
             </a>
           ) : null}
@@ -170,6 +182,27 @@ export function ProgressDashboard({ progress, user, onProgressChange }: Progress
           ) : null}
         </article>
       </section>
+
+      <article className="practice-panel personalized-plan-panel">
+        <div>
+          <p className="eyebrow">Personalized path</p>
+          <h3>{personalizedPlan.gradeLabel} - {personalizedPlan.goalLabel}</h3>
+          <p className="helper-text">{personalizedPlan.encouragement}</p>
+        </div>
+        <div className="personalized-path-list">
+          {personalizedPlan.recommendations.slice(0, 3).map((recommendation) => (
+            <a className={`personalized-path-card is-${recommendation.priority}`} href={recommendation.route} key={`${recommendation.route}-${recommendation.skillArea}`}>
+              <small>{recommendation.priority === "start" ? "Start here" : recommendation.priority === "practice" ? "Practice next" : "Stretch"}</small>
+              <strong>{activityTitleForView(recommendation.view)}</strong>
+              <span>{recommendation.reason}</span>
+            </a>
+          ))}
+        </div>
+        <p className="helper-text">
+          Plan source: {personalizedPlan.planSource.replace("-", " ")}.
+          {personalizedPlan.missedItems.length ? ` Reviewing ${personalizedPlan.missedItems.slice(0, 3).join(", ")}.` : " More saved practice will make this smarter."}
+        </p>
+      </article>
 
       <div className="dashboard-stat-grid">
         {stats.slice(0, 4).map((stat) => (

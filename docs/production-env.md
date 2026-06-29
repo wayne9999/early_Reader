@@ -63,6 +63,12 @@ Optional support email automation secret:
 firebase functions:secrets:set RESEND_API_KEY
 ```
 
+Optional premium voice activity secret:
+
+```bash
+firebase functions:secrets:set ELEVENLABS_API_KEY
+```
+
 The GitHub backend workflow does not rewrite secrets during a normal deploy. Select `sync_secrets=true` only when a secret value has changed; ordinary deployments reuse the active Firebase Secret Manager versions.
 
 Firestore rules deploy through the official Firebase Rules REST API using the workflow service account. This avoids relying on an interactive Firebase CLI login in CI. Firestore indexes remain defined in `firestore.indexes.json`; deploy index changes separately after validating the service account's Firestore index permissions.
@@ -84,6 +90,8 @@ Runtime environment values:
 - `SUPPORT_NOTIFICATION_EMAIL`
 - `SUPPORT_FROM_EMAIL`
 - `READNEST_ENFORCE_APP_CHECK` (`false` during monitoring, then `true` after App Check is verified)
+- `ELEVENLABS_VOICE_ID` for the child-friendly narrator voice used in premium activities
+- `ELEVENLABS_MODEL_ID` defaults to `eleven_multilingual_v2`
 
 Production values after custom-domain verification:
 
@@ -102,6 +110,7 @@ Production values after custom-domain verification:
 - AI budget records under `aiBudget/**` are backend-only. If the monthly cap is reached, the backend uses the rule-based fallback instead of calling OpenAI.
 - Support requests are stored in `supportCases/{caseId}`. The backend support worker writes AI summary fields and a Firebase Console detail link to the same document.
 - Support submissions and costly callable operations use backend per-user rate limits. Rate-limit counters under `abuseRateLimits/**` are backend-only.
+- Premium voice clips are created only by Firebase Functions after subscription checks. `ELEVENLABS_API_KEY` must stay in Secret Manager and never be exposed through Vite variables.
 - Firebase App Check uses reCAPTCHA v3 when `VITE_FIREBASE_APP_CHECK_SITE_KEY` is configured. Functions enforcement is controlled by `READNEST_ENFORCE_APP_CHECK`.
 - Operational logs are written to Cloud Logging and backend-authored `systemLogs/{logId}` documents. Client users cannot write operational logs; admins can read them through Firestore rules.
 
@@ -128,6 +137,8 @@ Use Firestore `systemLogs` for app-level operational history:
 - `eventName == "support_email_failed"`
 - `eventName == "ai_provider_fallback"`
 - `eventName == "ai_job_failed"`
+- `eventName == "elevenlabs_voice_clip_failed"`
+- `eventName == "elevenlabs_voice_clip_created"`
 
 Each log stores severity, event name, message, resource type/id, correlation id, and privacy-safe metadata. Full support messages stay in `supportCases/{caseId}`, not in logs.
 

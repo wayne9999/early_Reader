@@ -24,7 +24,7 @@ Status labels:
 | Area | Status | Notes |
 | --- | --- | --- |
 | Firebase Auth production path | Completed | Firebase Auth is preferred when env values are configured. Demo/Auth0 behavior is fallback only. |
-| Incomplete social providers | Completed | Instagram sign-in is visibly marked as coming later under Firebase. |
+| Social providers | Completed | Email/password, Google, and Facebook are the supported Firebase Auth paths. |
 | Role lock | Completed | Firestore rules prevent users from changing profile role after creation. |
 | Teacher/student separation | Completed | Firestore rules restrict student data to the owner and active assigned teacher. |
 | Bot and automated abuse controls | Needs Work | Backend rate limits, support honeypot, strict event payloads, and App Check integration are implemented. Register the reCAPTCHA v3 site key, monitor valid traffic, then enable Firestore and Functions enforcement before broad launch. |

@@ -43,11 +43,11 @@ export const subscriptionTiers: SubscriptionTier[] = [
     name: "Free Reader",
     price: "$0",
     audience: "Families getting started",
-    description: "Core reading and memory practice for one learner.",
+    description: "A useful starter path for one young reader.",
     perks: [
       "Guest Reading and Memory activities",
-      "Three extra signed-in activities: Rhymes, Sounds, and Sentences",
-      "Local progress tracking",
+      "Signed-in Rhymes and Sounds practice",
+      "Basic personalized dashboard signals",
       "Read-aloud support"
     ],
     cta: "Included"
@@ -57,13 +57,14 @@ export const subscriptionTiers: SubscriptionTier[] = [
     name: "Family Plus",
     price: "$7/month",
     audience: "Parents and caregivers",
-    description: "Extra support for home practice and multiple children.",
+    description: "A richer personalized path for home reading growth.",
     perks: [
-      "Unlock Story Steps and Word Garden",
-      "More guided practice packs as the library grows",
+      "Unlock premium Story Steps and Word Garden practice",
+      "Unlock Echo Reader and Voice Quest premium voice games",
+      "More guided packs shaped around missed words and goals",
       "Cloud progress sync across devices",
       "Printable weekly practice plans",
-      "Caregiver progress summaries"
+      "Parent-friendly strengths and next-step summaries"
     ],
     cta: "Start Family Plus",
     paymentEnvKey: "VITE_STRIPE_FAMILY_PLUS_LINK"
@@ -73,13 +74,14 @@ export const subscriptionTiers: SubscriptionTier[] = [
     name: "Teacher Pro",
     price: "$19/month",
     audience: "Tutors, teachers, and small groups",
-    description: "Classroom insight tools for targeted reading support.",
+    description: "Actionable student insight for targeted reading support.",
     perks: [
-      "Student roster and classroom dashboard",
+      "Assigned-student roster and classroom dashboard",
+      "Premium activity review including voice-powered practice",
       "Strength and growth-area analysis",
       "Intervention group planning",
       "Exportable progress summaries",
-      "AI-ready recommendation workflow"
+      "AI-supported recommendation workflow when enabled"
     ],
     cta: "Start Teacher Pro",
     paymentEnvKey: "VITE_STRIPE_TEACHER_PRO_LINK"

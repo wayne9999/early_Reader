@@ -17,6 +17,11 @@ on:
         required: true
         default: false
         type: boolean
+      sync_secrets:
+        description: Rewrite Firebase Function secrets before deploy. Leave off for normal deployments.
+        required: true
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -44,6 +49,9 @@ jobs:
       SUPPORT_FROM_EMAIL: ${{ vars.SUPPORT_FROM_EMAIL }}
       PROD_STRIPE_FAMILY_PLUS_PRICE_ID: ${{ vars.PROD_STRIPE_FAMILY_PLUS_PRICE_ID }}
       PROD_STRIPE_TEACHER_PRO_PRICE_ID: ${{ vars.PROD_STRIPE_TEACHER_PRO_PRICE_ID }}
+      ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+      ELEVENLABS_VOICE_ID: ${{ vars.ELEVENLABS_VOICE_ID }}
+      ELEVENLABS_MODEL_ID: ${{ vars.ELEVENLABS_MODEL_ID }}
     steps:
       - name: Checkout production branch
         uses: actions/checkout@v4
@@ -108,17 +116,23 @@ jobs:
             echo "READNEST_ENFORCE_APP_CHECK=${READNEST_ENFORCE_APP_CHECK:-false}"
             echo "SUPPORT_NOTIFICATION_EMAIL=${SUPPORT_NOTIFICATION_EMAIL:-support@myreadnest.org}"
             echo "SUPPORT_FROM_EMAIL=${SUPPORT_FROM_EMAIL:-ReadNest Support <support@myreadnest.org>}"
+            echo "ELEVENLABS_VOICE_ID=${ELEVENLABS_VOICE_ID:-EXAVITQu4vr4xnSDxMaL}"
+            echo "ELEVENLABS_MODEL_ID=${ELEVENLABS_MODEL_ID:-eleven_multilingual_v2}"
           } > .env
 
       - name: Deploy production Firestore rules
         if: ${{ inputs.target == 'rules' || inputs.target == 'all' }}
         run: node functions/scripts/deploy-firestore-rules.mjs
 
+      - name: Sync ElevenLabs secret
+        if: ${{ inputs.sync_secrets && (inputs.target == 'functions' || inputs.target == 'all') && env.ELEVENLABS_API_KEY != '' }}
+        run: printf '%s' "$ELEVENLABS_API_KEY" | firebase functions:secrets:set ELEVENLABS_API_KEY --project "$FIREBASE_PROJECT_ID" --data-file - --non-interactive
+
       - name: Deploy production Functions
         if: ${{ (inputs.target == 'functions' || inputs.target == 'all') && !inputs.include_scheduler }}
         run: >
           firebase deploy
-          --only functions:stripeWebhook,functions:createBillingPortalSession,functions:createCheckoutSession,functions:claimPlacementStudent,functions:updateTeacherAssignmentStatus,functions:createLearningRecommendation,functions:requestStudentInsight,functions:submitSupportCase,functions:updateLearningCoachState,functions:processAiAnalysisJob,functions:processSupportCase
+          --only functions:stripeWebhook,functions:createBillingPortalSession,functions:createCheckoutSession,functions:claimPlacementStudent,functions:updateTeacherAssignmentStatus,functions:createLearningRecommendation,functions:requestStudentInsight,functions:submitSupportCase,functions:updateLearningCoachState,functions:createActivityVoiceClip,functions:processAiAnalysisJob,functions:processSupportCase
           --project readnest-f9c67
           --non-interactive
           --force
@@ -127,7 +141,7 @@ jobs:
         if: ${{ (inputs.target == 'functions' || inputs.target == 'all') && inputs.include_scheduler }}
         run: >
           firebase deploy
-          --only functions:stripeWebhook,functions:createBillingPortalSession,functions:createCheckoutSession,functions:claimPlacementStudent,functions:updateTeacherAssignmentStatus,functions:createLearningRecommendation,functions:requestStudentInsight,functions:submitSupportCase,functions:updateLearningCoachState,functions:processAiAnalysisJob,functions:processSupportCase,functions:enqueueDailyInsightJobs
+          --only functions:stripeWebhook,functions:createBillingPortalSession,functions:createCheckoutSession,functions:claimPlacementStudent,functions:updateTeacherAssignmentStatus,functions:createLearningRecommendation,functions:requestStudentInsight,functions:submitSupportCase,functions:updateLearningCoachState,functions:createActivityVoiceClip,functions:processAiAnalysisJob,functions:processSupportCase,functions:enqueueDailyInsightJobs
           --project readnest-f9c67
           --non-interactive
           --force
