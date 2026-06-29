@@ -91,6 +91,10 @@ jobs:
           node -e 'const fs=require("fs"); const path=process.env.GOOGLE_APPLICATION_CREDENTIALS; const data=JSON.parse(fs.readFileSync(path,"utf8")); const target=data.client_email || (data.service_account_impersonation_url || "").match(/serviceAccounts\/([^:]+)/)?.[1] || "unknown"; console.log(`Credential target: ${target}`);'
           echo "Target Firebase project: ${FIREBASE_PROJECT_ID}"
 
+      - name: Ensure Cloud Billing API
+        if: ${{ inputs.target == 'functions' || inputs.target == 'all' }}
+        run: gcloud services enable cloudbilling.googleapis.com --project "$FIREBASE_PROJECT_ID"
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
