@@ -238,6 +238,47 @@ In Firebase Console:
 5. Create Firestore Database in production mode.
 6. Deploy or paste the rules from `firestore.rules`.
 
+## Facebook Sign-In Checklist
+
+Facebook sign-in uses Firebase Authentication directly. The React app button is
+available when Firebase env values exist, but it will only complete after both
+Firebase and Meta are configured.
+
+Firebase console:
+
+1. Open `https://console.firebase.google.com/project/readnest-f9c67/authentication/providers`.
+2. Enable the Facebook provider under Authentication > Sign-in method.
+3. Paste the Meta Facebook app ID and app secret.
+4. Confirm the production app uses `VITE_FIREBASE_AUTH_DOMAIN=readnest-f9c67.firebaseapp.com`.
+5. Add these Firebase Authentication authorized domains under Authentication > Settings:
+   - `myreadnest.org`
+   - `readnest-f9c67.web.app`
+   - `readnest-f9c67.firebaseapp.com`
+   - `wayne9999.github.io`
+
+Meta developer console:
+
+1. Open `https://developers.facebook.com/apps/`.
+2. Create or open the ReadNest app and add Facebook Login for Web.
+3. Add this Valid OAuth Redirect URI:
+   - `https://readnest-f9c67.firebaseapp.com/__/auth/handler`
+4. Add app domains:
+   - `myreadnest.org`
+   - `readnest-f9c67.firebaseapp.com`
+   - `readnest-f9c67.web.app`
+   - `wayne9999.github.io`
+5. Set the website URL to `https://myreadnest.org/`. Keep `https://wayne9999.github.io/early_Reader/` available for development testing if Meta allows the extra URL in the app settings.
+6. Add the Privacy Policy URL: `https://myreadnest.org/#/privacy`.
+7. Keep requested permissions to `email` and `public_profile`.
+8. Move the Meta app to Live mode before production users rely on Facebook sign-in.
+
+Common error meanings:
+
+- `auth/operation-not-allowed`: Facebook is not enabled in Firebase Authentication.
+- `auth/unauthorized-domain`: the current domain is missing from Firebase Authentication authorized domains.
+- `auth/invalid-credential` or `auth/invalid-oauth-client-id`: the Facebook app ID or secret in Firebase is missing or incorrect.
+- `auth/account-exists-with-different-credential`: the same email already signed up with another provider. Sign in with the original provider first, then link Facebook later.
+
 ## Role And Assignment Flow
 
 Current product behavior:
