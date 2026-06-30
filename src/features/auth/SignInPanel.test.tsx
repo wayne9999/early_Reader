@@ -94,4 +94,21 @@ describe("SignInPanel", () => {
       mode: "signIn"
     });
   });
+
+  it("shows social provider errors and keeps the selected signup intent", async () => {
+    const user = userEvent.setup();
+    signIn.mockRejectedValue(new Error("Facebook sign-in is not enabled in Firebase Auth yet."));
+
+    render(<SignInPanel />);
+
+    await user.click(
+      within(screen.getByRole("radiogroup", { name: /choose account type/i })).getByRole("button", {
+        name: /choose teacher signup/i
+      })
+    );
+    await user.click(screen.getByRole("button", { name: /continue with facebook/i }));
+
+    expect(localStorage.getItem("readnest-signup-intent-v1")).toBe("teacher");
+    expect(await screen.findByText(/Facebook sign-in is not enabled/i)).toBeInTheDocument();
+  });
 });
