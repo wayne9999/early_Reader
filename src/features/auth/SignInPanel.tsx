@@ -9,6 +9,10 @@ const providers: Array<{ id: SocialProvider; label: string; className: string; p
   { id: "facebook", label: "Continue with Facebook", className: "facebook-button", productionReady: true }
 ];
 
+function providerLabel(provider: SocialProvider) {
+  return provider === "facebook" ? "Facebook" : "Google";
+}
+
 type SignInPanelProps = {
   redirectView?: AppView | null;
 };
@@ -23,8 +27,13 @@ export function SignInPanel({ redirectView = null }: SignInPanelProps) {
   const [authError, setAuthError] = useState("");
 
   async function signInForPath(provider: SocialProvider) {
+    setAuthError("");
     saveSignupIntent(selectedPath);
-    await signIn(provider);
+    try {
+      await signIn(provider);
+    } catch (caughtError) {
+      setAuthError(caughtError instanceof Error ? caughtError.message : `${providerLabel(provider)} sign-in failed.`);
+    }
   }
 
   async function submitEmailAuth(event: FormEvent<HTMLFormElement>) {
@@ -162,11 +171,11 @@ export function SignInPanel({ redirectView = null }: SignInPanelProps) {
                   placeholder="At least 6 characters"
                 />
               </label>
-              {authError ? <p className="form-error">{authError}</p> : null}
               <button className="primary-button" disabled={isLoading} type="submit">
                 {emailMode === "signUp" ? `Create ${labelFromSignupPath(selectedPath)} account` : "Sign in with email"}
               </button>
             </form>
+            {authError ? <p className="form-error auth-panel-error">{authError}</p> : null}
 
             <div className="auth-divider">
               <span>or use a connected provider</span>

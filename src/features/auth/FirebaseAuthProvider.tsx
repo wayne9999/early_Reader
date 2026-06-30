@@ -6,8 +6,10 @@ import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
   signInWithPopup,
+  signInWithRedirect,
   signOut as firebaseSignOut,
   updateProfile,
+  type AuthProvider,
   type User
 } from "firebase/auth";
 import { createContext, useContext, useEffect, useMemo, useState, type PropsWithChildren } from "react";
@@ -25,6 +27,58 @@ type FirebaseAuthContextValue = {
 };
 
 const FirebaseAuthContext = createContext<FirebaseAuthContextValue | null>(null);
+
+function providerLabel(provider: SocialProvider) {
+  return provider === "facebook" ? "Facebook" : "Google";
+}
+
+function createSocialAuthProvider(provider: SocialProvider): AuthProvider {
+  if (provider === "google") {
+    const googleProvider = new GoogleAuthProvider();
+    googleProvider.addScope("email");
+    googleProvider.addScope("profile");
+    return googleProvider;
+  }
+
+  const facebookProvider = new FacebookAuthProvider();
+  facebookProvider.addScope("email");
+  facebookProvider.addScope("public_profile");
+  facebookProvider.setCustomParameters({ display: "popup" });
+  return facebookProvider;
+}
+
+function shouldUseRedirectFallback(error: unknown) {
+  return (
+    error instanceof FirebaseError &&
+    ["auth/popup-blocked", "auth/cancelled-popup-request", "auth/web-storage-unsupported"].includes(error.code)
+  );
+}
+
+function friendlyFirebaseAuthError(error: unknown, provider: SocialProvider) {
+  const label = providerLabel(provider);
+
+  if (!(error instanceof FirebaseError)) {
+    return error instanceof Error ? error.message : `${label} sign-in failed.`;
+  }
+
+  switch (error.code) {
+    case "auth/operation-not-allowed":
+      return `${label} sign-in is not enabled in Firebase Auth yet. Enable ${label} under Firebase Authentication > Sign-in method.`;
+    case "auth/unauthorized-domain":
+      return `This domain is not authorized for Firebase Auth. Add ${window.location.hostname} under Firebase Authentication > Settings > Authorized domains.`;
+    case "auth/account-exists-with-different-credential":
+      return `An account already exists with this email using another sign-in method. Sign in with that method first, then link ${label} later.`;
+    case "auth/invalid-credential":
+    case "auth/invalid-oauth-client-id":
+      return `${label} sign-in is missing or has incorrect app credentials in Firebase Auth. Check the provider App ID and App secret.`;
+    case "auth/popup-closed-by-user":
+      return `${label} sign-in was closed before it finished. Try again when you are ready.`;
+    case "auth/network-request-failed":
+      return `${label} sign-in could not reach Firebase. Check your connection and try again.`;
+    default:
+      return `${label} sign-in failed (${error.code}). Check Firebase and provider settings, then try again.`;
+  }
+}
 
 function toAppUser(user: User): AppUser {
   return {
@@ -64,21 +118,17 @@ export function FirebaseReadNestAuthProvider({ children }: PropsWithChildren) {
           return;
         }
 
-        const authProvider = provider === "google" ? new GoogleAuthProvider() : new FacebookAuthProvider();
-
-        if (provider === "facebook") {
-          authProvider.addScope("email");
-          authProvider.addScope("public_profile");
-        }
+        const authProvider = createSocialAuthProvider(provider);
 
         try {
           await signInWithPopup(runtime.auth, authProvider);
         } catch (error) {
-          if (error instanceof FirebaseError && error.code === "auth/operation-not-allowed") {
-            throw new Error("Facebook sign-in is not enabled in Firebase yet. Enable Facebook under Firebase Auth sign-in providers.");
+          if (shouldUseRedirectFallback(error)) {
+            await signInWithRedirect(runtime.auth, createSocialAuthProvider(provider));
+            return;
           }
 
-          throw error;
+          throw new Error(friendlyFirebaseAuthError(error, provider));
         }
       },
       async signInWithEmail(input) {
