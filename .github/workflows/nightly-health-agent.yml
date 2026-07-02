@@ -1,0 +1,96 @@
+name: Nightly Health Agent
+
+# Agent workflow 2 — autonomous nightly health check.
+# Deterministic checks run first (typecheck, unit tests, content validation,
+# production site reachability). If anything fails, Claude reads the logs,
+# diagnoses the root cause, and opens (or updates) a GitHub issue with a
+# specific fix plan. Green nights produce no noise.
+#
+# Requires the same ANTHROPIC_API_KEY secret as the other Claude workflows.
+
+on:
+  schedule:
+    - cron: "0 10 * * *" # 6:00 AM ET daily
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+  id-token: write
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run health checks
+        id: checks
+        shell: bash
+        run: |
+          mkdir -p /tmp/health
+          status=0
+
+          echo "== typecheck ==" | tee /tmp/health/typecheck.log
+          npm run check >> /tmp/health/typecheck.log 2>&1 || { echo "FAILED" >> /tmp/health/typecheck.log; status=1; }
+
+          echo "== unit tests ==" | tee /tmp/health/tests.log
+          npm test >> /tmp/health/tests.log 2>&1 || { echo "FAILED" >> /tmp/health/tests.log; status=1; }
+
+          echo "== content validation ==" | tee /tmp/health/content.log
+          npm run validate:content >> /tmp/health/content.log 2>&1 || { echo "FAILED" >> /tmp/health/content.log; status=1; }
+
+          echo "== production site ==" | tee /tmp/health/site.log
+          code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 https://myreadnest.org/ || echo "000")
+          echo "https://myreadnest.org/ -> HTTP $code" >> /tmp/health/site.log
+          if [ "$code" != "200" ]; then echo "FAILED" >> /tmp/health/site.log; status=1; fi
+
+          echo "any_failure=$status" >> "$GITHUB_OUTPUT"
+          # Never fail this step — Claude handles diagnosis next.
+          exit 0
+
+      - name: Check API key configured
+        id: key
+        env:
+          KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        shell: bash
+        run: |
+          if [ -n "$KEY" ]; then echo "present=true" >> "$GITHUB_OUTPUT";
+          else echo "present=false" >> "$GITHUB_OUTPUT"; fi
+
+      - name: Diagnose failures and file issue
+        if: steps.checks.outputs.any_failure == '1' && steps.key.outputs.present == 'true'
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            You are the nightly health agent for the ReadNest repo.
+            One or more health checks failed. The logs are in /tmp/health/
+            (typecheck.log, tests.log, content.log, site.log — a failing
+            check has a line reading FAILED).
+
+            1. Read each log and identify exactly which checks failed and why.
+            2. Search for an existing OPEN issue titled starting with
+               "Nightly health:" using `gh issue list`. If one exists, add a
+               comment with today's findings instead of opening a duplicate.
+            3. Otherwise open ONE issue titled
+               "Nightly health: <short failure summary>" containing:
+               - Which checks failed
+               - The most relevant error lines (trimmed, not full logs)
+               - Your root-cause diagnosis after reading the involved source files
+               - A concrete suggested fix
+            Keep it short enough that a human can act on it in one sitting.
+          claude_args: |
+            --allowedTools "Read,Grep,Glob,Bash(gh issue list:*),Bash(gh issue create:*),Bash(gh issue comment:*)"
+        env:
+          GH_TOKEN: ${{ github.token }}

@@ -1,0 +1,67 @@
+name: Claude PR Review
+
+# Agent workflow 1b — automatic review of every pull request.
+# Claude reviews the diff with a ReadNest-specific checklist (child privacy,
+# Firestore rules, billing correctness, env boundaries) and leaves one
+# sticky comment that updates on new pushes.
+#
+# Requires the same ANTHROPIC_API_KEY secret as claude-assistant.yml.
+
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review]
+
+concurrency:
+  group: claude-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: read
+      id-token: write
+      actions: read
+    steps:
+      - name: Check API key configured
+        id: key
+        env:
+          KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        shell: bash
+        run: |
+          if [ -n "$KEY" ]; then echo "present=true" >> "$GITHUB_OUTPUT";
+          else echo "present=false" >> "$GITHUB_OUTPUT"; echo "ANTHROPIC_API_KEY not set — skipping review."; fi
+
+      - name: Checkout
+        if: steps.key.outputs.present == 'true'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Claude review
+        if: steps.key.outputs.present == 'true'
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          track_progress: true
+          prompt: |
+            Review this pull request for the ReadNest early-reading app
+            (K-2 children are the end users). Prioritize, in order:
+
+            1. Child privacy / COPPA: any new collection of child data,
+               logging of PII, third-party calls, or analytics identifiers.
+            2. Firestore security: rules changes, new collection access,
+               anything that widens read/write scope.
+            3. Billing: Stripe tier gating (free / familyPlus / teacherPro),
+               entitlement checks, test-vs-live mode boundaries.
+            4. Environment safety: dev project (readnest-dev-f9c67) vs prod
+               (readnest-f9c67) leakage in config, env vars, or workflows.
+            5. Correctness bugs in the changed code only.
+
+            Be concise. Only flag real issues with file:line references and a
+            suggested fix. If the PR is clean, say so in two sentences.
+          claude_args: |
+            --allowedTools "Read,Grep,Glob,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
