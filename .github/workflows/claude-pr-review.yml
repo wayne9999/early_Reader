@@ -26,12 +26,23 @@ jobs:
       id-token: write
       actions: read
     steps:
+      - name: Check API key configured
+        id: key
+        env:
+          KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        shell: bash
+        run: |
+          if [ -n "$KEY" ]; then echo "present=true" >> "$GITHUB_OUTPUT";
+          else echo "present=false" >> "$GITHUB_OUTPUT"; echo "ANTHROPIC_API_KEY not set — skipping review."; fi
+
       - name: Checkout
+        if: steps.key.outputs.present == 'true'
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
       - name: Claude review
+        if: steps.key.outputs.present == 'true'
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}

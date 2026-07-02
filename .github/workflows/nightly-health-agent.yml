@@ -59,8 +59,17 @@ jobs:
           # Never fail this step — Claude handles diagnosis next.
           exit 0
 
+      - name: Check API key configured
+        id: key
+        env:
+          KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        shell: bash
+        run: |
+          if [ -n "$KEY" ]; then echo "present=true" >> "$GITHUB_OUTPUT";
+          else echo "present=false" >> "$GITHUB_OUTPUT"; fi
+
       - name: Diagnose failures and file issue
-        if: steps.checks.outputs.any_failure == '1'
+        if: steps.checks.outputs.any_failure == '1' && steps.key.outputs.present == 'true'
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
