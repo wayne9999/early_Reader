@@ -11,7 +11,7 @@
   "scripts": {
     "dev": "vite --host 127.0.0.1 --port 4173",
     "start": "npm run dev",
-    "build": "tsc -b && vite build",
+    "build": "npm run generate:seo && tsc -b && vite build",
     "preview": "vite preview --host 127.0.0.1 --port 4173",
     "check": "tsc -b --pretty false",
     "test": "vitest run --coverage=false",
@@ -19,7 +19,9 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "test:all": "npm run check && npm run test && npm run test:e2e",
+    "generate:seo": "node scripts/generate-seo-pages.mjs",
     "validate:content": "node scripts/validate-content.mjs",
+    "validate:seo": "npm run generate:seo && node scripts/validate-seo-assets.mjs",
     "validate:deployment-env": "node scripts/validate-deployment-env.mjs"
   },
   "dependencies": {
