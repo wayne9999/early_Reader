@@ -165,7 +165,13 @@ service cloud.firestore {
       allow list: if isSignedIn()
         && (userRole() == "teacher" || isAdmin())
         && request.query.limit <= 25;
-      allow create, update: if ownsUserDocument(studentId)
+      allow create: if ownsUserDocument(studentId)
+        && request.resource.data.studentId == request.auth.uid
+        && request.resource.data.status in ["unassigned", "requested"]
+        && request.resource.data.studentName is string
+        && request.resource.data.latestProgressSnapshot != null;
+      allow update: if ownsUserDocument(studentId)
+        && resource.data.status != "assigned"
         && request.resource.data.studentId == request.auth.uid
         && request.resource.data.status in ["unassigned", "requested"]
         && request.resource.data.studentName is string
@@ -196,6 +202,7 @@ service cloud.firestore {
             && request.resource.data.teacherId == resource.data.teacherId
             && request.resource.data.status == "accepted"
             && request.resource.data.acceptedBy == request.auth.uid
+            && onlyChanged(["status", "acceptedBy", "acceptedAt", "updatedAt", "updatedBy"])
           )
         );
       allow delete: if false;

@@ -42,6 +42,14 @@ describe("firestore privacy rules", () => {
     expect(rules).toContain("request.query.limit <= 25");
   });
 
+  it("prevents students from re-queueing an already-assigned placement", () => {
+    expect(rules).toContain("resource.data.status != \"assigned\"");
+  });
+
+  it("limits student invite acceptance to acceptance fields only", () => {
+    expect(rules).toContain("onlyChanged([\"status\", \"acceptedBy\", \"acceptedAt\", \"updatedAt\", \"updatedBy\"])");
+  });
+
   it("scopes classroom data to admins or classroom members", () => {
     expect(rules).toContain("function isClassroomMember(classroomId)");
     expect(rules).toContain("userRole() == \"admin\" || isClassroomMember(classroomId)");

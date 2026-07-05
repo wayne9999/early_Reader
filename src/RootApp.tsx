@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { RoleSetup } from "./features/account/RoleSetup";
 import { SubscriptionManagement } from "./features/account/SubscriptionManagement";
 import { SubscriptionPrompt } from "./features/account/SubscriptionPrompt";
+import { UpgradeCheckoutButton } from "./features/account/UpgradeCheckoutButton";
 import { LearningActivityPage } from "./features/activities/LearningActivityPage";
 import { SignInPanel } from "./features/auth/SignInPanel";
 import { useAuth } from "./features/auth/AuthProvider";
@@ -26,7 +27,6 @@ import {
   type AppRouteState
 } from "./services/appRoutes";
 import { billingConfig, isStripeLinkCompatible } from "./services/billingConfig";
-import { startSubscriptionCheckout } from "./services/billingRepository";
 import { paidStudentActivitiesDescription, studentActivityAccess, teacherDashboardAccess } from "./services/entitlementService";
 import { defaultProgress, loadProgress, saveProgress } from "./services/progressRepository";
 import { clearSignupIntent, loadSignupIntent } from "./services/signupIntent";
@@ -293,6 +293,12 @@ export function RootApp() {
     };
   }, [user]);
 
+  const refreshSubscription = useCallback(async () => {
+    const loadedSubscription = await loadTrustedSubscription(user, profile);
+    setSubscription(loadedSubscription);
+    return loadedSubscription;
+  }, [profile, user]);
+
   useEffect(() => {
     let isMounted = true;
 
@@ -464,19 +470,7 @@ export function RootApp() {
               {profile?.role === "teacher" ? " for teacher review and student support." : " for students."}
             </p>
             <div className="subscription-actions">
-              <button
-                className="primary-button"
-                type="button"
-                onClick={() => {
-                  void startSubscriptionCheckout(activityUpgradeTier).then((checkoutUrl) => {
-                    if (checkoutUrl) {
-                      window.open(checkoutUrl, "_blank", "noopener,noreferrer");
-                    }
-                  });
-                }}
-              >
-                Start {activityUpgradeName}
-              </button>
+              <UpgradeCheckoutButton tier={activityUpgradeTier} label={`Start ${activityUpgradeName}`} />
               <button className="secondary-button" type="button" onClick={() => navigateToView("rhymes")}>
                 Use free activities
               </button>
@@ -511,19 +505,7 @@ export function RootApp() {
               intervention planning, and AI-supported recommendations when enabled.
             </p>
             <div className="subscription-actions">
-              <button
-                className="primary-button"
-                type="button"
-                onClick={() => {
-                  void startSubscriptionCheckout("teacherPro").then((checkoutUrl) => {
-                    if (checkoutUrl) {
-                      window.open(checkoutUrl, "_blank", "noopener,noreferrer");
-                    }
-                  });
-                }}
-              >
-                Start Teacher Pro
-              </button>
+              <UpgradeCheckoutButton tier="teacherPro" label="Start Teacher Pro" />
               <button className="secondary-button" type="button" onClick={() => navigateToView("support")}>
                 Billing help
               </button>
@@ -561,7 +543,9 @@ export function RootApp() {
     if (currentView === "account") {
       return (
         <>
-          {profile ? <SubscriptionManagement profile={profile} subscription={subscription} /> : null}
+          {profile ? (
+            <SubscriptionManagement profile={profile} subscription={subscription} onRefresh={refreshSubscription} />
+          ) : null}
           <SignInPanel redirectView={requestedAuthView} />
         </>
       );
@@ -579,6 +563,7 @@ export function RootApp() {
     postSubscriptionView,
     profile,
     progress,
+    refreshSubscription,
     requestedAuthView,
     showSubscriptionPrompt,
     signupIntent,

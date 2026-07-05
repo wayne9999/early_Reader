@@ -57,6 +57,8 @@ npm run validate:content
 
 The project uses Node 24.17+ so local development, Vitest, jsdom, Playwright, Firebase tooling, and GitHub Actions stay on the same LTS runtime.
 
+In remote/CI sandboxes that pre-install a Chromium build that does not match the pinned Playwright browser revision, set `PLAYWRIGHT_CHROMIUM_PATH` (for example `PLAYWRIGHT_CHROMIUM_PATH=/opt/pw-browsers/chromium npm run test:e2e`) to reuse the installed browser instead of downloading one.
+
 Test metrics:
 
 - Unit/integration results print in the terminal from `npm run test`.
@@ -193,8 +195,11 @@ Required production values:
 
 Backend-only production values are documented in `docs/production-env.md` and `docs/stripe-setup.md`.
 
+Checkout flows redirect the current tab to Stripe (never `window.open`, which popup blockers can silently stop), and returning from Stripe reloads the app so trusted subscription state is refetched. The Account page also offers a manual "Refresh status" while a Stripe webhook is still settling. On the backend, subscription writes are guarded against out-of-order webhook delivery, refunds/disputes/failed payments revoke Firebase auth claims as well as Firestore access, partial refunds do not cancel access, and the nightly AI insight scheduler only processes students with recorded parent/caregiver consent. See `docs/pressure-test-2026-07-05.md` for the full review.
+
 ## Launch Docs
 
+- `docs/pressure-test-2026-07-05.md`
 - `docs/go-live-readiness.md`
 - `docs/production-env.md`
 - `docs/stripe-setup.md`

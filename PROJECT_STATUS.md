@@ -32,6 +32,7 @@
 - Added go-live, Stripe, production environment, and deployment docs.
 - Added SEO metadata, sitemap, robots file, web manifest, Open Graph image, and static SEO pages.
 - Completed the first live authenticated release QA cycle; see `docs/qa-release-2026-06-25.md` for tested journeys, fixes, and remaining launch work.
+- Completed a full-stack paid-product pressure test with fixes for checkout popup blocking, webhook ordering, claim revocation on refunds/disputes, partial-refund handling, scheduled AI consent enforcement, and Firestore rule tightening; see `docs/pressure-test-2026-07-05.md`.
 - Added GitHub Pages deployment workflow.
 - Added Firebase backend deployment workflow for rules, functions, secrets, and scheduled functions.
 - Deployed successfully to GitHub Pages.

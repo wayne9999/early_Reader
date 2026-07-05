@@ -275,28 +275,68 @@ async function findUserIdForCustomer(customerId: string, runtime: BillingRuntime
   return snapshot.docs[0]?.id ?? null;
 }
 
+type SubscriptionWriteResult = {
+  applied: boolean;
+  tier: SubscriptionTier;
+  status: SubscriptionStatus;
+};
+
 async function writeSubscription(
   userId: string,
   data: Record<string, unknown>,
   eventId: string,
-  runtime: BillingRuntime
-) {
+  runtime: BillingRuntime,
+  options: { eventCreated?: number; skipIfActive?: boolean } = {}
+): Promise<SubscriptionWriteResult> {
   const db = getFirestore();
+  const subscriptionRef = db.doc(`${runtime.collectionName}/${userId}`);
 
-  await db.doc(`${runtime.collectionName}/${userId}`).set(
-    {
-      ...data,
-      userId,
-      source: "stripe",
-      environment: runtime.mode === "live" ? "production" : "development",
-      firebaseProjectId: runtimeFirebaseProjectId ?? null,
-      stripeMode: runtime.mode,
-      lastStripeEventId: eventId,
-      updatedAt: FieldValue.serverTimestamp(),
-      updatedBy: "stripe-webhook"
-    },
-    { merge: true }
-  );
+  return db.runTransaction(async (transaction) => {
+    const snapshot = await transaction.get(subscriptionRef);
+    const existing = snapshot.data() ?? {};
+    const existingResult: SubscriptionWriteResult = {
+      applied: false,
+      tier: (existing.tier as SubscriptionTier) ?? "free",
+      status: (existing.status as SubscriptionStatus) ?? "free"
+    };
+    const lastStripeEventCreated =
+      typeof existing.lastStripeEventCreated === "number" ? existing.lastStripeEventCreated : 0;
+
+    // Stripe does not guarantee webhook delivery order. Never let an older
+    // event overwrite subscription state written by a newer event.
+    if (options.eventCreated && options.eventCreated < lastStripeEventCreated) {
+      return existingResult;
+    }
+
+    if (options.skipIfActive && existing.status === "active") {
+      return existingResult;
+    }
+
+    transaction.set(
+      subscriptionRef,
+      {
+        ...data,
+        userId,
+        source: "stripe",
+        environment: runtime.mode === "live" ? "production" : "development",
+        firebaseProjectId: runtimeFirebaseProjectId ?? null,
+        stripeMode: runtime.mode,
+        lastStripeEventId: eventId,
+        ...(options.eventCreated ? { lastStripeEventCreated: options.eventCreated } : {}),
+        updatedAt: FieldValue.serverTimestamp(),
+        updatedBy: "stripe-webhook"
+      },
+      { merge: true }
+    );
+
+    const merged = { ...existing, ...data };
+
+    return {
+      applied: true,
+      tier: (merged.tier as SubscriptionTier) ?? "free",
+      status: (merged.status as SubscriptionStatus) ?? "free"
+    };
+  });
 }
 
 async function setSubscriptionClaim(userId: string, tier: SubscriptionTier, status: SubscriptionStatus) {
@@ -310,6 +350,27 @@ async function setSubscriptionClaim(userId: string, tier: SubscriptionTier, stat
     hasFamilyPlus: tier === "familyPlus" && status === "active",
     hasTeacherPro: tier === "teacherPro" && status === "active"
   });
+}
+
+// Every live-mode subscription state change must also refresh auth claims so
+// refunds, disputes, and failed payments revoke paid access, not just grants.
+async function syncSubscriptionClaims(userId: string, runtime: BillingRuntime, result: SubscriptionWriteResult) {
+  if (runtime.mode !== "live" || !result.applied) {
+    return;
+  }
+
+  try {
+    await setSubscriptionClaim(userId, result.tier, result.status);
+  } catch (error) {
+    await writeOperationalLog({
+      severity: "error",
+      eventName: "subscription_claim_sync_failed",
+      message: error instanceof Error ? error.message : "Failed to sync subscription claims.",
+      resourceType: runtime.collectionName,
+      resourceId: userId,
+      metadata: { tier: result.tier, status: result.status }
+    });
+  }
 }
 
 function priceIdForTier(tier: SubscriptionTier, runtime: BillingRuntime) {
@@ -653,7 +714,12 @@ async function runAiAnalysisJob(jobId: string, job: DocumentData) {
   }
 }
 
-async function handleSubscription(subscription: Stripe.Subscription, eventId: string, runtime: BillingRuntime) {
+async function handleSubscription(
+  subscription: Stripe.Subscription,
+  eventId: string,
+  runtime: BillingRuntime,
+  eventCreated?: number
+) {
   const customerId = typeof subscription.customer === "string" ? subscription.customer : subscription.customer.id;
   const userId = subscription.metadata.firebaseUid || await findUserIdForCustomer(customerId, runtime);
   const firstItem = subscription.items.data[0];
@@ -676,7 +742,7 @@ async function handleSubscription(subscription: Stripe.Subscription, eventId: st
     return;
   }
 
-  await writeSubscription(
+  const writeResult = await writeSubscription(
     userId,
     {
       tier,
@@ -688,17 +754,17 @@ async function handleSubscription(subscription: Stripe.Subscription, eventId: st
       lastPaymentError: null
     },
     eventId,
-    runtime
+    runtime,
+    { eventCreated }
   );
-  if (runtime.mode === "live") {
-    await setSubscriptionClaim(userId, tier, status);
-  }
+  await syncSubscriptionClaims(userId, runtime, writeResult);
 }
 
 async function handleCheckoutCompleted(
   session: Stripe.Checkout.Session,
   eventId: string,
-  runtime: BillingRuntime
+  runtime: BillingRuntime,
+  eventCreated?: number
 ) {
   const userId = session.metadata?.firebaseUid || session.client_reference_id;
   const customerId = typeof session.customer === "string" ? session.customer : session.customer?.id;
@@ -719,22 +785,24 @@ async function handleCheckoutCompleted(
 
   if (subscriptionId) {
     const subscription = await stripeClient(runtime).subscriptions.retrieve(subscriptionId);
-    await handleSubscription(subscription, eventId, runtime);
+    await handleSubscription(subscription, eventId, runtime, eventCreated);
     return;
   }
 
+  // Non-subscription checkout (e.g. a one-time payment) must never downgrade
+  // an already-active subscription document.
   await writeSubscription(userId, {
-    tier: "free",
     status: "checkoutStarted",
     stripeCustomerId: customerId,
     stripeSubscriptionId: null
-  }, eventId, runtime);
+  }, eventId, runtime, { eventCreated, skipIfActive: true });
 }
 
 async function handleInvoicePaymentFailed(
   invoice: Stripe.Invoice,
   eventId: string,
-  runtime: BillingRuntime
+  runtime: BillingRuntime,
+  eventCreated?: number
 ) {
   const customerId = typeof invoice.customer === "string" ? invoice.customer : invoice.customer?.id;
   const userId = customerId ? await findUserIdForCustomer(customerId, runtime) : null;
@@ -752,17 +820,19 @@ async function handleInvoicePaymentFailed(
     return;
   }
 
-  await writeSubscription(userId, {
+  const writeResult = await writeSubscription(userId, {
     status: "pastDue",
     lastPaymentError: invoice.last_finalization_error?.message ?? "invoice.payment_failed"
-  }, eventId, runtime);
+  }, eventId, runtime, { eventCreated });
+  await syncSubscriptionClaims(userId, runtime, writeResult);
 }
 
 async function handleRefundOrDispute(
   charge: Stripe.Charge,
   eventId: string,
   status: SubscriptionStatus,
-  runtime: BillingRuntime
+  runtime: BillingRuntime,
+  eventCreated?: number
 ) {
   const customerId = typeof charge.customer === "string" ? charge.customer : charge.customer?.id;
   const userId = customerId ? await findUserIdForCustomer(customerId, runtime) : null;
@@ -780,13 +850,14 @@ async function handleRefundOrDispute(
     return;
   }
 
-  await writeSubscription(userId, {
+  const writeResult = await writeSubscription(userId, {
     status,
     lastPaymentError: status === "canceled" ? "refund_or_dispute" : "payment_dispute"
-  }, eventId, runtime);
+  }, eventId, runtime, { eventCreated });
+  await syncSubscriptionClaims(userId, runtime, writeResult);
 }
 
-async function handleDispute(dispute: Stripe.Dispute, eventId: string, runtime: BillingRuntime) {
+async function handleDispute(dispute: Stripe.Dispute, eventId: string, runtime: BillingRuntime, eventCreated?: number) {
   if (!dispute.charge || typeof dispute.charge !== "string") {
     await writeOperationalLog({
       severity: "warning",
@@ -801,7 +872,7 @@ async function handleDispute(dispute: Stripe.Dispute, eventId: string, runtime: 
   }
 
   const charge = await stripeClient(runtime).charges.retrieve(dispute.charge);
-  await handleRefundOrDispute(charge, eventId, "pastDue", runtime);
+  await handleRefundOrDispute(charge, eventId, "pastDue", runtime, eventCreated);
 }
 
 function createStripeWebhook(runtime: BillingRuntime) {
@@ -836,21 +907,38 @@ function createStripeWebhook(runtime: BillingRuntime) {
       try {
         switch (event.type) {
           case "checkout.session.completed":
-            await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session, event.id, runtime);
+            await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session, event.id, runtime, event.created);
             break;
           case "customer.subscription.created":
           case "customer.subscription.updated":
           case "customer.subscription.deleted":
-            await handleSubscription(event.data.object as Stripe.Subscription, event.id, runtime);
+            await handleSubscription(event.data.object as Stripe.Subscription, event.id, runtime, event.created);
             break;
           case "invoice.payment_failed":
-            await handleInvoicePaymentFailed(event.data.object as Stripe.Invoice, event.id, runtime);
+            await handleInvoicePaymentFailed(event.data.object as Stripe.Invoice, event.id, runtime, event.created);
             break;
-          case "charge.refunded":
-            await handleRefundOrDispute(event.data.object as Stripe.Charge, event.id, "canceled", runtime);
+          case "charge.refunded": {
+            const charge = event.data.object as Stripe.Charge;
+
+            // charge.refunded fires for partial refunds too; only a fully
+            // refunded charge should cancel paid access.
+            if (charge.refunded === true) {
+              await handleRefundOrDispute(charge, event.id, "canceled", runtime, event.created);
+            } else {
+              await writeOperationalLog({
+                severity: "info",
+                eventName: "stripe_partial_refund_ignored",
+                message: "Partial refund received; subscription access unchanged.",
+                correlationId: event.id,
+                resourceType: "stripeEvent",
+                resourceId: event.id,
+                metadata: { chargeId: charge.id }
+              });
+            }
             break;
+          }
           case "charge.dispute.created":
-            await handleDispute(event.data.object as Stripe.Dispute, event.id, runtime);
+            await handleDispute(event.data.object as Stripe.Dispute, event.id, runtime, event.created);
             break;
           default:
             break;
@@ -2094,7 +2182,8 @@ export const enqueueDailyInsightJobs = onSchedule(
     region: "us-central1"
   },
   async () => {
-    const snapshot = await getFirestore()
+    const db = getFirestore();
+    const snapshot = await db
       .collection("teacherStudentLinks")
       .where("status", "==", "active")
       .limit(250)
@@ -2105,8 +2194,33 @@ export const enqueueDailyInsightJobs = onSchedule(
         .filter((studentId: unknown): studentId is string => typeof studentId === "string")
     ));
 
+    if (uniqueStudentIds.length === 0) {
+      return;
+    }
+
+    // AI insight jobs may only run for students whose account holds recorded
+    // parent/caregiver consent; scheduled processing gets no consent bypass.
+    const studentDocs = await db.getAll(...uniqueStudentIds.map((studentId) => db.doc(`users/${studentId}`)));
+    const consentedStudentIds = studentDocs
+      .filter((studentDoc) => {
+        const profile = studentDoc.data() ?? {};
+        return profile.parentConsentAccepted === true || profile.aiRecommendationsConsentAccepted === true;
+      })
+      .map((studentDoc) => studentDoc.id);
+    const skippedCount = uniqueStudentIds.length - consentedStudentIds.length;
+
+    if (skippedCount > 0) {
+      await writeOperationalLog({
+        severity: "info",
+        eventName: "ai_daily_jobs_consent_skipped",
+        message: `Skipped ${skippedCount} student(s) without recorded consent for scheduled AI insights.`,
+        resourceType: "aiAnalysisJobs",
+        resourceId: "daily-schedule"
+      });
+    }
+
     await Promise.all(
-      uniqueStudentIds.map((studentId) =>
+      consentedStudentIds.map((studentId) =>
         createAiAnalysisJob({
           studentId,
           requestedBy: "scheduler",

@@ -37,25 +37,17 @@ export function SubscriptionPrompt({ user, profile, onProfileUpdated, onContinue
     setIsStartingCheckout(true);
     setCheckoutError("");
 
-    const nextProfile = await updateUserProfile(user, profile, {
-      subscriptionTier: paidTierId,
-      subscriptionStatus: "checkoutStarted"
-    });
-
-    onProfileUpdated(nextProfile);
-    void trackProductEvent(user, "checkout_clicked", { tier: paidTierId });
-
     try {
-      const checkoutUrl = await startSubscriptionCheckout(paidTierId);
+      const nextProfile = await updateUserProfile(user, profile, {
+        subscriptionTier: paidTierId,
+        subscriptionStatus: "checkoutStarted"
+      });
 
-      if (checkoutUrl) {
-        window.open(checkoutUrl, "_blank", "noopener,noreferrer");
-      } else {
-        setCheckoutError("Checkout is not configured yet. Visit Support for billing help.");
-      }
+      onProfileUpdated(nextProfile);
+      void trackProductEvent(user, "checkout_clicked", { tier: paidTierId });
+      window.location.assign(await startSubscriptionCheckout(paidTierId));
     } catch (error) {
       setCheckoutError(error instanceof Error ? error.message : "Checkout could not start right now.");
-    } finally {
       setIsStartingCheckout(false);
     }
   }
