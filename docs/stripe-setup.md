@@ -70,6 +70,15 @@ Required events:
 
 Run **Deploy Live Stripe Billing** from GitHub Actions after configuring the live values. The protected `production` environment requires human approval before secrets are synchronized or functions are deployed.
 
+## Webhook Registration (Automated)
+
+The **Register Stripe Webhook** workflow (`.github/workflows/register-stripe-webhook.yml`) registers the endpoint through the Stripe API — no Dashboard clicks needed:
+
+1. Run the workflow with `mode: test` first. It creates (or refreshes) the endpoint for `stripeWebhookTest` with all required events, stores the new signing secret directly in Firebase (`STRIPE_WEBHOOK_SECRET`), redeploys the webhook function, fires a `checkout.session.completed` test event through Stripe CLI, and checks the function logs for `stripe_webhook_processed`.
+2. Run it again with `mode: live` (requires `production` environment approval). Same flow against `stripeWebhook` and `STRIPE_LIVE_WEBHOOK_SECRET`; no test event is fired in live mode.
+3. After any run that minted a new signing secret, copy that secret into the matching **GitHub** secret (`STRIPE_WEBHOOK_SECRET` or `STRIPE_LIVE_WEBHOOK_SECRET`) — the billing deploy workflows sync GitHub secrets into Firebase and would otherwise overwrite the fresh value with a stale one. The workflow prints a warning as a reminder.
+4. Stripe never re-reveals an existing endpoint's signing secret. If the endpoint already exists and you need the secret, re-run with `rotate: true` to mint a replacement endpoint (created before the old one is deleted, so delivery never gaps).
+
 ## Checkout Metadata
 
 Backend-created Checkout Sessions attach:

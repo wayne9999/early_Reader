@@ -1,6 +1,13 @@
 import { addDoc, collection, doc, getDocs, limit, query, serverTimestamp, updateDoc, where } from "firebase/firestore";
+import { httpsCallable } from "firebase/functions";
 import type { AppUser, TeacherInvite, UserProfile } from "../types";
 import { getFirebaseRuntime } from "./firebase";
+
+export type AcceptInviteResult = {
+  status: "active" | "requested";
+  teacherName: string;
+  linkId?: string;
+};
 
 const INVITE_STORAGE_KEY = "readnest-teacher-invites-v1";
 
@@ -84,15 +91,43 @@ export async function loadTeacherInvites(user: AppUser | null) {
   }));
 }
 
-export async function revokeTeacherInvite(invite: TeacherInvite) {
+export async function revokeTeacherInvite(user: AppUser, invite: TeacherInvite) {
   const runtime = getFirebaseRuntime();
+  const revokedInvite: TeacherInvite = { ...invite, status: "revoked", updatedAt: new Date().toISOString() };
 
-  if (!runtime) {
-    return;
+  if (!runtime || !runtime.auth.currentUser) {
+    saveLocalInvites(
+      user.id,
+      loadLocalInvites(user.id).map((localInvite) => (localInvite.id === invite.id ? revokedInvite : localInvite))
+    );
+    return revokedInvite;
   }
 
   await updateDoc(doc(runtime.db, "teacherInvites", invite.id), {
     status: "revoked",
-    updatedAt: serverTimestamp()
+    updatedAt: serverTimestamp(),
+    updatedBy: runtime.auth.currentUser.uid
   });
+
+  return revokedInvite;
+}
+
+export async function acceptTeacherInviteCode(code: string): Promise<AcceptInviteResult> {
+  const trimmedCode = code.trim().toUpperCase();
+
+  if (trimmedCode.length < 4) {
+    throw new Error("Enter the invite code your teacher shared.");
+  }
+
+  const runtime = getFirebaseRuntime();
+
+  if (!runtime || !runtime.auth.currentUser) {
+    // Demo mode has no backend; simulate a pending request so the flow stays testable.
+    return { status: "requested", teacherName: "Demo Teacher" };
+  }
+
+  const acceptInvite = httpsCallable<{ code: string }, AcceptInviteResult>(runtime.functions, "acceptTeacherInvite");
+  const response = await acceptInvite({ code: trimmedCode });
+
+  return response.data;
 }

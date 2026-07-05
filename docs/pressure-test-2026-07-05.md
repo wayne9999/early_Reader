@@ -69,11 +69,16 @@ Full-stack adversarial review of the paid product path: frontend checkout flows,
 - **Client-side gating of static paid activities** (Sentences, Story Steps, Word Garden): a technical user could reach this static content by manipulating client state. The expensive assets (ElevenLabs voice, AI insights) are enforced server-side; gating static rounds server-side is not worth the complexity at this stage. Revisit if premium content becomes substantial.
 - **Demo-mode entitlement fallbacks** (`source === "demo"`): only reachable when Firebase is not configured, which `firebase.ts` forbids in production builds.
 
-## Remaining launch risks (pre-existing, still open)
+## Remaining launch risks — follow-up pass (same day)
 
-1. **Stripe webhook endpoint registration + end-to-end test events** in the Stripe Dashboard remain unverified (also flagged in `PROJECT_STATUS.md`).
-2. **App Check is opt-in** (`READNEST_ENFORCE_APP_CHECK`); enable it in production once the reCAPTCHA site key is deployed, or callable functions can be scripted from outside the app.
-3. **Invite acceptance/revocation UI** is still a scaffold; the tightened rules are ready for it.
-4. **Backend data-deletion fulfillment** for support cases is still a manual operations process.
+Items 1–4 below were closed in the follow-up commit on this branch:
+
+1. **Stripe webhook registration + test event** → automated. `scripts/register-stripe-webhook.mjs` plus the **Register Stripe Webhook** workflow register the endpoint via the Stripe API, store the signing secret in Firebase, redeploy the webhook function, and (test mode) fire a `checkout.session.completed` event and check the function logs. One workflow run per mode is all that remains; see `docs/stripe-setup.md`.
+2. **App Check** → enforced by default in production. The functions default `enforceAppCheck` to on when `READNEST_ENVIRONMENT=production` (explicit `READNEST_ENFORCE_APP_CHECK=false` is a temporary rollback switch), the production deploy workflow default flipped to `true`, and production builds now fail validation without `VITE_FIREBASE_APP_CHECK_SITE_KEY`. Action required before the next production deploy: register the reCAPTCHA v3 key and set `PROD_VITE_FIREBASE_APP_CHECK_SITE_KEY`.
+3. **Invite acceptance/revocation** → complete. New `acceptTeacherInvite` backend callable validates the code (active, unexpired, single-use), enforces teacher capacity for auto-approve invites, creates the assignment link transactionally, and consumes the invite. Students redeem codes on Find Teacher; teachers revoke unused codes from their dashboard.
+4. **Data-deletion fulfillment** → implemented. Admin-only `fulfillDataDeletion` callable deletes the full user subtree, assignment links, invites, child profiles, analytics events, and the auth account; resolves the originating support case; retains billing records deliberately. Operational steps in `docs/data-deletion-runbook.md`.
+
+Still open (product/content work, not launch blockers):
+
 5. **Content grade tags** are missing (`validate:content` warning) — needed before scaling paid content packs.
 6. **Teacher certification verification** is stored but not operationally verified against state agencies.

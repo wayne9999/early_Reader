@@ -25,7 +25,11 @@ const appBaseUrl = process.env.READNEST_APP_BASE_URL ?? "https://myreadnest.org/
 const aiModel = process.env.READNEST_AI_MODEL ?? "gpt-5.5";
 const supportNotificationEmail = process.env.SUPPORT_NOTIFICATION_EMAIL ?? "support@myreadnest.org";
 const supportFromEmail = process.env.SUPPORT_FROM_EMAIL ?? "ReadNest Support <support@myreadnest.org>";
-const enforceAppCheck = process.env.READNEST_ENFORCE_APP_CHECK === "true";
+// App Check is enforced by default in production; READNEST_ENFORCE_APP_CHECK=false
+// is a deliberate, temporary rollback switch only.
+const enforceAppCheck = process.env.READNEST_ENFORCE_APP_CHECK
+  ? process.env.READNEST_ENFORCE_APP_CHECK === "true"
+  : isProductionEnvironment;
 const expectedFirebaseProjectId = process.env.READNEST_EXPECTED_FIREBASE_PROJECT_ID;
 const runtimeFirebaseProjectId = process.env.GCLOUD_PROJECT ?? process.env.GOOGLE_CLOUD_PROJECT ?? process.env.FIREBASE_PROJECT_ID;
 const aiWarningLimitUsd = parseBudgetLimit(process.env.READNEST_AI_WARNING_LIMIT_USD, 10);
@@ -62,9 +66,11 @@ if (
 
 type LogSeverity = "info" | "warning" | "error";
 type RateLimitAction =
+  | "acceptInvite"
   | "billingPortal"
   | "checkout"
   | "claimStudent"
+  | "dataDeletion"
   | "manageAssignment"
   | "learningRecommendation"
   | "studentInsight"
@@ -1666,6 +1672,186 @@ export const updateTeacherAssignmentStatus = onCall(
   }
 );
 
+export const acceptTeacherInvite = onCall(
+  {
+    region: "us-central1",
+    enforceAppCheck
+  },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Sign in before using a teacher invite code.");
+    }
+
+    const studentId = request.auth.uid;
+    await enforceUserRateLimit({
+      userId: studentId,
+      action: "acceptInvite",
+      maxAttempts: 10,
+      windowMs: 10 * 60 * 1000
+    });
+
+    const code = cleanUserText(request.data?.code, 40).toUpperCase();
+
+    if (code.length < 4) {
+      throw new HttpsError("invalid-argument", "Enter the invite code your teacher shared.");
+    }
+
+    const db = getFirestore();
+    const studentDoc = await db.doc(`users/${studentId}`).get();
+    const studentProfile = studentDoc.data() ?? {};
+
+    if (studentProfile.role !== "student") {
+      throw new HttpsError("permission-denied", "Only student accounts can accept a teacher invite.");
+    }
+
+    const inviteQuery = await db.collection("teacherInvites")
+      .where("code", "==", code)
+      .limit(1)
+      .get();
+    const inviteDoc = inviteQuery.docs[0];
+
+    if (!inviteDoc) {
+      throw new HttpsError("not-found", "That invite code was not found. Check the code with your teacher.");
+    }
+
+    const inviteRef = inviteDoc.ref;
+    const teacherId = typeof inviteDoc.data().teacherId === "string" ? inviteDoc.data().teacherId : "";
+
+    if (!teacherId || teacherId === studentId) {
+      throw new HttpsError("failed-precondition", "This invite code is not usable for this account.");
+    }
+
+    const teacherProfileRef = db.doc(`teacherProfiles/${teacherId}`);
+    const teacherDirectoryRef = db.doc(`teacherDirectory/${teacherId}`);
+    const linkRef = db.doc(`teacherStudentLinks/${teacherId}_${studentId}`);
+    const queueRef = db.doc(`studentPlacementQueue/${studentId}`);
+    let resultStatus: "active" | "requested" = "requested";
+    let teacherNameResult = "Teacher";
+
+    await db.runTransaction(async (transaction) => {
+      const [inviteSnapshot, teacherProfileDoc, teacherDirectoryDoc, existingLinkDoc] = await Promise.all([
+        transaction.get(inviteRef),
+        transaction.get(teacherProfileRef),
+        transaction.get(teacherDirectoryRef),
+        transaction.get(linkRef)
+      ]);
+      const invite = inviteSnapshot.data() ?? {};
+
+      if (invite.status !== "active") {
+        throw new HttpsError("failed-precondition", "This invite code is no longer active.");
+      }
+
+      const expiresAtMs = timestampMillis(invite.expiresAt);
+
+      if (expiresAtMs && expiresAtMs < Date.now()) {
+        transaction.set(inviteRef, {
+          status: "expired",
+          updatedAt: FieldValue.serverTimestamp(),
+          updatedBy: "invite-worker"
+        }, { merge: true });
+        throw new HttpsError("failed-precondition", "This invite code has expired. Ask your teacher for a new one.");
+      }
+
+      if (existingLinkDoc.exists && existingLinkDoc.data()?.status === "active") {
+        throw new HttpsError("already-exists", "This teacher is already connected to your account.");
+      }
+
+      const teacherProfile = teacherProfileDoc.data() ?? {};
+      const teacherDirectory = teacherDirectoryDoc.data() ?? {};
+      const autoApprove = invite.autoApprove === true;
+      const teacherName = safeString(teacherProfile.displayName, safeString(teacherDirectory.displayName, "Teacher"));
+      const teacherEmail = typeof teacherProfile.email === "string"
+        ? teacherProfile.email
+        : typeof teacherDirectory.email === "string"
+          ? teacherDirectory.email
+          : null;
+      const studentName = safeString(studentProfile.displayName, "Student");
+      const now = FieldValue.serverTimestamp();
+
+      if (autoApprove) {
+        const maxStudentLoad =
+          positiveNumber(teacherProfile.maxStudentLoad)
+          ?? positiveNumber(teacherDirectory.maxStudentLoad)
+          ?? defaultTeacherCapacity;
+        const activeStudentCount =
+          positiveNumber(teacherDirectory.activeStudentCount)
+          ?? positiveNumber(teacherProfile.activeStudentCount)
+          ?? 0;
+
+        if (activeStudentCount >= maxStudentLoad) {
+          throw new HttpsError("resource-exhausted", "This teacher's roster is full. Ask them for a new invite later.");
+        }
+      }
+
+      const linkStatus = autoApprove ? "active" : "requested";
+
+      transaction.set(linkRef, {
+        teacherId,
+        teacherName,
+        teacherEmail,
+        studentId,
+        studentName,
+        studentEmail: typeof studentProfile.email === "string" ? studentProfile.email : null,
+        status: linkStatus,
+        inviteId: inviteSnapshot.id,
+        requestedAt: now,
+        updatedAt: now,
+        createdBy: "teacher-invite",
+        updatedBy: studentId
+      }, { merge: true });
+
+      transaction.set(inviteRef, {
+        status: "accepted",
+        acceptedBy: studentId,
+        acceptedAt: now,
+        updatedAt: now,
+        updatedBy: studentId
+      }, { merge: true });
+
+      if (autoApprove) {
+        transaction.set(queueRef, {
+          studentId,
+          status: "assigned",
+          assignedTeacherId: teacherId,
+          assignedTeacherName: teacherName,
+          holdingTeacherName: null,
+          assignedAt: now,
+          updatedAt: now,
+          updatedBy: "teacher-invite"
+        }, { merge: true });
+        transaction.set(teacherDirectoryRef, {
+          activeStudentCount: FieldValue.increment(1),
+          updatedAt: now,
+          updatedBy: "teacher-invite"
+        }, { merge: true });
+        transaction.set(teacherProfileRef, {
+          activeStudentCount: FieldValue.increment(1),
+          updatedAt: now,
+          updatedBy: "teacher-invite"
+        }, { merge: true });
+      }
+
+      resultStatus = linkStatus;
+      teacherNameResult = teacherName;
+    });
+
+    await writeOperationalLog({
+      severity: "info",
+      eventName: "teacher_invite_accepted",
+      message: `Teacher invite accepted with ${resultStatus} assignment.`,
+      resourceType: "teacherInvites",
+      resourceId: inviteRef.id,
+      metadata: { teacherId, studentId, status: resultStatus }
+    });
+
+    return {
+      status: resultStatus,
+      teacherName: teacherNameResult,
+      linkId: `${teacherId}_${studentId}`
+    };
+  }
+);
+
 export const requestStudentInsight = onCall(
   {
     region: "us-central1",
@@ -1899,6 +2085,147 @@ export const submitSupportCase = onCall(
     });
 
     return { caseId: caseRef.id };
+  }
+);
+
+async function deleteQueryDocs(queryRef: FirebaseFirestore.Query, db: FirebaseFirestore.Firestore) {
+  const snapshot = await queryRef.get();
+
+  if (snapshot.empty) {
+    return 0;
+  }
+
+  const batch = db.batch();
+  snapshot.docs.forEach((docSnapshot) => batch.delete(docSnapshot.ref));
+  await batch.commit();
+
+  return snapshot.size;
+}
+
+export const fulfillDataDeletion = onCall(
+  {
+    region: "us-central1",
+    enforceAppCheck,
+    timeoutSeconds: 300
+  },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Sign in as an admin before fulfilling data deletion.");
+    }
+
+    const requesterId = request.auth.uid;
+    await enforceUserRateLimit({
+      userId: requesterId,
+      action: "dataDeletion",
+      maxAttempts: 5,
+      windowMs: 60 * 60 * 1000
+    });
+
+    const db = getFirestore();
+    const requesterDoc = await db.doc(`users/${requesterId}`).get();
+
+    if (requesterDoc.data()?.role !== "admin") {
+      throw new HttpsError("permission-denied", "Only admin accounts can fulfill data deletion requests.");
+    }
+
+    const targetUserId = cleanUserText(request.data?.userId, 128);
+    const caseId = cleanUserText(request.data?.caseId, 128);
+    const confirmation = cleanUserText(request.data?.confirm, 128);
+
+    if (!targetUserId) {
+      throw new HttpsError("invalid-argument", "Provide the userId whose data should be deleted.");
+    }
+
+    if (targetUserId === requesterId) {
+      throw new HttpsError("failed-precondition", "Admins cannot delete their own account through this workflow.");
+    }
+
+    if (confirmation !== targetUserId) {
+      throw new HttpsError(
+        "failed-precondition",
+        "Pass confirm equal to the target userId to acknowledge this action is irreversible."
+      );
+    }
+
+    const deletedCollections: Record<string, number> = {};
+
+    // The user document subtree covers learning progress, learning events,
+    // summaries, AI insights, and learning coach state.
+    await db.recursiveDelete(db.doc(`users/${targetUserId}`));
+    deletedCollections.userTree = 1;
+
+    for (const docPath of [
+      `studentPlacementQueue/${targetUserId}`,
+      `teacherProfiles/${targetUserId}`,
+      `teacherDirectory/${targetUserId}`
+    ]) {
+      await db.doc(docPath).delete();
+    }
+
+    deletedCollections.studentLinks = await deleteQueryDocs(
+      db.collection("teacherStudentLinks").where("studentId", "==", targetUserId),
+      db
+    );
+    deletedCollections.teacherLinks = await deleteQueryDocs(
+      db.collection("teacherStudentLinks").where("teacherId", "==", targetUserId),
+      db
+    );
+    deletedCollections.teacherInvites = await deleteQueryDocs(
+      db.collection("teacherInvites").where("teacherId", "==", targetUserId),
+      db
+    );
+    deletedCollections.childProfiles = await deleteQueryDocs(
+      db.collection("childProfiles").where("parentUid", "==", targetUserId),
+      db
+    );
+    deletedCollections.analyticsEvents = await deleteQueryDocs(
+      db.collection("analyticsEvents").where("userId", "==", targetUserId),
+      db
+    );
+
+    // Subscription documents are retained: they are financial records tied to
+    // Stripe transactions. Cancellation happens through Stripe, not deletion.
+
+    try {
+      await getAuth().deleteUser(targetUserId);
+      deletedCollections.authAccount = 1;
+    } catch (error) {
+      const code = (error as { code?: string }).code;
+
+      if (code !== "auth/user-not-found") {
+        throw new HttpsError("internal", "Firestore data was deleted but the auth account could not be removed. Retry to finish.");
+      }
+    }
+
+    if (caseId) {
+      await db.doc(`supportCases/${caseId}`).set({
+        status: "resolved",
+        resolution: "dataDeleted",
+        resolvedBy: requesterId,
+        resolvedAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+        updatedBy: requesterId
+      }, { merge: true });
+    }
+
+    await writeOperationalLog({
+      severity: "info",
+      eventName: "data_deletion_fulfilled",
+      message: "User data deletion completed.",
+      resourceType: "users",
+      resourceId: targetUserId,
+      metadata: {
+        requestedBy: requesterId,
+        caseId: caseId || null,
+        deletedCollections
+      }
+    });
+
+    return {
+      userId: targetUserId,
+      deletedCollections,
+      subscriptionRecordsRetained: true
+    };
   }
 );
 

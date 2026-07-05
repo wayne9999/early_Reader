@@ -38,13 +38,15 @@
 - Deployed successfully to GitHub Pages.
 - Deployed Firebase rules, Functions, Stripe/OpenAI secrets, and scheduled AI insight job through GitHub Actions.
 
+- Completed the launch-blocker follow-up: automated Stripe webhook registration workflow, production-default App Check enforcement, invite acceptance/revocation flow (`acceptTeacherInvite` callable + Find Teacher redemption + dashboard revoke), and admin data-deletion fulfillment (`fulfillDataDeletion` callable + `docs/data-deletion-runbook.md`).
+
 ## Not Yet Fully Connected
 
 - Facebook sign-in needs Firebase Console provider setup with the Meta app ID and secret before live use.
-- Stripe webhook code is deployed with secrets, but it still needs Stripe Dashboard endpoint registration and end-to-end test events.
-- Teacher-created invitation codes can be created, but invite acceptance/revocation/admin tooling still needs completion.
+- Stripe webhook registration is automated by the **Register Stripe Webhook** GitHub Actions workflow; it still needs one run in test mode and one approved run in live mode.
+- App Check enforcement is now the production default; the reCAPTCHA v3 site key (`PROD_VITE_FIREBASE_APP_CHECK_SITE_KEY`) must be registered before the next production deploy or the build fails validation.
 - AI insight generation uses a backend OpenAI adapter with a rule-based fallback. Legal review, prompt evaluation, and production monitoring are still needed before broad launch.
-- Parent multi-child profiles, placement onboarding, printable sheets, and backend data deletion fulfillment still need completion.
+- Parent multi-child profiles, placement onboarding, and printable sheets still need completion.
 - Production role enforcement should move to backend logic/custom claims before live classroom use at scale.
 
 ## Verification Last Run

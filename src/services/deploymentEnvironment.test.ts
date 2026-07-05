@@ -53,4 +53,31 @@ describe("deployment environment boundaries", () => {
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("belongs to the opposite environment");
   });
+
+  it("rejects a production build without the App Check site key", () => {
+    const result = validateEnvironment({
+      VITE_APP_ENVIRONMENT: "production",
+      VITE_STRIPE_MODE: "live",
+      VITE_FIREBASE_PROJECT_ID: "readnest-f9c67",
+      VITE_EXPECTED_FIREBASE_PROJECT_ID: "readnest-f9c67",
+      VITE_FORBIDDEN_FIREBASE_PROJECT_ID: "readnest-dev-f9c67",
+      VITE_FIREBASE_APP_CHECK_SITE_KEY: ""
+    });
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("VITE_FIREBASE_APP_CHECK_SITE_KEY is required for production builds");
+  });
+
+  it("accepts a production build with the App Check site key", () => {
+    const result = validateEnvironment({
+      VITE_APP_ENVIRONMENT: "production",
+      VITE_STRIPE_MODE: "live",
+      VITE_FIREBASE_PROJECT_ID: "readnest-f9c67",
+      VITE_EXPECTED_FIREBASE_PROJECT_ID: "readnest-f9c67",
+      VITE_FORBIDDEN_FIREBASE_PROJECT_ID: "readnest-dev-f9c67",
+      VITE_FIREBASE_APP_CHECK_SITE_KEY: "6LcExampleSiteKey"
+    });
+
+    expect(result.status).toBe(0);
+  });
 });

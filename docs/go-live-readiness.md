@@ -12,7 +12,7 @@ Status labels:
 | --- | --- | --- |
 | Free starter value | Completed | Reading, Memory, Rhymes, Sounds, and Sentences remain available to free signed-in students. |
 | Premium student value | Needs Work | Story Steps and Word Garden are gated; printable plans and premium packs need full content and export flows. |
-| Teacher workflow | Needs Work | Student requests, holding-space claims, approval, dashboards, reports, and invite-code creation exist. Invite acceptance/revocation admin tools need completion. |
+| Teacher workflow | Ready | Student requests, holding-space claims, approval, dashboards, reports, and invite codes are complete: families redeem codes on Find Teacher through the `acceptTeacherInvite` backend callable (single-use, expiring, capacity-checked) and teachers revoke unused codes from their dashboard. |
 | Parent workflow | Needs Work | Student dashboard, progress summary, and parent consent storage exist. Multi-child parent account management needs a full child profile UI. |
 | Onboarding | Needs Work | Account role selection exists. Grade, reading goal, placement/checkpoint, and personalized starting path need completion. |
 | Mobile UX | Completed | Current responsive layout and hamburger menu are tested with Playwright smoke coverage. |
@@ -39,7 +39,7 @@ Status labels:
 | --- | --- | --- |
 | Stripe-hosted payment | Completed | Backend-created Checkout Sessions are preferred for subscriptions, with Payment Links as fallback/donation support. Card data never touches the app. |
 | Trusted subscription state | Completed | Frontend now reads `subscriptions/{uid}`. Missing subscription docs fail closed for paid access in Firebase mode. |
-| Stripe webhook backend | Needs Work | Firebase Functions deploy with secrets succeeds. Stripe Dashboard webhook endpoint and test-event verification still need final confirmation. |
+| Stripe webhook backend | Needs Run | Endpoint registration and test-event verification are automated by the **Register Stripe Webhook** GitHub Actions workflow (`register-stripe-webhook.yml`); run it once for test mode and once for live mode. |
 | Billing portal | Needs Work | Callable `createBillingPortalSession` exists and deploys. Account UI still needs to prefer the callable over any durable external portal link. |
 | Failed payment states | Completed | Past-due/canceled states show billing guidance and lock premium access. |
 | Refund/dispute handling | Needs Work | Webhook scaffold marks refund/dispute states; operations policy and reconciliation need testing. |
@@ -71,7 +71,7 @@ Status labels:
 | Legal pages | Completed | Privacy, Terms, Children's Privacy, Parent Consent, Teacher Terms, Refund/Cancellation pages exist in-app. |
 | Legal review | Blocked | Counsel review is required before public child-directed launch. |
 | Parent consent | Completed | Parent/child profile creation requires an explicit consent checkbox and stores consent metadata on the user profile. |
-| Data deletion | Needs Work | Parents can submit a signed-in data deletion support case. Backend deletion/export fulfillment still needs implementation. |
+| Data deletion | Ready | Parents submit a signed-in deletion support case; admins fulfill it with the `fulfillDataDeletion` callable (full user subtree, links, invites, child profiles, analytics, auth account). See `docs/data-deletion-runbook.md`. |
 | Support operations | Needs Work | Support page, email path, and Firestore `supportCases` intake exist. `myreadnest.org` is verified in Resend and the production sender is configured; ticket routing, SLA, and status page still need external setup. |
 
 ## Quality And Deployment

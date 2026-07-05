@@ -7,6 +7,7 @@ const donationLink = process.env.VITE_STRIPE_DONATION_LINK ?? "";
 const familyPlusLink = process.env.VITE_STRIPE_FAMILY_PLUS_LINK ?? "";
 const teacherProLink = process.env.VITE_STRIPE_TEACHER_PRO_LINK ?? "";
 const customerPortalLink = process.env.VITE_STRIPE_CUSTOMER_PORTAL_LINK ?? "";
+const appCheckSiteKey = process.env.VITE_FIREBASE_APP_CHECK_SITE_KEY ?? "";
 
 const errors = [];
 
@@ -48,6 +49,12 @@ if (appEnvironment === "production" && stripeMode !== "live") {
 
 if (appEnvironment === "development" && stripeMode !== "test") {
   errors.push("Development builds must use VITE_STRIPE_MODE=test.");
+}
+
+if (appEnvironment === "production" && !appCheckSiteKey) {
+  errors.push(
+    "VITE_FIREBASE_APP_CHECK_SITE_KEY is required for production builds: backend callables enforce App Check in production, so a build without the site key cannot start checkout, billing, or support flows."
+  );
 }
 
 const stripeLinks = [
