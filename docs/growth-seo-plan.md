@@ -44,13 +44,21 @@ Completed:
 - Added `scripts/generate-seo-pages.mjs` so the pages are rebuilt before every production build.
 - Added `scripts/validate-seo-assets.mjs` and e2e coverage for sitemap, robots, canonical tags, JSON-LD, and mobile overflow.
 
-Manual launch steps:
+## July 2026 Submission Automation
 
-1. In Google Search Console, add/verify `https://myreadnest.org`, then submit `https://myreadnest.org/sitemap.xml`.
-2. Use URL Inspection for `/`, `/reading-practice/`, `/online-reading-games/`, `/kindergarten-reading/`, and `/teacher-dashboard/`.
-3. In Bing Webmaster Tools, add the same site and submit the sitemap.
-4. Run Google's Rich Results Test against `/reading-practice/` and `/pricing/`.
-5. Track indexing status weekly for the first month and revise pages that are discovered but not indexed.
+Search-engine submission is now largely automated by the **Submit To Search Engines** workflow (`.github/workflows/submit-search-engines.yml`), which runs automatically after every successful production deploy and can be dispatched manually:
+
+- **Bing (and Yandex/Seznam/Naver)**: `npm run submit:indexnow` pushes every sitemap URL through IndexNow using the key file committed in `public/` (deprecated anonymous sitemap pings no longer exist). No account setup needed; Bing Webmaster Tools account is optional for reporting.
+- **Google sitemap submission**: `npm run submit:google` submits the sitemap through the Search Console API. One-time setup: create a Google Cloud service account, add its email as a user of the Search Console property, and store its JSON key as the `GSC_SERVICE_ACCOUNT_JSON` repo secret (set the `GSC_SITE_URL` variable if the property is not `sc-domain:myreadnest.org`).
+- **Google URL Inspection**: the same workflow inspects `/`, `/reading-practice/`, `/online-reading-games/`, `/kindergarten-reading/`, and `/teacher-dashboard/` via the URL Inspection API once the secret exists.
+- **Rich Results**: `npm run validate:rich-results` validates every generated page's FAQPage and BreadcrumbList JSON-LD against Google's documented requirements locally (it runs in CI and inside `validate:seo`). The interactive https://search.google.com/test/rich-results check of `/reading-practice/` and `/pricing/` remains a nice-to-have visual confirmation.
+
+Remaining truly-manual steps (need the Google/Microsoft account owner):
+
+1. Verify the `myreadnest.org` property in Google Search Console (DNS TXT or HTML file) if not already verified — the API cannot self-verify.
+2. Create the service account, grant it Search Console access, and add the `GSC_SERVICE_ACCOUNT_JSON` secret.
+3. Optionally add the site in Bing Webmaster Tools (can import from Search Console) for reporting dashboards; indexing submission is already covered by IndexNow.
+4. Track indexing status weekly for the first month and revise pages that are discovered but not indexed.
 
 Research basis:
 
