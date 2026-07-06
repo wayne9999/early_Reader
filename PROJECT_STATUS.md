@@ -39,6 +39,7 @@
 - Deployed Firebase rules, Functions, Stripe/OpenAI secrets, and scheduled AI insight job through GitHub Actions.
 
 - Completed the launch-blocker follow-up: automated Stripe webhook registration workflow, production-default App Check enforcement, invite acceptance/revocation flow (`acceptTeacherInvite` callable + Find Teacher redemption + dashboard revoke), and admin data-deletion fulfillment (`fulfillDataDeletion` callable + `docs/data-deletion-runbook.md`).
+- Automated search-engine submission: IndexNow (Bing/Yandex) URL submission, Search Console API sitemap submission and URL inspection (pending `GSC_SERVICE_ACCOUNT_JSON` secret), local Rich Results validation in `validate:seo`, and the **Submit To Search Engines** workflow that runs after every production deploy. See `docs/growth-seo-plan.md`.
 
 ## Not Yet Fully Connected
 
