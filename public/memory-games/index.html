@@ -3,30 +3,199 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="robots" content="index, follow, max-image-preview:large" />
-    <meta
-      name="description"
-      content="ReadNest includes educational memory games for kids that support working memory, attention, classroom routines, and early learning skills."
-    />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+    <meta name="description" content="ReadNest memory games help kids strengthen focus, recall, school-ready routines, and confidence alongside early reading practice." />
     <link rel="canonical" href="https://myreadnest.org/memory-games/" />
-    <title>Educational Memory Games for Kids | ReadNest</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="/brand/favicon-32.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/brand/apple-touch-icon.png" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="ReadNest" />
+    <meta property="og:title" content="Memory Games for Kids | Reading and School-Ready Practice | ReadNest" />
+    <meta property="og:description" content="ReadNest memory games help kids strengthen focus, recall, school-ready routines, and confidence alongside early reading practice." />
+    <meta property="og:url" content="https://myreadnest.org/memory-games/" />
+    <meta property="og:image" content="https://myreadnest.org/brand/readnest-bird-book.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Memory Games for Kids | Reading and School-Ready Practice | ReadNest" />
+    <meta name="twitter:description" content="ReadNest memory games help kids strengthen focus, recall, school-ready routines, and confidence alongside early reading practice." />
+    <meta name="twitter:image" content="https://myreadnest.org/brand/readnest-bird-book.png" />
+    <script type="application/ld+json">[
+  {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": "Memory games that support early reading habits",
+    "description": "ReadNest memory games help kids strengthen focus, recall, school-ready routines, and confidence alongside early reading practice.",
+    "url": "https://myreadnest.org/memory-games/",
+    "isPartOf": {
+      "@type": "WebSite",
+      "name": "ReadNest",
+      "url": "https://myreadnest.org"
+    },
+    "about": {
+      "@type": "SoftwareApplication",
+      "name": "ReadNest",
+      "applicationCategory": "EducationalApplication",
+      "operatingSystem": "Web"
+    }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "ReadNest",
+        "item": "https://myreadnest.org/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Memory games that support early reading habits",
+        "item": "https://myreadnest.org/memory-games/"
+      }
+    ]
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Is the memory game free?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. Guests can try the memory game without creating an account."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does it track progress?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Signed-in learners can have activity history stored for dashboard summaries."
+        }
+      }
+    ]
+  }
+]</script>
+    <title>Memory Games for Kids | Reading and School-Ready Practice | ReadNest</title>
+    <style>
+      :root {
+        color: #202338;
+        background: #fffaf1;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; line-height: 1.6; }
+      a { color: inherit; }
+      .page { min-height: 100vh; background: radial-gradient(circle at top left, #fff1b8, transparent 32rem), #fffaf1; }
+      .nav, .hero, .section, .footer { width: min(1120px, calc(100% - 32px)); margin: 0 auto; }
+      .nav { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 22px 0; }
+      .brand { display: flex; align-items: center; gap: 10px; font-weight: 900; text-decoration: none; }
+      .brand img { width: 44px; height: 44px; border-radius: 12px; }
+      .links { display: flex; flex-wrap: wrap; gap: 14px; font-size: 0.95rem; color: #5f6277; }
+      .links a { text-decoration: none; }
+      .links a:hover { color: #202338; }
+      .hero { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(260px, 0.75fr); gap: 42px; align-items: center; padding: 54px 0 42px; }
+      .eyebrow { color: #168f88; font-size: 0.82rem; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; margin: 0 0 10px; }
+      h1 { font-size: clamp(2.5rem, 7vw, 5.1rem); line-height: 0.98; margin: 0; letter-spacing: 0; }
+      .hero p { color: #5f6277; font-size: 1.2rem; max-width: 680px; }
+      .cta-row { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 28px; }
+      .button { border: 0; border-radius: 999px; color: white; background: #ff6158; box-shadow: 0 16px 36px rgba(255, 97, 88, 0.24); display: inline-flex; font-weight: 900; padding: 14px 22px; text-decoration: none; }
+      .button.secondary { background: white; color: #202338; border: 1px solid #ece6dc; box-shadow: none; }
+      .mascot-card { background: linear-gradient(135deg, #ffcf6e, #ffafc8 48%, #8adfff); border: 8px solid white; border-radius: 28px; padding: 28px; box-shadow: 0 22px 60px rgba(32, 35, 56, 0.14); }
+      .mascot-card img { display: block; width: 100%; max-width: 340px; margin: 0 auto; border-radius: 18px; }
+      .section { padding: 34px 0; }
+      .section h2 { font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.05; margin: 0 0 12px; }
+      .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+      .card { background: white; border: 1px solid #ece6dc; border-radius: 20px; padding: 24px; box-shadow: 0 10px 34px rgba(32, 35, 56, 0.06); }
+      .card p { color: #5f6277; margin-top: 0; }
+      ul { padding-left: 1.2rem; margin-bottom: 0; }
+      li { margin: 0.35rem 0; }
+      .faq { background: #f2fff9; border-radius: 24px; padding: 28px; }
+      details { background: white; border-radius: 16px; padding: 16px 18px; margin: 12px 0; border: 1px solid #d7efe7; }
+      summary { cursor: pointer; font-weight: 900; }
+      .footer { border-top: 1px solid #ece6dc; color: #6b6e82; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 18px; margin-top: 44px; padding: 28px 0 40px; }
+      @media (max-width: 780px) {
+        .nav { align-items: flex-start; flex-direction: column; }
+        .hero { grid-template-columns: 1fr; padding-top: 28px; }
+        .grid { grid-template-columns: 1fr; }
+      }
+    </style>
   </head>
   <body>
-    <main>
-      <h1>Educational Memory Games for Kids</h1>
-      <p>
-        ReadNest includes short memory matching games that help children practice attention,
-        working memory, school routines, healthy habits, and social skills. The game tracks turns,
-        matched pairs, completed boards, and best memory board performance.
-      </p>
-      <h2>Memory skills supported</h2>
-      <ul>
-        <li>Visual memory and recall.</li>
-        <li>Attention and turn-taking.</li>
-        <li>Classroom habit vocabulary.</li>
-        <li>Confidence through short, successful practice loops.</li>
-      </ul>
-      <p><a href="/">Open the ReadNest app</a></p>
-    </main>
+    <div class="page">
+      <header class="nav">
+        <a class="brand" href="/">
+          <img src="/brand/readnest-icon-192.png" alt="" />
+          <span>ReadNest</span>
+        </a>
+        <nav class="links" aria-label="Related reading resources">
+          <a href="/">Home</a>
+          <a href="/online-reading-games/">Reading games</a>
+          <a href="/reading-practice/">Reading practice</a>
+          <a href="/phonics-practice/">Phonics</a>
+          <a href="/sight-words/">Sight words</a>
+          <a href="/pricing/">Pricing</a>
+        </nav>
+      </header>
+      <main>
+        <section class="hero">
+          <div>
+            <p class="eyebrow">Focus, recall, and school-ready ideas</p>
+            <h1>Memory games that support early reading habits</h1>
+            <p>ReadNest memory games give children a quick matching activity that supports attention and recall while staying connected to school-ready habits.</p>
+            <div class="cta-row">
+              <a class="button" href="/#/memory">Try the memory game</a>
+              <a class="button secondary" href="/#/support">See plans</a>
+            </div>
+          </div>
+          <aside class="mascot-card" aria-label="ReadNest mascot">
+            <img src="/brand/readnest-bird-book.png" alt="ReadNest bird mascot sitting on an open book." />
+          </aside>
+        </section>
+        <section class="section">
+          <div class="grid">
+            <article class="card">
+              <h2>What the memory game practices</h2>
+              <p>The board uses simple pairs so children can focus on remembering, matching, and finishing a short game.</p>
+              <ul>
+                <li>Card matching and recall.</li>
+                <li>Healthy habits and classroom routines.</li>
+                <li>Turn-taking patience and completion.</li>
+                <li>Progress signals for activity history.</li>
+              </ul>
+            </article>
+            <article class="card">
+              <h2>Why it belongs in a reading app</h2>
+              <p>Reading requires attention, working memory, and confidence. A short memory game can warm up those skills before word practice.</p>
+              <ul>
+                <li>Useful as a calm starter activity.</li>
+                <li>Free for guests.</li>
+                <li>Tracked for signed-in learners.</li>
+              </ul>
+            </article>
+          </div>
+        </section>
+        <section class="section">
+          <div class="faq">
+            <p class="eyebrow">Common questions</p>
+            <h2>Answers before you start</h2>
+            <details>
+              <summary>Is the memory game free?</summary>
+              <p>Yes. Guests can try the memory game without creating an account.</p>
+            </details>
+            <details>
+              <summary>Does it track progress?</summary>
+              <p>Signed-in learners can have activity history stored for dashboard summaries.</p>
+            </details>
+          </div>
+        </section>
+      </main>
+      <footer class="footer">
+        <span>ReadNest helps K-2 children build reading confidence through short, personalized practice.</span>
+        <span><a href="/#/privacy">Privacy</a> · <a href="/#/children-privacy">Children's privacy</a> · <a href="/#/support">Support</a></span>
+      </footer>
+    </div>
   </body>
 </html>
