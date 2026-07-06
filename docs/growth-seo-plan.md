@@ -34,6 +34,33 @@ ReadNest should win trust before it asks families or teachers to pay. The growth
 5. Add real screenshots, short demo videos, and testimonials once families and teachers have tested the app.
 6. Move to a custom domain before paid acquisition so canonical URLs and brand trust are stronger.
 
+## July 2026 Crawlability Pass
+
+Completed:
+
+- Added generated static landing pages for the highest-intent parent and teacher search paths.
+- Added production canonical URLs for `https://myreadnest.org`.
+- Added Open Graph, Twitter preview metadata, JSON-LD, and FAQ structured data on each static page.
+- Added `scripts/generate-seo-pages.mjs` so the pages are rebuilt before every production build.
+- Added `scripts/validate-seo-assets.mjs` and e2e coverage for sitemap, robots, canonical tags, JSON-LD, and mobile overflow.
+
+Manual launch steps:
+
+1. In Google Search Console, add/verify `https://myreadnest.org`, then submit `https://myreadnest.org/sitemap.xml`.
+2. Use URL Inspection for `/`, `/reading-practice/`, `/online-reading-games/`, `/kindergarten-reading/`, and `/teacher-dashboard/`.
+3. In Bing Webmaster Tools, add the same site and submit the sitemap.
+4. Run Google's Rich Results Test against `/reading-practice/` and `/pricing/`.
+5. Track indexing status weekly for the first month and revise pages that are discovered but not indexed.
+
+Research basis:
+
+- Google SEO Starter Guide: https://developers.google.com/search/docs/fundamentals/seo-starter-guide
+- Google JavaScript SEO Basics: https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics
+- Google Structured Data: https://developers.google.com/search/docs/appearance/structured-data/intro-structured-data
+- Google Software App Structured Data: https://developers.google.com/search/docs/appearance/structured-data/software-app
+- Bing Webmaster Guidelines: https://www.bing.com/webmasters/help/webmaster-guidelines-30fba23a
+- Schema.org `SoftwareApplication`: https://schema.org/SoftwareApplication
+
 ## Content Rules
 
 - Keep copy parent-friendly and specific: short practice, grade range, what kids do, what adults see.
