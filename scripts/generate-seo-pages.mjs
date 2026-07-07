@@ -450,37 +450,69 @@ const pages = [
   },
   {
     slug: "pricing",
-    priority: "0.75",
-    title: "ReadNest Pricing | Free Reader, Family Plus, and Teacher Pro",
+    priority: "0.85",
+    title: "ReadNest Pricing: Free, Family Plus $7/mo, Teacher Pro $19/mo | ReadNest",
     description:
-      "ReadNest pricing includes a free starter reading path, Family Plus for personalized premium practice, and Teacher Pro for dashboards, reports, and intervention planning.",
-    h1: "ReadNest pricing",
-    eyebrow: "Start free, upgrade when the path needs more support",
+      "ReadNest pricing: free starter reading path, Family Plus at $7 per month for K-2 personalized practice, and Teacher Pro at $19 per month for tutor and teacher dashboards.",
+    h1: "ReadNest pricing: free, $7 for families, $19 for tutors and teachers",
+    eyebrow: "Simple plans, cancel anytime",
     hero:
-      "ReadNest starts with useful free practice, then offers paid plans for families and teachers who need deeper personalization, clearer progress insight, and more guided support.",
+      "Free Reader is a real starter path, not a teaser. Family Plus is $7 per month and Teacher Pro is $19 per month. Both use Stripe-hosted checkout, cancel through the Stripe Customer Portal, and never charge a per-child fee.",
     sections: [
       {
-        title: "Free Reader",
-        body: "Free starter practice gives families a useful first experience before they subscribe.",
-        bullets: ["Reading and memory activities.", "Signed-in Rhymes, Sounds, and Sentences.", "Basic dashboard signals."]
+        title: "The three plans at a glance",
+        body: "Everything a K-2 family or tutor might need, clearly split into three plans that do not surprise anyone at renewal.",
+        bullets: [
+          "Free Reader — $0. Reading and Memory activities without sign-up, plus signed-in Rhymes, Sounds, and Sentences with basic dashboard signals.",
+          "Family Plus — $7 per month. All student activities (Sentences, Story Steps, Word Garden, Echo Reader, Voice Quest), deeper personalized paths, printable plans, and full parent progress views.",
+          "Teacher Pro — $19 per month. Everything in Family Plus for review, plus assigned-student roster, activity review, downloadable report cards, strengths and growth analysis, intervention planning, and AI-supported recommendations when enabled.",
+          "Both paid plans use Stripe-hosted checkout, so card details stay on Stripe. Cancel any time through the Stripe Customer Portal from the Account page."
+        ]
       },
       {
-        title: "Family Plus and Teacher Pro",
-        body:
-          "Family Plus is $7 per month for deeper student practice. Teacher Pro is $19 per month for classroom insight.",
+        title: "Is Family Plus worth $7 for one kid?",
+        body: "The honest math is short. A single one-hour session with a private reading tutor typically runs $40 to $80. Family Plus is $7 per month for daily 5 to 10 minute personalized practice between those sessions — or as the daily practice itself if a tutor is not in the picture yet.",
         bullets: [
-          "Family Plus: all student activities, printable plans, and personalized practice.",
-          "Teacher Pro: student dashboards, report exports, intervention planning, and AI-supported recommendations when enabled.",
-          "Subscriptions can be canceled through the billing portal when configured."
+          "One tutoring session per month usually costs 5-10x a Family Plus subscription.",
+          "ReadNest tracks sight words practiced, phonics attempts, and skill areas so parents know what to review each week without guessing.",
+          "Family Plus unlocks the personalized paths that adapt around missed words, grade level, and reading goals.",
+          "One subscription covers the child — no per-child or per-device up-charge.",
+          "The Free Reader tier stays available; families who skip Family Plus keep Reading, Memory, Rhymes, and Sounds."
+        ]
+      },
+      {
+        title: "Family Plus vs Teacher Pro: how to choose",
+        body: "The two paid plans solve different problems. Pick the one that matches how you actually use ReadNest.",
+        bullets: [
+          "Pick Family Plus at $7 if you are a parent or caregiver focused on one or a few of your own children at home.",
+          "Pick Teacher Pro at $19 if you are a tutor, small-group specialist, or classroom teacher who needs an assigned-student roster, downloadable report cards, and intervention planning.",
+          "Teacher Pro is priced for a working tutor's practice; using it across multiple assigned students costs less than one hour of tutoring per month.",
+          "Families whose child has a tutor typically pair Family Plus (parent side) with the tutor's Teacher Pro (professional side), so both sides see the same progress."
+        ]
+      },
+      {
+        title: "What is deliberately not in the plans",
+        body: "Absence is a feature. Here is what the paid plans do not include, on purpose.",
+        bullets: [
+          "No per-child add-ons. One Family Plus subscription is one Family Plus subscription.",
+          "No in-app purchases inside child activities. Every upgrade path is on the parent-facing Account page.",
+          "No ads or third-party ad networks on any plan, free or paid.",
+          "No auto-renewal without visible billing status; families see current tier, next renewal date, and can cancel from the Account page.",
+          "No hidden classroom fees on Teacher Pro. It is a single per-teacher plan, not a per-student one."
         ]
       }
     ],
     faq: [
-      ["Can families start free?", "Yes. ReadNest includes a useful free starter tier."],
-      ["Are subscriptions monthly?", "Yes. Family Plus and Teacher Pro are monthly plans."]
+      ["Is ReadNest worth $7 per month for one kid?", "For most K-2 families, yes. Family Plus at $7 per month costs less than one weekend book, and daily 5 to 10 minute personalized practice between reading sessions typically moves a child faster than one-off longer sessions."],
+      ["Is Family Plus or Teacher Pro right for me?", "Family Plus is for parents and caregivers focused on their own children at $7 per month. Teacher Pro is for tutors, small-group specialists, and classroom teachers who need assigned-student dashboards, reports, and intervention planning at $19 per month."],
+      ["How does ReadNest compare to a reading tutor?", "A reading tutor typically costs $40 to $80 per hour. ReadNest is not a replacement for a great tutor, but it is designed to do the daily practice between tutoring sessions and to give parents a clearer picture of what to review at home."],
+      ["Can I try the paid plans free?", "Yes. Free Reader gives every family real practice without a sign-up. Registered free accounts also unlock Rhymes, Sounds, and Sentences before any subscription decision."],
+      ["Are there any per-child or per-device fees?", "No. One Family Plus subscription is one Family Plus subscription. There is no separate charge per child profile or per device."],
+      ["How do I cancel a subscription?", "Cancel any time through the Stripe Customer Portal from the Account page. Paid access remains until the current billing period ends."],
+      ["Are there refunds?", "See the refund policy for the current terms. Support requests for billing help go through the Support page and are answered by the ReadNest team, not a bot."]
     ],
-    ctaHref: "/#/support",
-    ctaLabel: "Compare plans"
+    ctaHref: "/#/account",
+    ctaLabel: "Start free and pick a plan later"
   },
   {
     slug: "kid-safe",
@@ -553,7 +585,9 @@ const pages = [
         body: "Detailed head-to-head comparisons for the reading apps parents ask about most often.",
         bullets: [
           "ReadNest vs ABCmouse: focus, price, and safety.",
-          "ReadNest vs Reading Eggs: session length, age range, and teacher tools."
+          "ReadNest vs Reading Eggs: session length, age range, and teacher tools.",
+          "ReadNest vs Homer: subject breadth vs focused reading depth.",
+          "ReadNest vs Hooked on Phonics: structured phonics program vs daily practice tool."
         ]
       }
     ],
@@ -780,6 +814,168 @@ const pages = [
     ],
     ctaHref: "/#/reading",
     ctaLabel: "Try 5 minutes of free reading practice"
+  },
+  {
+    slug: "science-of-reading",
+    priority: "0.85",
+    title: "Is ReadNest Based on the Science of Reading? | ReadNest",
+    description:
+      "How ReadNest supports the five pillars of the science of reading — phonemic awareness, phonics, fluency, vocabulary, and comprehension — for kindergarten through grade 2.",
+    h1: "Is ReadNest based on the science of reading?",
+    eyebrow: "How ReadNest supports evidence-based early reading",
+    hero:
+      "Short answer: ReadNest is designed around the same five pillars the National Reading Panel identified as the core of effective early reading — phonemic awareness, phonics, fluency, vocabulary, and comprehension. This page walks through exactly how each pillar maps to what your child sees in the app.",
+    sections: [
+      {
+        title: "The five pillars, and where ReadNest lives inside each one",
+        body: "The science of reading is not a single product. It is a body of research that consistently points to five skills early readers need to build together, not one at a time.",
+        bullets: [
+          "Phonemic awareness — hearing and manipulating individual sounds. ReadNest's Sounds activity and beginning-sound review target this directly.",
+          "Phonics — connecting letters to sounds and blending them into words. ReadNest's Reading practice, phonics blending flow, and CVC word work sit here.",
+          "Fluency — reading with accuracy, appropriate pace, and expression. ReadNest's Sentences, Echo Reader, and Voice Quest activities target sentence-level fluency with listen-again support.",
+          "Vocabulary — knowing what the words actually mean. ReadNest's Word Meaning activity introduces target vocabulary with short child-friendly definitions.",
+          "Comprehension — understanding a text as a whole. ReadNest's Story Steps and sequencing activities support comprehension at a K-2 level."
+        ]
+      },
+      {
+        title: "What ReadNest deliberately does not do",
+        body: "Being honest about the limits of a single app is part of being evidence-aligned.",
+        bullets: [
+          "ReadNest does not diagnose dyslexia or any learning difference. That work belongs with a trained reading specialist, school psychologist, or pediatrician.",
+          "ReadNest is not a full structured-literacy curriculum. It is a daily practice tool that sits alongside classroom instruction, tutoring, or homeschool curriculum.",
+          "ReadNest does not use pure whole-word guessing strategies. Practice is designed to encourage decoding first, sight-word recognition through repeated exposure, and listen-again support instead of picture guessing.",
+          "ReadNest does not replace reading aloud with an adult. The best outcomes still come from a caregiver or teacher reading with the child every day."
+        ]
+      },
+      {
+        title: "How to use ReadNest with a science-of-reading approach at home",
+        body: "The playbook that matches the research is simpler than the research papers make it sound.",
+        bullets: [
+          "Keep sessions short. 5 to 10 minutes of daily practice beats one long weekly session.",
+          "Practice one skill at a time. A day of sight words is not the same as a day of phonics blending; both matter.",
+          "Repeat before pushing forward. When your child hesitates, review; do not race to the next level.",
+          "Read aloud together every day, even for children who are already reading independently.",
+          "Watch the parent dashboard for the skill areas where practice is thin, and use ReadNest's next-step suggestions to focus the next few sessions."
+        ]
+      }
+    ],
+    faq: [
+      ["What is the science of reading?", "The science of reading is the body of research showing that effective early reading instruction combines phonemic awareness, phonics, fluency, vocabulary, and comprehension. It is not a single curriculum or brand."],
+      ["Is ReadNest a structured literacy program?", "No. ReadNest is a daily practice tool aligned with the same skill areas that structured literacy programs target. It complements a structured literacy curriculum rather than replacing one."],
+      ["Does ReadNest use whole-word or three-cueing guessing strategies?", "No. ReadNest is designed to encourage decoding first, build sight-word recognition through repeated exposure, and offer listen-again support rather than picture-guessing prompts."],
+      ["Is ReadNest a good fit for a child with dyslexia?", "ReadNest supports the same skill areas structured literacy targets, and the short calm session design tends to fit children with dyslexia well. It does not diagnose or replace working with a trained reading specialist."],
+      ["Can homeschool families use ReadNest as their reading curriculum?", "ReadNest works well as the daily practice piece of a homeschool reading plan. Many homeschool families pair ReadNest with a structured literacy curriculum or with regular read-alouds at home."],
+      ["Where can I read the research behind the five pillars?", "The National Reading Panel report, the Reading League's Science of Reading Defining Movement documents, and the What Works Clearinghouse's early reading evidence reviews are all good starting points."]
+    ],
+    ctaHref: "/#/reading",
+    ctaLabel: "Try free reading practice"
+  },
+  {
+    slug: "vs/homer",
+    priority: "0.7",
+    title: "ReadNest vs Homer: An Honest K-2 Reading Comparison | ReadNest",
+    description:
+      "ReadNest vs Homer for K-2 families: how they differ on focus, session length, teacher tools, and price — plus when each one is the better fit.",
+    h1: "ReadNest vs Homer: an honest K-2 comparison",
+    eyebrow: "ReadNest vs the alternatives",
+    hero:
+      "Homer (Begin Learning) is a broad early-learning app covering reading, math, thinking, and creativity for ages 2 through 8. ReadNest is a focused K-2 reading tool with a parent dashboard and a teacher workspace. Both can be right; here is when each one fits.",
+    sections: [
+      {
+        title: "When Homer is the better fit",
+        body: "Homer earned its brand for real reasons. Here is when it is the honest pick.",
+        bullets: [
+          "You want one app that covers reading, math, thinking, and creativity together.",
+          "Your child is younger than kindergarten and you want a preschool on-ramp.",
+          "You want a broad, playful library your child can explore across subjects.",
+          "You value a well-known brand with polished production values."
+        ]
+      },
+      {
+        title: "When ReadNest is the better fit",
+        body: "ReadNest picks a smaller lane on purpose.",
+        bullets: [
+          "Your child is in kindergarten, first grade, or second grade and reading is the priority right now.",
+          "You want short 5 to 10 minute daily practice built for calm sessions rather than long content playthroughs.",
+          "You want a parent dashboard that surfaces sight words, phonics attempts, and skill areas without hunting.",
+          "You are a tutor or teacher who needs an assigned-student roster, downloadable report cards, and intervention planning.",
+          "You want to test the app before subscribing without creating an account — ReadNest's Reading and Memory activities are free without sign-up."
+        ]
+      },
+      {
+        title: "Price and safety",
+        body: "The commercial and safety differences are what families actually decide on.",
+        bullets: [
+          "ReadNest Family Plus is $7 per month for focused K-2 reading practice; Teacher Pro is $19 per month for tutors and small groups.",
+          "Homer pricing depends on the current bundle. Compare the monthly cost against features you'll actually use.",
+          "Both platforms are kid-safe. ReadNest commits to no ads, no in-app purchases in child activities, no chat between users, and no data selling."
+        ]
+      }
+    ],
+    faq: [
+      ["Is Homer a replacement for ReadNest?", "Homer is broader across subjects; ReadNest is deeper on K-2 reading with parent dashboards and teacher tools. Some families use Homer for broad early learning and ReadNest for focused reading progress tracking."],
+      ["Which is better for a struggling kindergarten reader?", "ReadNest is built around short personalized reading practice with sight-word and phonics signals in the parent dashboard, which tends to fit a struggling reader well. Homer is broader and less focused on skill diagnostics."],
+      ["Which one costs less?", "ReadNest Family Plus is $7 per month. Homer pricing varies by bundle. Compare the monthly cost against features you'll use."],
+      ["Does either one have a teacher plan?", "ReadNest Teacher Pro at $19 per month is built for tutors and small groups with dashboards, downloadable reports, and intervention planning."],
+      ["Can I try both free?", "Both offer free access paths. ReadNest keeps Reading and Memory free without sign-up so you can preview the experience before subscribing."],
+      ["Is either one safer for kids?", "Both are kid-safe. ReadNest commits to no ads, no in-app purchases in child activities, no chat between users, and no data selling."]
+    ],
+    ctaHref: "/#/reading",
+    ctaLabel: "Try free reading practice"
+  },
+  {
+    slug: "vs/hooked-on-phonics",
+    priority: "0.7",
+    title: "ReadNest vs Hooked on Phonics: Honest K-2 Comparison | ReadNest",
+    description:
+      "ReadNest vs Hooked on Phonics for K-2 families: how they differ on daily practice, teacher tools, physical materials, and price.",
+    h1: "ReadNest vs Hooked on Phonics: an honest K-2 comparison",
+    eyebrow: "ReadNest vs the alternatives",
+    hero:
+      "Hooked on Phonics is a well-known phonics program with a structured lesson sequence, physical workbooks and readers in some plans, and a companion app. ReadNest is a focused K-2 reading tool built for short daily practice with a parent dashboard and a teacher workspace. Both can be right; here is how they differ.",
+    sections: [
+      {
+        title: "When Hooked on Phonics is the better fit",
+        body: "Hooked on Phonics has been around a long time for a reason. Here is when it is the honest pick.",
+        bullets: [
+          "You want a structured phonics lesson sequence with a defined path from start to finish.",
+          "You value physical workbooks and printed early readers your child holds in hand.",
+          "You want a program you can complete over a set number of weeks rather than an open-ended daily-practice tool.",
+          "You are willing to pay a higher upfront cost for the full program bundle."
+        ]
+      },
+      {
+        title: "When ReadNest is the better fit",
+        body: "ReadNest is designed for calm, ongoing daily practice rather than a completion path.",
+        bullets: [
+          "You want short 5 to 10 minute daily sessions rather than a fixed lesson sequence.",
+          "You want a parent dashboard that surfaces sight words, phonics attempts, and skill areas without paperwork.",
+          "You need progress signals across multiple K-2 reading skills (sight words, phonics, sentence fluency, vocabulary, comprehension), not just phonics.",
+          "You are a tutor or classroom teacher who needs an assigned-student roster, downloadable report cards, and intervention planning.",
+          "You want a lower monthly commitment ($7 per month for Family Plus) rather than a higher up-front program purchase."
+        ]
+      },
+      {
+        title: "Price and how they overlap",
+        body: "The two products can complement each other more than they compete.",
+        bullets: [
+          "ReadNest Family Plus is $7 per month; Teacher Pro is $19 per month.",
+          "Hooked on Phonics pricing depends on the plan and bundle — the full-program bundle is a higher upfront investment.",
+          "Many families use Hooked on Phonics as their phonics curriculum and ReadNest as their daily reading practice tool with parent progress tracking.",
+          "Both are kid-safe. ReadNest commits to no ads, no in-app purchases in child activities, no chat between users, and no data selling."
+        ]
+      }
+    ],
+    faq: [
+      ["Is ReadNest a replacement for Hooked on Phonics?", "Not directly. Hooked on Phonics is a structured phonics program with a defined lesson sequence; ReadNest is a daily practice tool covering multiple K-2 reading skills. Some families use both."],
+      ["Which one is better for teaching phonics from scratch?", "Hooked on Phonics is structured as a full phonics program. ReadNest supports phonics practice as one of five skill areas and works well as daily practice alongside a phonics program or classroom instruction."],
+      ["Which one costs less?", "ReadNest Family Plus is $7 per month, which is a smaller ongoing commitment than a full Hooked on Phonics program bundle. Compare based on the plan you'd actually use."],
+      ["Do teachers or tutors use ReadNest?", "Yes. ReadNest Teacher Pro at $19 per month gives tutors and small groups an assigned-student roster, downloadable report cards, and intervention planning."],
+      ["Can my child use both?", "Yes. Many families use Hooked on Phonics as their phonics program and ReadNest as their daily reading practice tool with parent progress views."],
+      ["Which one is safer for young kids?", "Both are kid-safe. ReadNest commits to no ads, no in-app purchases in child activities, no chat between users, and no data selling."]
+    ],
+    ctaHref: "/#/reading",
+    ctaLabel: "Try free reading practice"
   }
 ];
 

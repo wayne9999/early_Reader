@@ -17,8 +17,11 @@ const seoPages = [
   ["vs", "ReadNest compared to other early reading apps"],
   ["vs/abcmouse", "ReadNest vs ABCmouse: an honest comparison for K-2 reading"],
   ["vs/reading-eggs", "ReadNest vs Reading Eggs: an honest K-2 comparison"],
+  ["vs/homer", "ReadNest vs Homer: an honest K-2 comparison"],
+  ["vs/hooked-on-phonics", "ReadNest vs Hooked on Phonics: an honest K-2 comparison"],
   ["for-tutors", "ReadNest for tutors and small groups"],
-  ["my-child-cant-read-yet", "My child can't read yet — when to worry and what helps"]
+  ["my-child-cant-read-yet", "My child can't read yet — when to worry and what helps"],
+  ["science-of-reading", "Is ReadNest based on the science of reading?"]
 ];
 
 test.describe("crawlable SEO landing pages", () => {
