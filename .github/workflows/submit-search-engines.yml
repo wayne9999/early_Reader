@@ -1,0 +1,60 @@
+name: Submit To Search Engines
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Deploy ReadNest Production"]
+    types: [completed]
+
+permissions:
+  contents: read
+
+jobs:
+  submit:
+    # For workflow_run triggers, only submit after a successful production deploy.
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Validate rich results locally
+        run: |
+          node scripts/generate-seo-pages.mjs
+          node scripts/validate-rich-results.mjs
+
+      - name: Submit URLs to IndexNow (Bing, Yandex, and partners)
+        run: node scripts/submit-indexnow.mjs
+
+      - name: Submit sitemap to Google Search Console
+        env:
+          GSC_SERVICE_ACCOUNT_JSON: ${{ secrets.GSC_SERVICE_ACCOUNT_JSON }}
+          GSC_SITE_URL: ${{ vars.GSC_SITE_URL }}
+        run: |
+          if [ -z "$GSC_SERVICE_ACCOUNT_JSON" ]; then
+            echo "::warning::GSC_SERVICE_ACCOUNT_JSON secret is not set. Google sitemap submission was skipped."
+            exit 0
+          fi
+          node scripts/google-search-console.mjs submit-sitemap
+
+      - name: Inspect key URLs in Google Search Console
+        continue-on-error: true
+        env:
+          GSC_SERVICE_ACCOUNT_JSON: ${{ secrets.GSC_SERVICE_ACCOUNT_JSON }}
+          GSC_SITE_URL: ${{ vars.GSC_SITE_URL }}
+        run: |
+          if [ -z "$GSC_SERVICE_ACCOUNT_JSON" ]; then
+            echo "::warning::GSC_SERVICE_ACCOUNT_JSON secret is not set. Google URL inspection was skipped."
+            exit 0
+          fi
+          node scripts/google-search-console.mjs inspect \
+            / \
+            /reading-practice/ \
+            /online-reading-games/ \
+            /kindergarten-reading/ \
+            /teacher-dashboard/
