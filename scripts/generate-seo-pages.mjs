@@ -62,7 +62,7 @@ const pages = [
     priority: "0.9",
     title: "Online Reading Games for Kids | ReadNest",
     description:
-      "ReadNest offers personalized online reading games for kids in kindergarten through grade 2, including sight words, phonics, memory games, premium voice activities, and progress support.",
+      "ReadNest offers personalized online reading games for K-2 kids, including sight words, phonics, memory games, voice activities, and progress support.",
     h1: "Online reading games that feel like play",
     eyebrow: "Sight words, phonics, memory, and voice activities",
     hero:
@@ -373,7 +373,7 @@ const pages = [
     priority: "0.8",
     title: "Reading Intervention Support for Early Readers | ReadNest",
     description:
-      "ReadNest supports early reading intervention with short practice sessions, missed-word history, phonics patterns, teacher dashboards, and parent-friendly progress summaries.",
+      "ReadNest supports early reading intervention with short practice, missed-word history, phonics patterns, teacher dashboards, and parent progress summaries.",
     h1: "Reading intervention support that stays practical",
     eyebrow: "Short practice, clearer next steps",
     hero:
