@@ -5,7 +5,7 @@ type HomePageProps = {
   onSelectPlan?: (tier: SubscriptionTierId) => void;
 };
 
-const birdBookImageSrc = `${import.meta.env.BASE_URL}brand/readnest-bird-book.png`;
+const birdBookImageSrc = `${import.meta.env.BASE_URL}brand/readnest-bird-book-768.jpg`;
 
 const parentBenefits = [
   {

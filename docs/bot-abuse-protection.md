@@ -3,7 +3,7 @@
 ## Implemented
 
 - Firebase Authentication remains the identity authority and applies its own account-creation quotas.
-- Firebase App Check client support uses the invisible reCAPTCHA Enterprise provider.
+- Firebase App Check client support uses an invisible reCAPTCHA v3 provider when the frontend site key is configured.
 - Costly callable functions support App Check enforcement through `READNEST_ENFORCE_APP_CHECK`.
 - Support requests are submitted through a backend callable instead of direct Firestore writes.
 - Support requests use a hidden honeypot plus a limit of 3 submissions per signed-in user per hour.
@@ -24,7 +24,8 @@ Do not add a visible CAPTCHA to every activity. It creates accessibility and usa
 2. Select the ReadNest web app and register the **reCAPTCHA v3** provider.
 3. Add these allowed web domains:
    - `wayne9999.github.io`
-   - the future ReadNest custom domain
+   - `myreadnest.org`
+   - `readnest-f9c67.web.app`
    - `localhost` only for development
 4. Copy the public site key.
 5. Set the GitHub Actions variable:
@@ -43,6 +44,18 @@ Do not add a visible CAPTCHA to every activity. It creates accessibility and usa
    ```
 
 Roll out enforcement only after valid traffic appears. Enabling it before the site key reaches the deployed frontend will block legitimate users.
+
+## App Check 403 Verification
+
+If automated QA or live browsers show `AppCheck: 403` in the console, verify configuration before changing application code:
+
+1. Firebase Console > App Check > Apps > ReadNest web app.
+2. Confirm the provider is reCAPTCHA v3 and the site key matches `PROD_VITE_FIREBASE_APP_CHECK_SITE_KEY`.
+3. Google reCAPTCHA Admin Console > the same v3 key > Domains.
+4. Confirm `myreadnest.org`, `readnest-f9c67.web.app`, and `wayne9999.github.io` are allowed where needed.
+5. If enforcement is enabled for Firestore or Functions, test a signed-in learning event and support case after any key/domain change.
+
+Do not disable App Check as the first response. A 403 in headless browser QA can also appear when reCAPTCHA refuses automated clients, while real browsers may still work.
 
 ## Authentication Console Hardening
 
