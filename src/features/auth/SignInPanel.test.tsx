@@ -46,6 +46,19 @@ describe("SignInPanel", () => {
     expect(screen.getByText("Parent / Child signup selected")).toBeInTheDocument();
   });
 
+  it("preselects the teacher path when Teacher Pro was selected first", () => {
+    render(<SignInPanel preferredSignupPath="teacher" subscriptionIntent="teacherPro" />);
+
+    expect(screen.getByText("Teacher Pro selected")).toBeInTheDocument();
+    expect(screen.getByText(/connect paid access to the correct account/i)).toBeInTheDocument();
+    expect(screen.getByText("Teacher signup selected")).toBeInTheDocument();
+    expect(
+      within(screen.getByRole("radiogroup", { name: /choose account type/i })).getByRole("button", {
+        name: /choose teacher signup/i
+      })
+    ).toHaveAttribute("aria-pressed", "true");
+  });
+
   it("saves teacher intent and submits email signup details", async () => {
     const user = userEvent.setup();
     signInWithEmail.mockResolvedValue(undefined);
