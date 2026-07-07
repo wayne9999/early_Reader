@@ -29,10 +29,16 @@ import { billingConfig, isStripeLinkCompatible } from "./services/billingConfig"
 import { startSubscriptionCheckout } from "./services/billingRepository";
 import { paidStudentActivitiesDescription, studentActivityAccess, teacherDashboardAccess } from "./services/entitlementService";
 import { defaultProgress, loadProgress, saveProgress } from "./services/progressRepository";
-import { clearSignupIntent, loadSignupIntent } from "./services/signupIntent";
+import { clearSignupIntent, loadSignupIntent, saveSignupIntent } from "./services/signupIntent";
 import { loadTrustedSubscription } from "./services/subscriptionRepository";
+import {
+  clearSubscriptionIntent,
+  loadSubscriptionIntent,
+  saveSubscriptionIntent,
+  signupPathForSubscriptionTier
+} from "./services/subscriptionIntent";
 import { loadUserProfile } from "./services/userProfileRepository";
-import type { AppUser, AppView, Progress, SignupPath, SubscriptionRecord, UserProfile, UserRole } from "./types";
+import type { AppUser, AppView, Progress, SignupPath, SubscriptionRecord, SubscriptionTierId, UserProfile, UserRole } from "./types";
 
 type NavItem = { id: AppView; label: string; icon: string; badge?: string };
 type NavGroup = { title: string; items: NavItem[]; defaultOpen?: boolean };
@@ -198,6 +204,7 @@ export function RootApp() {
   const [subscription, setSubscription] = useState<SubscriptionRecord | null>(null);
   const [pendingAuthView, setPendingAuthView] = useState<AppView | null>(() => loadPendingAuthView());
   const [signupIntent, setSignupIntent] = useState<SignupPath | null>(() => loadSignupIntent());
+  const [subscriptionIntent, setSubscriptionIntent] = useState<SubscriptionTierId | null>(() => loadSubscriptionIntent());
   const [isProfileLoading, setIsProfileLoading] = useState(true);
   const [isProgressLoading, setIsProgressLoading] = useState(true);
   const [isSubscriptionLoading, setIsSubscriptionLoading] = useState(true);
@@ -230,6 +237,19 @@ export function RootApp() {
     setRouteState(parseAppRoute(nextHash));
     setIsMenuOpen(false);
   }, []);
+
+  const beginSubscriptionIntent = useCallback((tier: SubscriptionTierId) => {
+    const path = signupPathForSubscriptionTier(tier);
+
+    if (path) {
+      saveSignupIntent(path);
+      setSignupIntent(path);
+    }
+
+    saveSubscriptionIntent(tier);
+    setSubscriptionIntent(tier);
+    navigateToView("account");
+  }, [navigateToView]);
 
   useEffect(() => {
     const syncRoute = () => setRouteState(parseAppRoute(window.location.hash));
@@ -270,6 +290,7 @@ export function RootApp() {
 
   useEffect(() => {
     setSignupIntent(loadSignupIntent());
+    setSubscriptionIntent(loadSubscriptionIntent());
   }, [user]);
 
   useEffect(() => {
@@ -374,6 +395,8 @@ export function RootApp() {
       setProfile(createdProfile);
       clearSignupIntent();
       setSignupIntent(null);
+      clearSubscriptionIntent();
+      setSubscriptionIntent(null);
       clearPendingAuthView();
       setPendingAuthView(null);
 
@@ -401,7 +424,13 @@ export function RootApp() {
     };
 
     if (!user && requiresAuthentication(currentView)) {
-      return <SignInPanel redirectView={currentView} />;
+      return (
+        <SignInPanel
+          preferredSignupPath={signupIntent}
+          redirectView={currentView}
+          subscriptionIntent={subscriptionIntent}
+        />
+      );
     }
 
     if (user && !profile) {
@@ -435,7 +464,7 @@ export function RootApp() {
     }
 
     if (currentView === "home") {
-      return <HomePage onNavigate={navigateToView} />;
+      return <HomePage onNavigate={navigateToView} onSelectPlan={beginSubscriptionIntent} />;
     }
 
     if (currentView === "memory") {
@@ -544,7 +573,7 @@ export function RootApp() {
     }
 
     if (currentView === "support") {
-      return <SupportPage profile={profile} user={user} />;
+      return <SupportPage onSubscriptionIntent={beginSubscriptionIntent} profile={profile} user={user} />;
     }
 
     if (
@@ -562,7 +591,11 @@ export function RootApp() {
       return (
         <>
           {profile ? <SubscriptionManagement profile={profile} subscription={subscription} /> : null}
-          <SignInPanel redirectView={requestedAuthView} />
+          <SignInPanel
+            preferredSignupPath={signupIntent}
+            redirectView={requestedAuthView}
+            subscriptionIntent={subscriptionIntent}
+          />
         </>
       );
     }
@@ -583,6 +616,7 @@ export function RootApp() {
     showSubscriptionPrompt,
     signupIntent,
     subscription,
+    subscriptionIntent,
     user
   ]);
 

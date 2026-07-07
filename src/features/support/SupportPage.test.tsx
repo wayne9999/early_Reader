@@ -1,5 +1,7 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
+import { vi } from "vitest";
 import { SupportPage } from "./SupportPage";
 
 describe("SupportPage", () => {
@@ -41,5 +43,17 @@ describe("SupportPage", () => {
 
     expect(screen.getByRole("heading", { name: "Teacher Pro" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Family Plus" })).not.toBeInTheDocument();
+  });
+
+  it("saves a guest subscription intent before account creation", async () => {
+    const user = userEvent.setup();
+    const onSubscriptionIntent = vi.fn();
+
+    render(<SupportPage onSubscriptionIntent={onSubscriptionIntent} />);
+
+    await user.click(screen.getByRole("button", { name: /start teacher pro/i }));
+
+    expect(onSubscriptionIntent).toHaveBeenCalledWith("teacherPro");
+    expect(screen.getByText(/plan saved/i)).toBeInTheDocument();
   });
 });
