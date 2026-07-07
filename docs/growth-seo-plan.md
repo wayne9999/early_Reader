@@ -33,12 +33,12 @@ ReadNest should win trust before it asks families or teachers to pay. The growth
 
 ## Launch Actions
 
-1. Submit `https://myreadnest.org/sitemap.xml` in Google Search Console.
-2. Submit the same sitemap in Bing Webmaster Tools.
-3. Verify the homepage with Google's Rich Results Test for `SoftwareApplication` and `FAQPage`.
-4. Share the homepage and `/online-reading-games/` with parent groups, tutoring communities, and teacher communities.
-5. Add real screenshots, short demo videos, and testimonials once families and teachers have tested the app.
-6. Move to a custom domain before paid acquisition so canonical URLs and brand trust are stronger.
+1. Keep the production deploy and search submission workflows green.
+2. Share the homepage and `/online-reading-games/` with parent groups, tutoring communities, teacher communities, and local school-adjacent groups.
+3. Add real screenshots, short demo videos, and testimonials once families and teachers have tested the app.
+4. Publish helpful parent/teacher articles that answer one specific reading-practice question at a time.
+5. Track Search Console queries weekly and turn high-impression/low-click searches into better page titles, FAQs, and content.
+6. Use small-budget paid campaigns only after analytics confirm signup, checkout, and support flows are converting.
 
 ## July 2026 Crawlability Pass
 
@@ -50,21 +50,35 @@ Completed:
 - Added `scripts/generate-seo-pages.mjs` so the pages are rebuilt before every production build.
 - Added `scripts/validate-seo-assets.mjs` and e2e coverage for sitemap, robots, canonical tags, JSON-LD, and mobile overflow.
 
-## July 2026 Submission Automation
+Completed launch automation:
 
-Search-engine submission is now largely automated by the **Submit To Search Engines** workflow (`.github/workflows/submit-search-engines.yml`), which runs automatically after every successful production deploy and can be dispatched manually:
+1. `Submit To Search Engines` now submits public URLs to IndexNow for Bing, Yandex, and partners.
+2. `GSC_SERVICE_ACCOUNT_JSON` is configured for GitHub Actions.
+3. Google Search Console API is enabled for the `readnest-f9c67` Google Cloud project.
+4. The workflow successfully submits `https://myreadnest.org/sitemap.xml` to Google Search Console.
+5. The workflow successfully runs URL Inspection for `/`, `/reading-practice/`, `/online-reading-games/`, `/kindergarten-reading/`, `/teacher-dashboard/`, and the new landing pages listed below.
+6. Production pages, sitemap, and IndexNow verification file return HTTP 200.
 
-- **Bing (and Yandex/Seznam/Naver)**: `npm run submit:indexnow` pushes every sitemap URL through IndexNow using the key file committed in `public/` (deprecated anonymous sitemap pings no longer exist). No account setup needed; Bing Webmaster Tools account is optional for reporting.
-- **Google sitemap submission**: `npm run submit:google` submits the sitemap through the Search Console API. One-time setup: create a Google Cloud service account, add its email as a user of the Search Console property, and store its JSON key as the `GSC_SERVICE_ACCOUNT_JSON` repo secret (set the `GSC_SITE_URL` variable if the property is not `sc-domain:myreadnest.org`).
-- **Google URL Inspection**: the same workflow inspects `/`, `/reading-practice/`, `/online-reading-games/`, `/kindergarten-reading/`, and `/teacher-dashboard/` via the URL Inspection API once the secret exists.
-- **Rich Results**: `npm run validate:rich-results` validates every generated page's FAQPage and BreadcrumbList JSON-LD against Google's documented requirements locally (it runs in CI and inside `validate:seo`). The interactive https://search.google.com/test/rich-results check of `/reading-practice/` and `/pricing/` remains a nice-to-have visual confirmation.
+Ongoing launch steps:
 
-Remaining truly-manual steps (need the Google/Microsoft account owner):
+1. Track indexing status weekly for the first month and revise pages that are discovered but not indexed.
+2. Monitor Search Console query impressions and click-through rate.
+3. Keep `https://myreadnest.org/sitemap.xml` submitted after each production deploy through the workflow.
+4. Add original screenshots, teacher/parent testimonials, and demo clips as soon as real users have tested the app.
+5. Publish one helpful early-reading article each week for at least eight weeks.
 
-1. Verify the `myreadnest.org` property in Google Search Console (DNS TXT or HTML file) if not already verified — the API cannot self-verify.
-2. Create the service account, grant it Search Console access, and add the `GSC_SERVICE_ACCOUNT_JSON` secret.
-3. Optionally add the site in Bing Webmaster Tools (can import from Search Console) for reporting dashboards; indexing submission is already covered by IndexNow.
-4. Track indexing status weekly for the first month and revise pages that are discovered but not indexed.
+## Top-of-Funnel And Commercial-Intent Pass
+
+The original 12 static SEO pages were all bottom-of-funnel or mid-funnel (grade-specific reading, sight words, pricing, teacher dashboard). To lift the traffic ceiling, this pass adds:
+
+- **Trust hub**: `/kid-safe/` — closes the sale on every other page (no ads, no data selling, no chat, COPPA, screen time).
+- **Comparison cluster**: `/vs/` hub plus `/vs/abcmouse/`, `/vs/reading-eggs/`, `/vs/homer/`, `/vs/hooked-on-phonics/` — high commercial-intent head-to-heads.
+- **Highest-LTV landing**: `/for-tutors/` — dedicated Teacher Pro entry for tutors and small-group specialists.
+- **Symptom-first top-of-funnel**: `/my-child-cant-read-yet/` — pulls anxious-parent search intent the solution-first pages cannot reach.
+- **EEAT anchor**: `/science-of-reading/` — deep evidence piece; citation magnet and internal-linking hub.
+- **Focused pricing rewrite**: `/pricing/` now answers "is it worth it for one kid?" directly and includes a Family Plus vs Teacher Pro table with a real tutoring cost comparison.
+
+Every new page inherits FAQPage and BreadcrumbList JSON-LD, canonical + Open Graph metadata, sitemap entry, cross-page nav links, and Playwright + rich-results validation coverage from `scripts/generate-seo-pages.mjs` and `scripts/validate-rich-results.mjs`.
 
 Research basis:
 

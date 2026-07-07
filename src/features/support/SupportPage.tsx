@@ -3,7 +3,7 @@ import { billingConfig, isStripeLinkCompatible, subscriptionTiers } from "../../
 import { startSubscriptionCheckout } from "../../services/billingRepository";
 import { createSupportCase } from "../../services/supportCaseRepository";
 import { supportMailtoHref } from "../../services/supportConfig";
-import type { AppUser, SupportCaseType, UserProfile } from "../../types";
+import type { AppUser, SubscriptionTierId, SupportCaseType, UserProfile } from "../../types";
 
 function openPaymentLink(url: string) {
   if (!url) {
@@ -15,16 +15,17 @@ function openPaymentLink(url: string) {
 
 type SupportPageProps = {
   initialFocus?: "donation" | "plans";
+  onSubscriptionIntent?: (tierId: SubscriptionTierId) => void;
   profile?: UserProfile | null;
   user?: AppUser | null;
 };
 
-export function SupportPage({ initialFocus = "plans", profile = null, user = null }: SupportPageProps) {
+export function SupportPage({ initialFocus = "plans", onSubscriptionIntent, profile = null, user = null }: SupportPageProps) {
   if (initialFocus === "donation") {
     return <DonationPage />;
   }
 
-  return <SupportCenterPage profile={profile} user={user} />;
+  return <SupportCenterPage onSubscriptionIntent={onSubscriptionIntent} profile={profile} user={user} />;
 }
 
 const donationImpact = [
@@ -175,7 +176,15 @@ function DonationPage() {
   );
 }
 
-function SupportCenterPage({ profile, user }: { profile: UserProfile | null; user: AppUser | null }) {
+function SupportCenterPage({
+  onSubscriptionIntent,
+  profile,
+  user
+}: {
+  onSubscriptionIntent?: (tierId: SubscriptionTierId) => void;
+  profile: UserProfile | null;
+  user: AppUser | null;
+}) {
   const paidTiers = subscriptionTiers.filter((tier) => {
     if (tier.id === "free") {
       return false;
@@ -239,7 +248,8 @@ function SupportCenterPage({ profile, user }: { profile: UserProfile | null; use
 
   async function startUpgrade(tierId: "familyPlus" | "teacherPro") {
     if (!user) {
-      setUpgradeStatus("Sign in first so ReadNest can connect the subscription to the correct account.");
+      onSubscriptionIntent?.(tierId);
+      setUpgradeStatus("Plan saved. Create or sign in to an account so ReadNest can connect the subscription to the right role.");
       return;
     }
 

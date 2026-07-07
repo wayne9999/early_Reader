@@ -1,7 +1,8 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { isFirebaseConfigured } from "../../services/firebase";
 import { labelFromSignupPath, saveSignupIntent } from "../../services/signupIntent";
-import type { AppView, SignupPath, SocialProvider } from "../../types";
+import { subscriptionTiers } from "../../services/billingConfig";
+import type { AppView, SignupPath, SocialProvider, SubscriptionTierId } from "../../types";
 import { useAuth } from "./AuthProvider";
 
 const providers: Array<{ id: SocialProvider; label: string; className: string; productionReady: boolean }> = [
@@ -14,17 +15,29 @@ function providerLabel(provider: SocialProvider) {
 }
 
 type SignInPanelProps = {
+  preferredSignupPath?: SignupPath | null;
   redirectView?: AppView | null;
+  subscriptionIntent?: SubscriptionTierId | null;
 };
 
-export function SignInPanel({ redirectView = null }: SignInPanelProps) {
+export function SignInPanel({ preferredSignupPath = null, redirectView = null, subscriptionIntent = null }: SignInPanelProps) {
   const { isAuthenticated, isLoading, mode, signIn, signInWithEmail, signOut, user } = useAuth();
-  const [selectedPath, setSelectedPath] = useState<SignupPath>("parentChild");
+  const [selectedPath, setSelectedPath] = useState<SignupPath>(preferredSignupPath ?? "parentChild");
   const [emailMode, setEmailMode] = useState<"signUp" | "signIn">("signUp");
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState("");
+  const intendedTier = useMemo(
+    () => subscriptionTiers.find((tier) => tier.id === subscriptionIntent),
+    [subscriptionIntent]
+  );
+
+  useEffect(() => {
+    if (preferredSignupPath) {
+      setSelectedPath(preferredSignupPath);
+    }
+  }, [preferredSignupPath]);
 
   async function signInForPath(provider: SocialProvider) {
     setAuthError("");
@@ -70,6 +83,16 @@ export function SignInPanel({ redirectView = null }: SignInPanelProps) {
           <div className="redirect-notice" role="status">
             <strong>Sign in to continue to the page from your link.</strong>
             <span>ReadNest saved that link and will open it after your account is ready.</span>
+          </div>
+        ) : null}
+
+        {intendedTier ? (
+          <div className="redirect-notice" role="status">
+            <strong>{intendedTier.name} selected</strong>
+            <span>
+              Create or sign in to the matching account type first. Then ReadNest will reopen this plan so Stripe can
+              connect paid access to the correct account.
+            </span>
           </div>
         ) : null}
 

@@ -1,10 +1,11 @@
-import type { AppView } from "../../types";
+import type { AppView, SubscriptionTierId } from "../../types";
 
 type HomePageProps = {
   onNavigate: (view: AppView) => void;
+  onSelectPlan?: (tier: SubscriptionTierId) => void;
 };
 
-const birdBookImageSrc = `${import.meta.env.BASE_URL}brand/readnest-bird-book.png`;
+const birdBookImageSrc = `${import.meta.env.BASE_URL}brand/readnest-bird-book-768.jpg`;
 
 const parentBenefits = [
   {
@@ -82,7 +83,7 @@ const planHighlights = [
   }
 ];
 
-export function HomePage({ onNavigate }: HomePageProps) {
+export function HomePage({ onNavigate, onSelectPlan }: HomePageProps) {
   return (
     <div className="home-page">
       <section className="home-hero home-hero-marketing" aria-labelledby="home-title">
@@ -243,7 +244,19 @@ export function HomePage({ onNavigate }: HomePageProps) {
               <button
                 className={plan.featured ? "primary-button" : "secondary-button"}
                 type="button"
-                onClick={() => onNavigate(plan.view)}
+                onClick={() => {
+                  if (plan.name === "Family Plus") {
+                    onSelectPlan?.("familyPlus");
+                    return;
+                  }
+
+                  if (plan.name === "Teacher Pro") {
+                    onSelectPlan?.("teacherPro");
+                    return;
+                  }
+
+                  onNavigate(plan.view);
+                }}
               >
                 {plan.action}
               </button>

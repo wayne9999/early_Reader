@@ -31,6 +31,8 @@
 - Added privacy/legal/refund/teacher terms pages and footer links.
 - Added go-live, Stripe, production environment, and deployment docs.
 - Added SEO metadata, sitemap, robots file, web manifest, Open Graph image, and static SEO pages.
+- Added and verified automated search submission for IndexNow and Google Search Console.
+- Added revenue launch plan for parent, teacher, donation, and paid subscription growth.
 - Completed the first live authenticated release QA cycle; see `docs/qa-release-2026-06-25.md` for tested journeys, fixes, and remaining launch work.
 - Completed a full-stack paid-product pressure test with fixes for checkout popup blocking, webhook ordering, claim revocation on refunds/disputes, partial-refund handling, scheduled AI consent enforcement, and Firestore rule tightening; see `docs/pressure-test-2026-07-05.md`.
 - Added GitHub Pages deployment workflow.
@@ -45,6 +47,7 @@
 
 - Facebook sign-in needs Firebase Console provider setup with the Meta app ID and secret before live use.
 - Stripe webhook registration is automated by the **Register Stripe Webhook** GitHub Actions workflow; it still needs one run in test mode and one approved run in live mode.
+- Live subscription checkout still needs a final end-to-end paid test event before scaling paid acquisition.
 - App Check enforcement is now the production default; the reCAPTCHA v3 site key (`PROD_VITE_FIREBASE_APP_CHECK_SITE_KEY`) must be registered before the next production deploy or the build fails validation.
 - AI insight generation uses a backend OpenAI adapter with a rule-based fallback. Legal review, prompt evaluation, and production monitoring are still needed before broad launch.
 - Parent multi-child profiles, placement onboarding, and printable sheets still need completion.
