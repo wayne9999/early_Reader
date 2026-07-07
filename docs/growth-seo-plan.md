@@ -24,6 +24,12 @@ ReadNest should win trust before it asks families or teachers to pay. The growth
 | Teacher dashboard | `/teacher-dashboard/` | Teacher SaaS/productivity query. |
 | Reading intervention | `/reading-intervention/` | Tutor/teacher intervention support query. |
 | Pricing | `/pricing/` | Commercial intent for Free, Family Plus, and Teacher Pro. |
+| Kid safety and privacy | `/kid-safe/` | Trust anchor for parents; ads, COPPA, screen time, data. Closes the sale from every other page. |
+| Comparison hub | `/vs/` | Head-to-head competitor comparisons hub. |
+| ReadNest vs ABCmouse | `/vs/abcmouse/` | High commercial-intent comparison. |
+| ReadNest vs Reading Eggs | `/vs/reading-eggs/` | High commercial-intent comparison. |
+| For tutors | `/for-tutors/` | Teacher Pro landing for tutors and small-group specialists (highest-LTV segment). |
+| Symptom-first for parents | `/my-child-cant-read-yet/` | Top-of-funnel pull for anxious-parent search intent. |
 
 ## Launch Actions
 

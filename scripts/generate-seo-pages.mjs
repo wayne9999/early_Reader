@@ -13,6 +13,8 @@ const sharedLinks = [
   { href: "/reading-practice/", label: "Reading practice" },
   { href: "/phonics-practice/", label: "Phonics" },
   { href: "/sight-words/", label: "Sight words" },
+  { href: "/for-tutors/", label: "For tutors" },
+  { href: "/kid-safe/", label: "Kid safety" },
   { href: "/pricing/", label: "Pricing" }
 ];
 
@@ -479,6 +481,305 @@ const pages = [
     ],
     ctaHref: "/#/support",
     ctaLabel: "Compare plans"
+  },
+  {
+    slug: "kid-safe",
+    priority: "0.85",
+    title: "Is ReadNest Safe for Kids? Ads, Privacy, and Screen Time | ReadNest",
+    description:
+      "ReadNest is built for K-2 with no ads, no data selling, no chat, no in-app purchases, and parent or caregiver consent stored before a child profile is created.",
+    h1: "A kid-safe reading app that families can actually trust",
+    eyebrow: "Kid safety and family privacy",
+    hero:
+      "ReadNest is designed for kindergarten through grade 2 with no advertising, no in-app purchases inside child activities, no chat between users, and no selling of student data. Parent or caregiver consent is stored on the child profile before practice starts, and payment stays on Stripe-hosted checkout.",
+    sections: [
+      {
+        title: "What ReadNest never does",
+        body: "The most important safety promises are the ones you can commit to at the code level, not just in a policy document.",
+        bullets: [
+          "No advertising or third-party ad networks inside the app.",
+          "No in-app purchases inside child activities.",
+          "No chat, comments, or messaging between users.",
+          "No selling or renting of student data to advertisers.",
+          "No child profile is created without a parent or caregiver consent step."
+        ]
+      },
+      {
+        title: "How your family's data is protected",
+        body: "Trust is earned in the boring backend details, so here are the ones that matter.",
+        bullets: [
+          "Parent or caregiver consent is recorded on the child profile with a versioned policy reference.",
+          "Learning data is limited to short skill signals like sight-word recognition and phonics attempts.",
+          "Payment details stay on Stripe-hosted checkout; ReadNest never sees card numbers.",
+          "Backend rate limits, Firebase App Check, and Firestore security rules keep data access scoped to the account that owns it.",
+          "Data deletion requests are fulfilled through a documented admin workflow, not manual guessing."
+        ]
+      },
+      {
+        title: "Calm design for young attention spans",
+        body: "Kid-safe also means the app respects your family's time and energy.",
+        bullets: [
+          "Sessions are shaped for 5 to 10 minutes, not marathon streaks.",
+          "Read-aloud support lets one adult start a session and step aside.",
+          "Progress summaries make it clear when a child has finished today's practice.",
+          "No infinite-scroll rewards designed to keep a child on the screen longer."
+        ]
+      }
+    ],
+    faq: [
+      ["Is ReadNest COPPA compliant?", "ReadNest is built for children in kindergarten through grade 2 and follows COPPA-aligned practices: a parent or caregiver consent step before any child profile is created, no advertising or targeted ad networks, no chat between users, and no sale of student data. Full details are in the children's privacy notice."],
+      ["Does ReadNest sell my child's data?", "No. ReadNest does not sell or rent student data to advertisers. Learning data is used to shape the child's personalized practice path and, for teacher accounts, to power dashboards for the assigned teacher."],
+      ["Are there ads or in-app purchases inside ReadNest?", "There are no advertisements or third-party ad networks in ReadNest, and there are no in-app purchases inside child activities. Subscription upgrades happen from the parent-facing Account page."],
+      ["Is there any chat or social feature between kids?", "No. ReadNest has no chat, direct messaging, or social feed between users. Teacher and student accounts are connected only through the teacher assignment workflow."],
+      ["How much screen time does ReadNest expect?", "ReadNest is built for short 5 to 10 minute sessions. It is designed to complement reading with a caregiver or teacher, not replace it."],
+      ["How do I delete my child's account and data?", "Signed-in families can request deletion through the Support page. Admins fulfill the request through a documented workflow that removes profile data, learning events, and the account itself; billing records are retained for financial reasons."]
+    ],
+    ctaHref: "/#/children-privacy",
+    ctaLabel: "Read the children's privacy notice"
+  },
+  {
+    slug: "vs",
+    priority: "0.6",
+    title: "ReadNest vs Other Reading Apps: Honest K-2 Comparisons | ReadNest",
+    description:
+      "Honest comparisons between ReadNest and other early reading apps for kindergarten through grade 2, including ABCmouse and Reading Eggs.",
+    h1: "ReadNest compared to other early reading apps",
+    eyebrow: "Choosing a reading app for a K-2 child",
+    hero:
+      "Every early reading app is built for a slightly different family. These comparisons are written to help you pick the right one for your child, even when the right answer is not ReadNest.",
+    sections: [
+      {
+        title: "Comparisons",
+        body: "Detailed head-to-head comparisons for the reading apps parents ask about most often.",
+        bullets: [
+          "ReadNest vs ABCmouse: focus, price, and safety.",
+          "ReadNest vs Reading Eggs: session length, age range, and teacher tools."
+        ]
+      }
+    ],
+    faq: [
+      ["Which reading app is best for a K-2 child?", "The best app depends on how your child engages. Long gamified journeys, broad edutainment libraries, and focused daily practice all work for different children."],
+      ["Do you compare against every app?", "We compare against the apps parents ask about most often. If we do not have a page for the app you are considering, ask on the Support page and we will add it."]
+    ],
+    ctaHref: "/#/reading",
+    ctaLabel: "Try free reading practice"
+  },
+  {
+    slug: "vs/abcmouse",
+    priority: "0.7",
+    title: "ReadNest vs ABCmouse: An Honest K-2 Reading Comparison | ReadNest",
+    description:
+      "ReadNest and ABCmouse solve different problems. Here is an honest comparison of focus, price, teacher tools, and safety for kindergarten through second grade families.",
+    h1: "ReadNest vs ABCmouse: an honest comparison for K-2 reading",
+    eyebrow: "ReadNest vs the alternatives",
+    hero:
+      "ABCmouse is a broad early-learning library that covers reading, math, art, and science for ages 2 through 8. ReadNest is a focused K-2 reading tool with parent progress views and a teacher dashboard. Both can be right; here is when each fits.",
+    sections: [
+      {
+        title: "When ABCmouse is the better fit",
+        body: "There are real reasons families choose ABCmouse, and pretending otherwise would waste your time.",
+        bullets: [
+          "You want one subscription that covers reading, math, art, and science.",
+          "Your child is younger than kindergarten and you want a broad edutainment library.",
+          "You prefer a big animated content library over short daily skill practice.",
+          "You want an established, brand-recognized platform families have used for years."
+        ]
+      },
+      {
+        title: "When ReadNest is the better fit",
+        body: "ReadNest is deliberately narrow. That is the point.",
+        bullets: [
+          "Your child is in kindergarten through grade 2 and reading is the priority right now.",
+          "You want short 5 to 10 minute sessions instead of long content playthroughs.",
+          "You want a parent dashboard that shows sight words, phonics attempts, and skill areas without hunting.",
+          "You are a tutor or teacher who needs a real assigned-student dashboard with progress reports.",
+          "You want a smaller monthly commitment focused on reading rather than a broad edutainment bill."
+        ]
+      },
+      {
+        title: "Price and safety",
+        body: "The commercial and safety differences are the ones families actually decide on.",
+        bullets: [
+          "ReadNest Family Plus is $7 per month for focused reading depth.",
+          "ReadNest Teacher Pro is $19 per month and is intended for tutors and small groups.",
+          "Both platforms are kid-safe. ReadNest commits to no ads, no in-app purchases in child activities, and no chat between users.",
+          "ReadNest starts with free Reading and Memory activities that do not require sign-up, so you can test it before subscribing."
+        ]
+      }
+    ],
+    faq: [
+      ["Is ReadNest a full replacement for ABCmouse?", "No. ABCmouse covers many subjects; ReadNest focuses on kindergarten through grade 2 reading. Families who want broad edutainment plus focused reading progress sometimes use both."],
+      ["Which is better for a struggling kindergarten reader?", "ReadNest is built around short, personalized daily reading paths with parent progress views, which fits struggling readers well. ABCmouse is broader and less focused on skill diagnostics."],
+      ["Which one costs less?", "ReadNest Family Plus is $7 per month. ABCmouse family pricing varies by promotion. Compare each plan's included features to what your child actually needs."],
+      ["Can I use both?", "Yes. Some families use ABCmouse for broad early learning and ReadNest for focused reading practice with progress tracking."],
+      ["Which is safer for young kids?", "Both are kid-safe. ReadNest commits to no ads, no in-app purchases in child activities, no chat between users, and no data selling."],
+      ["Do teachers or tutors use ReadNest?", "Yes. ReadNest Teacher Pro gives tutors and small groups an assigned-student dashboard, activity review, and downloadable progress reports for $19 per month."]
+    ],
+    ctaHref: "/#/reading",
+    ctaLabel: "Try free reading practice"
+  },
+  {
+    slug: "vs/reading-eggs",
+    priority: "0.7",
+    title: "ReadNest vs Reading Eggs: Honest K-2 Reading Comparison | ReadNest",
+    description:
+      "ReadNest vs Reading Eggs for K-2 families: how they differ on focus, session length, teacher tools, and price, plus when each one is the better fit.",
+    h1: "ReadNest vs Reading Eggs: an honest K-2 comparison",
+    eyebrow: "ReadNest vs the alternatives",
+    hero:
+      "Reading Eggs is a well-known game-based reading journey covering roughly ages 2 through 13. ReadNest is a focused K-2 reading tool with parent progress views and teacher dashboards. Both can help; here is how they differ.",
+    sections: [
+      {
+        title: "Where Reading Eggs wins",
+        body: "Reading Eggs earned its reputation. Here is when it is the honest pick.",
+        bullets: [
+          "You want a long gamified reading journey your child follows as a game.",
+          "Your child is younger than kindergarten and you want a preschool on-ramp.",
+          "You already know the game-map style keeps your child engaged.",
+          "You want an older sibling to use the same platform through late elementary."
+        ]
+      },
+      {
+        title: "Where ReadNest wins",
+        body: "ReadNest picks a smaller lane and stays in it.",
+        bullets: [
+          "Short calm sessions built for 5 to 10 minutes, not long lesson maps.",
+          "Focused on kindergarten, first grade, and second grade rather than a wide age range.",
+          "Parent dashboard that surfaces sight words, phonics attempts, and next-step practice without hunting.",
+          "A dedicated teacher dashboard with an assigned-student roster and downloadable report cards.",
+          "Free Reading and Memory activities without any signup so you can test before you subscribe."
+        ]
+      },
+      {
+        title: "Price and family fit",
+        body: "The commercial differences matter for families paying every month.",
+        bullets: [
+          "ReadNest Family Plus is $7 per month for focused K-2 reading practice.",
+          "Reading Eggs pricing varies by promotion and bundle; check the current plan against features you will actually use.",
+          "ReadNest Teacher Pro is $19 per month for tutors and small groups with dashboards, reports, and intervention planning.",
+          "Both are kid-safe and do not include advertising inside child activities."
+        ]
+      }
+    ],
+    faq: [
+      ["Is Reading Eggs still worth it in 2026?", "Reading Eggs is a strong pick for a long gamified reading journey across a wide age range. Whether it is worth it depends on whether your child engages with the game map format and whether the wider age range matters to you."],
+      ["Which is better for a kindergartener who is behind?", "ReadNest is built around short, calm, personalized paths with sight-word and phonics signals in the parent dashboard, which fits a behind kindergartener well. Reading Eggs relies more on gamified journey progression."],
+      ["Which one is cheaper?", "ReadNest Family Plus is $7 per month. Reading Eggs pricing depends on the current promotion and bundle. Compare the actual monthly cost against features you'll use."],
+      ["Can teachers or tutors use ReadNest?", "Yes. Teacher Pro at $19 per month gives an assigned-student roster, activity review, downloadable reports, and intervention planning."],
+      ["Do both have free trials?", "Both offer free access paths. ReadNest keeps Reading and Memory free without sign-up so you can test the experience before subscribing."],
+      ["Is either one safer for kids?", "Both are kid-safe. ReadNest commits to no ads, no in-app purchases in child activities, no chat between users, and no data selling."]
+    ],
+    ctaHref: "/#/reading",
+    ctaLabel: "Try free reading practice"
+  },
+  {
+    slug: "for-tutors",
+    priority: "0.8",
+    title: "ReadNest for Tutors: Reading Intervention for K-2 Tutoring | ReadNest",
+    description:
+      "ReadNest Teacher Pro gives K-2 tutors an assigned-student roster, progress reports, skill area analysis, and downloadable report cards for $19 per month.",
+    h1: "ReadNest for tutors and small groups",
+    eyebrow: "Teacher Pro for reading tutors",
+    hero:
+      "Tutors and small-group specialists need reading practice, progress, and parent-ready reports on one screen. ReadNest Teacher Pro gives you a classroom dashboard, an assigned-student roster, activity review, and downloadable progress summaries you can share with parents.",
+    sections: [
+      {
+        title: "Built for how tutors actually work",
+        body: "The workflow is designed around the way a tutor runs a session, not a full classroom.",
+        bullets: [
+          "Invite students by code without emailing spreadsheets or setting up rosters manually.",
+          "Assigned-student roster with active load, capacity signals, and a holding space for placement.",
+          "Review recent activity, sight words practiced, phonics attempts, and skill areas per student.",
+          "Open student activities in read-only review mode to see exactly what the child saw."
+        ]
+      },
+      {
+        title: "Reports and parent updates without extra work",
+        body: "The reports parents actually ask for should be one click away.",
+        bullets: [
+          "Downloadable HTML report card per active student, escaped and safe to email.",
+          "Strengths, growth areas, and next-step practice suggestions per learner.",
+          "Quarter and annual goal comparisons for parent-teacher conversations.",
+          "Intervention planning notes to keep small-group instruction focused."
+        ]
+      },
+      {
+        title: "Fair pricing for a small tutoring practice",
+        body: "The commercial terms are meant to match how a tutor bills their own clients.",
+        bullets: [
+          "$19 per month for the Teacher Pro plan; use across every assigned student.",
+          "Stripe-hosted checkout with instant activation on payment success.",
+          "Cancel through the Stripe Customer Portal from the Account page without email chains.",
+          "Free trial of the student-facing experience without a subscription, so you can preview before you subscribe."
+        ]
+      }
+    ],
+    faq: [
+      ["Can private tutors use ReadNest?", "Yes. ReadNest Teacher Pro is built for tutors, small groups, and reading interventionists working with K-2 learners."],
+      ["How do I invite a family or a student to my Teacher Pro account?", "Create an invite code from your Teacher Pro dashboard. Families enter the code on Find Teacher, which either links the student immediately (auto-approve) or creates a pending request for you to accept."],
+      ["Do I need to buy a plan per student?", "No. Teacher Pro is one $19 per month plan per teacher, not per student. Family Plus is a separate plan intended for parents at $7 per month."],
+      ["Can I download a report card for a parent?", "Yes. Teacher Pro lets you download an HTML report card per active assigned student. It includes progress, skill areas, strengths, growth areas, and next-step suggestions."],
+      ["Can I bill parents through ReadNest?", "No. ReadNest handles the tool subscription; billing your own tutoring clients stays with your own invoicing. Parents can subscribe to Family Plus separately if you want them to have parent-facing progress access."],
+      ["What happens if I cancel Teacher Pro?", "Cancellation happens through the Stripe Customer Portal. Access remains until the current billing period ends; assigned-student data stays on the account so you can resume without losing history."]
+    ],
+    ctaHref: "/#/account",
+    ctaLabel: "Start Teacher Pro"
+  },
+  {
+    slug: "my-child-cant-read-yet",
+    priority: "0.85",
+    title: "My Child Can't Read Yet — When to Worry and What Helps | ReadNest",
+    description:
+      "Not every K-2 child reads on schedule. Here's what typical progress looks like, warning signs to raise with a teacher, and calm daily practice you can start today.",
+    h1: "My child can't read yet — when to worry and what helps",
+    eyebrow: "For parents of early readers",
+    hero:
+      "Reading develops on a range, not a schedule. This is a short, honest walk-through of what typical kindergarten through second-grade reading progress looks like, warning signs worth talking with a teacher about, and calm daily practice families can start at home today.",
+    sections: [
+      {
+        title: "What most kindergarteners are still learning",
+        body: "The wide range of what is normal in kindergarten catches most parents by surprise.",
+        bullets: [
+          "Recognizing all 26 letters and the sound each one usually makes.",
+          "Blending sounds into short CVC words like cat, sun, and pop.",
+          "Reading a small starter set of high-frequency sight words on sight.",
+          "Understanding that words in a book carry meaning and follow left-to-right order.",
+          "Not every kindergartener has these down at the start of the year, or even the end. Progress within kindergarten is normal."
+        ]
+      },
+      {
+        title: "Warning signs worth mentioning to a teacher",
+        body: "These are not diagnoses. They are conversation starters worth raising with a classroom teacher, pediatrician, or reading specialist.",
+        bullets: [
+          "Trouble hearing rhymes or hearing the ending sounds of familiar words.",
+          "Guessing at words from the picture or first letter instead of trying to sound them out.",
+          "Reversing letters like b, d, p, or q well into first grade.",
+          "Very little visible progress across a full quarter even with consistent practice.",
+          "Reading tires the child in a way that feels different from ordinary end-of-day fatigue."
+        ]
+      },
+      {
+        title: "Calm daily practice you can start today",
+        body: "The playbook that actually works for early readers is boring, calm, and repetitive on purpose.",
+        bullets: [
+          "Short 5 to 10 minute sessions, not long ones.",
+          "Read aloud together every day, even for older siblings.",
+          "Practice one small skill at a time: one set of sight words, one phonics pattern.",
+          "Repeat rather than push forward when a child hesitates.",
+          "Track wins your child can feel — a new sight word learned this week, a book finished."
+        ]
+      }
+    ],
+    faq: [
+      ["At what age should a child be reading?", "Reading develops on a range. Most children begin recognizing letters and short words in kindergarten, start reading simple sentences in first grade, and read short passages independently in second grade. Individual variation of six months to a year is common."],
+      ["Is my kindergartener behind if they can't read yet?", "Not necessarily. Many kindergarteners are still learning letter sounds and a starter set of sight words late into the school year. Concern grows if very little progress happens across a full quarter with support."],
+      ["What is the difference between a slow start and dyslexia?", "A slow start typically resolves with steady practice and daily reading time. Dyslexia is a specific learning difference that a trained reading specialist, school psychologist, or pediatrician can help evaluate. Persistent trouble sounding out familiar patterns is worth raising with a professional."],
+      ["Should I hire a reading tutor?", "A tutor can help, especially a tutor trained in structured literacy or the science of reading. Short calm daily practice matters more than any single session, so a great tutor is one who assigns short focused practice between meetings."],
+      ["How much daily reading practice is enough for a struggling reader?", "For most kindergarten through second grade children, 5 to 10 minutes of focused practice per day plus a read-aloud with an adult is more effective than a long once-a-week session."],
+      ["Can a reading app really help a child who is behind?", "A focused app that surfaces the specific skills your child is missing can help, especially when it is used in short daily sessions and paired with reading aloud together. ReadNest is built around short calm sessions and parent progress signals for exactly this pattern."]
+    ],
+    ctaHref: "/#/reading",
+    ctaLabel: "Try 5 minutes of free reading practice"
   }
 ];
 
