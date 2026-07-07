@@ -31,6 +31,8 @@
 - Added privacy/legal/refund/teacher terms pages and footer links.
 - Added go-live, Stripe, production environment, and deployment docs.
 - Added SEO metadata, sitemap, robots file, web manifest, Open Graph image, and static SEO pages.
+- Added and verified automated search submission for IndexNow and Google Search Console.
+- Added revenue launch plan for parent, teacher, donation, and paid subscription growth.
 - Completed the first live authenticated release QA cycle; see `docs/qa-release-2026-06-25.md` for tested journeys, fixes, and remaining launch work.
 - Added GitHub Pages deployment workflow.
 - Added Firebase backend deployment workflow for rules, functions, secrets, and scheduled functions.
@@ -40,7 +42,7 @@
 ## Not Yet Fully Connected
 
 - Facebook sign-in needs Firebase Console provider setup with the Meta app ID and secret before live use.
-- Stripe webhook code is deployed with secrets, but it still needs Stripe Dashboard endpoint registration and end-to-end test events.
+- Stripe webhook code is deployed with secrets, but live subscription checkout still needs a final end-to-end paid test event before scaling paid acquisition.
 - Teacher-created invitation codes can be created, but invite acceptance/revocation/admin tooling still needs completion.
 - AI insight generation uses a backend OpenAI adapter with a rule-based fallback. Legal review, prompt evaluation, and production monitoring are still needed before broad launch.
 - Parent multi-child profiles, placement onboarding, printable sheets, and backend data deletion fulfillment still need completion.

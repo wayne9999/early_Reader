@@ -27,12 +27,12 @@ ReadNest should win trust before it asks families or teachers to pay. The growth
 
 ## Launch Actions
 
-1. Submit `https://myreadnest.org/sitemap.xml` in Google Search Console.
-2. Submit the same sitemap in Bing Webmaster Tools.
-3. Verify the homepage with Google's Rich Results Test for `SoftwareApplication` and `FAQPage`.
-4. Share the homepage and `/online-reading-games/` with parent groups, tutoring communities, and teacher communities.
-5. Add real screenshots, short demo videos, and testimonials once families and teachers have tested the app.
-6. Move to a custom domain before paid acquisition so canonical URLs and brand trust are stronger.
+1. Keep the production deploy and search submission workflows green.
+2. Share the homepage and `/online-reading-games/` with parent groups, tutoring communities, teacher communities, and local school-adjacent groups.
+3. Add real screenshots, short demo videos, and testimonials once families and teachers have tested the app.
+4. Publish helpful parent/teacher articles that answer one specific reading-practice question at a time.
+5. Track Search Console queries weekly and turn high-impression/low-click searches into better page titles, FAQs, and content.
+6. Use small-budget paid campaigns only after analytics confirm signup, checkout, and support flows are converting.
 
 ## July 2026 Crawlability Pass
 
@@ -44,13 +44,22 @@ Completed:
 - Added `scripts/generate-seo-pages.mjs` so the pages are rebuilt before every production build.
 - Added `scripts/validate-seo-assets.mjs` and e2e coverage for sitemap, robots, canonical tags, JSON-LD, and mobile overflow.
 
-Manual launch steps:
+Completed launch automation:
 
-1. In Google Search Console, add/verify `https://myreadnest.org`, then submit `https://myreadnest.org/sitemap.xml`.
-2. Use URL Inspection for `/`, `/reading-practice/`, `/online-reading-games/`, `/kindergarten-reading/`, and `/teacher-dashboard/`.
-3. In Bing Webmaster Tools, add the same site and submit the sitemap.
-4. Run Google's Rich Results Test against `/reading-practice/` and `/pricing/`.
-5. Track indexing status weekly for the first month and revise pages that are discovered but not indexed.
+1. `Submit To Search Engines` now submits public URLs to IndexNow for Bing, Yandex, and partners.
+2. `GSC_SERVICE_ACCOUNT_JSON` is configured for GitHub Actions.
+3. Google Search Console API is enabled for the `readnest-f9c67` Google Cloud project.
+4. The workflow successfully submits `https://myreadnest.org/sitemap.xml` to Google Search Console.
+5. The workflow successfully runs URL Inspection for `/`, `/reading-practice/`, `/online-reading-games/`, `/kindergarten-reading/`, and `/teacher-dashboard/`.
+6. Production pages, sitemap, and IndexNow verification file return HTTP 200.
+
+Ongoing launch steps:
+
+1. Track indexing status weekly for the first month and revise pages that are discovered but not indexed.
+2. Monitor Search Console query impressions and click-through rate.
+3. Keep `https://myreadnest.org/sitemap.xml` submitted after each production deploy through the workflow.
+4. Add original screenshots, teacher/parent testimonials, and demo clips as soon as real users have tested the app.
+5. Publish one helpful early-reading article each week for at least eight weeks.
 
 Research basis:
 
