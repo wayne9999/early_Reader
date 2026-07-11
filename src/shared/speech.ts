@@ -66,21 +66,37 @@ export function speak(text: string, options: Partial<SpeechSynthesisUtterance> =
   window.speechSynthesis.speak(makeUtterance(text, options));
 }
 
+// Prefers native OS TTS inside the Capacitor shell; falls back to browser
+// SpeechSynthesis on the web. All existing web callers get the upgrade for
+// free because `speakWord`, `speakSentence`, etc. delegate here.
+async function speakBestAvailable(text: string, options: Partial<SpeechSynthesisUtterance> = {}) {
+  try {
+    const { speakAdaptive } = await import("./nativeSpeech");
+    await speakAdaptive(text, {
+      rate: options.rate,
+      pitch: options.pitch,
+      volume: options.volume
+    });
+  } catch {
+    speak(text, options);
+  }
+}
+
 export function speakWord(word: string) {
-  speak(word, { rate: 0.82, pitch: 1.22 });
+  void speakBestAvailable(word, { rate: 0.82, pitch: 1.22 });
 }
 
 export function speakSentence(sentence: string) {
-  speak(sentence, { rate: 0.84, pitch: 1.14 });
+  void speakBestAvailable(sentence, { rate: 0.84, pitch: 1.14 });
 }
 
 export function speakSounds(sounds: string[], word: string) {
-  speak(`${sounds.join(" ... ")}. Blend it together: ${word}!`, {
+  void speakBestAvailable(`${sounds.join(" ... ")}. Blend it together: ${word}!`, {
     rate: 0.72,
     pitch: 1.2
   });
 }
 
 export function celebrate(message = "Great job! You did it!") {
-  speak(message, { rate: 0.94, pitch: 1.28 });
+  void speakBestAvailable(message, { rate: 0.94, pitch: 1.28 });
 }
