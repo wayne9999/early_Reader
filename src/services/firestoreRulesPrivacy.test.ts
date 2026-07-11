@@ -42,6 +42,14 @@ describe("firestore privacy rules", () => {
     expect(rules).toContain("request.query.limit <= 25");
   });
 
+  it("prevents students from re-queueing an already-assigned placement", () => {
+    expect(rules).toContain("resource.data.status != \"assigned\"");
+  });
+
+  it("limits student invite acceptance to acceptance fields only", () => {
+    expect(rules).toContain("onlyChanged([\"status\", \"acceptedBy\", \"acceptedAt\", \"updatedAt\", \"updatedBy\"])");
+  });
+
   it("scopes classroom data to admins or classroom members", () => {
     expect(rules).toContain("function isClassroomMember(classroomId)");
     expect(rules).toContain("userRole() == \"admin\" || isClassroomMember(classroomId)");
@@ -99,5 +107,15 @@ describe("firestore privacy rules", () => {
     expect(rules).toContain("match /systemLogs/{logId}");
     expect(rules).toContain("allow read: if isAdmin();");
     expect(rules).toContain("allow create, update, delete: if false;");
+  });
+
+  it("accepts bounded client-side runtime error reports and restricts reads to admins", () => {
+    expect(rules).toContain("match /runtimeErrors/{errorId}");
+    expect(rules).toContain('request.resource.data.source in [');
+    expect(rules).toContain('"react-error-boundary", "window-onerror", "unhandled-rejection", "checkout", "manual"');
+    expect(rules).toContain("request.resource.data.message.size() <= 500");
+    expect(rules).toContain("request.resource.data.stack == null || request.resource.data.stack.size() <= 4000");
+    expect(rules).toContain("allow read: if isAdmin();");
+    expect(rules).toContain("allow update, delete: if false;");
   });
 });

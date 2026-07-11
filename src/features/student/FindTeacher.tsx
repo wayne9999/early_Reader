@@ -8,6 +8,8 @@ import {
   teacherLoadStatus,
   upsertStudentPlacementQueue
 } from "../../services/assignmentRepository";
+import { acceptTeacherInviteCode } from "../../services/teacherInviteRepository";
+import { trackProductEvent } from "../../services/productAnalytics";
 import type { AppUser, Progress, StudentPlacementQueue, TeacherStudentLink, UserProfile } from "../../types";
 
 type FindTeacherProps = {
@@ -24,6 +26,9 @@ export function FindTeacher({ progress, user, profile }: FindTeacherProps) {
   const [message, setMessage] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [isJoiningQueue, setIsJoiningQueue] = useState(false);
+  const [inviteCode, setInviteCode] = useState("");
+  const [inviteStatus, setInviteStatus] = useState("");
+  const [isAcceptingInvite, setIsAcceptingInvite] = useState(false);
 
   useEffect(() => {
     void Promise.all([loadStudentAssignments(user), loadStudentPlacement(user)]).then(([loadedAssignments, loadedPlacement]) => {
@@ -91,6 +96,34 @@ export function FindTeacher({ progress, user, profile }: FindTeacherProps) {
     }
   }
 
+  async function redeemInviteCode() {
+    if (!user) {
+      return;
+    }
+
+    setIsAcceptingInvite(true);
+    setInviteStatus("");
+
+    try {
+      const result = await acceptTeacherInviteCode(inviteCode);
+
+      setInviteCode("");
+      setInviteStatus(
+        result.status === "active"
+          ? `You are now connected to ${result.teacherName}.`
+          : `Request sent to ${result.teacherName}. They will approve it from their dashboard.`
+      );
+      void trackProductEvent(user, "teacher_invite_accepted", { status: result.status });
+      const [nextAssignments, nextPlacement] = await Promise.all([loadStudentAssignments(user), loadStudentPlacement(user)]);
+      setAssignments(nextAssignments);
+      setPlacement(nextPlacement);
+    } catch (error) {
+      setInviteStatus(error instanceof Error ? error.message : "That invite code could not be used right now.");
+    } finally {
+      setIsAcceptingInvite(false);
+    }
+  }
+
   function assignmentForTeacher(teacherId: string) {
     return assignments.find((assignment) => assignment.teacherId === teacherId);
   }
@@ -128,6 +161,27 @@ export function FindTeacher({ progress, user, profile }: FindTeacherProps) {
             {placement?.status === "unassigned" ? "In holding space" : isJoiningQueue ? "Saving..." : "Skip for now"}
           </button>
         </div>
+      </section>
+
+      <section className="practice-panel teacher-search">
+        <label>
+          <span>Have an invite code from your teacher?</span>
+          <input
+            value={inviteCode}
+            onChange={(event) => setInviteCode(event.target.value)}
+            placeholder="READ-AB12CD"
+            autoCapitalize="characters"
+          />
+        </label>
+        <button
+          className="primary-button"
+          type="button"
+          disabled={isAcceptingInvite || !inviteCode.trim() || !user}
+          onClick={() => void redeemInviteCode()}
+        >
+          {isAcceptingInvite ? "Checking..." : "Use invite code"}
+        </button>
+        {inviteStatus ? <p className="helper-text">{inviteStatus}</p> : null}
       </section>
 
       <section className="practice-panel teacher-search">

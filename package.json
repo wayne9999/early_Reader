@@ -21,8 +21,10 @@
     "test:all": "npm run check && npm run test && npm run test:e2e",
     "generate:seo": "node scripts/generate-seo-pages.mjs",
     "validate:content": "node scripts/validate-content.mjs",
-    "validate:seo": "npm run generate:seo && node scripts/validate-seo-assets.mjs",
-    "validate:deployment-env": "node scripts/validate-deployment-env.mjs"
+    "validate:seo": "npm run generate:seo && node scripts/validate-seo-assets.mjs && node scripts/validate-rich-results.mjs",
+    "validate:deployment-env": "node scripts/validate-deployment-env.mjs",
+    "submit:indexnow": "node scripts/submit-indexnow.mjs",
+    "submit:google": "node scripts/google-search-console.mjs submit-sitemap"
   },
   "dependencies": {
     "@auth0/auth0-react": "^2.3.0",

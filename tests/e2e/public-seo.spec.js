@@ -12,7 +12,16 @@ const seoPages = [
   ["teacher-dashboard", "Teacher reading dashboard for assigned students"],
   ["reading-intervention", "Reading intervention support that stays practical"],
   ["caregiver-progress", "Parent-friendly reading progress tracking"],
-  ["pricing", "ReadNest pricing"]
+  ["pricing", "ReadNest pricing"],
+  ["kid-safe", "A kid-safe reading app that families can actually trust"],
+  ["vs", "ReadNest compared to other early reading apps"],
+  ["vs/abcmouse", "ReadNest vs ABCmouse: an honest comparison for K-2 reading"],
+  ["vs/reading-eggs", "ReadNest vs Reading Eggs: an honest K-2 comparison"],
+  ["vs/homer", "ReadNest vs Homer: an honest K-2 comparison"],
+  ["vs/hooked-on-phonics", "ReadNest vs Hooked on Phonics: an honest K-2 comparison"],
+  ["for-tutors", "ReadNest for tutors and small groups"],
+  ["my-child-cant-read-yet", "My child can't read yet — when to worry and what helps"],
+  ["science-of-reading", "Is ReadNest based on the science of reading?"]
 ];
 
 test.describe("crawlable SEO landing pages", () => {
@@ -42,6 +51,9 @@ test.describe("crawlable SEO landing pages", () => {
     const sitemapResponse = await page.goto("/sitemap.xml");
     expect(sitemapResponse?.ok()).toBe(true);
     await expect(page.locator("body")).toContainText("https://myreadnest.org/reading-practice/");
+    await expect(page.locator("body")).toContainText("https://myreadnest.org/kid-safe/");
+    await expect(page.locator("body")).toContainText("https://myreadnest.org/vs/abcmouse/");
+    await expect(page.locator("body")).toContainText("https://myreadnest.org/for-tutors/");
     await expect(page.locator("body")).toContainText("2026-07-05");
 
     const robotsResponse = await page.goto("/robots.txt");

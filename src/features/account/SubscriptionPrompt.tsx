@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { subscriptionTiers } from "../../services/billingConfig";
 import { startSubscriptionCheckout } from "../../services/billingRepository";
 import {
@@ -20,6 +20,12 @@ export function SubscriptionPrompt({ user, profile, onProfileUpdated, onContinue
   const [isStartingCheckout, setIsStartingCheckout] = useState(false);
   const [checkoutError, setCheckoutError] = useState("");
   const paidTierId: SubscriptionTierId = profile.role === "teacher" ? "teacherPro" : "familyPlus";
+
+  useEffect(() => {
+    void trackProductEvent(user, "paywall_viewed", { tier: paidTierId, role: profile.role });
+    // Fire once per mount; role and tier are stable within one prompt render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const paidTier = useMemo(
     () => subscriptionTiers.find((tier) => tier.id === paidTierId),
     [paidTierId]
@@ -37,25 +43,17 @@ export function SubscriptionPrompt({ user, profile, onProfileUpdated, onContinue
     setIsStartingCheckout(true);
     setCheckoutError("");
 
-    const nextProfile = await updateUserProfile(user, profile, {
-      subscriptionTier: paidTierId,
-      subscriptionStatus: "checkoutStarted"
-    });
-
-    onProfileUpdated(nextProfile);
-    void trackProductEvent(user, "checkout_clicked", { tier: paidTierId });
-
     try {
-      const checkoutUrl = await startSubscriptionCheckout(paidTierId);
+      const nextProfile = await updateUserProfile(user, profile, {
+        subscriptionTier: paidTierId,
+        subscriptionStatus: "checkoutStarted"
+      });
 
-      if (checkoutUrl) {
-        window.open(checkoutUrl, "_blank", "noopener,noreferrer");
-      } else {
-        setCheckoutError("Checkout is not configured yet. Visit Support for billing help.");
-      }
+      onProfileUpdated(nextProfile);
+      void trackProductEvent(user, "checkout_clicked", { tier: paidTierId });
+      window.location.assign(await startSubscriptionCheckout(paidTierId));
     } catch (error) {
       setCheckoutError(error instanceof Error ? error.message : "Checkout could not start right now.");
-    } finally {
       setIsStartingCheckout(false);
     }
   }

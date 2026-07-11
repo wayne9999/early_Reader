@@ -6,6 +6,7 @@ import type { SubscriptionRecord, SubscriptionTierId, UserProfile } from "../../
 type SubscriptionManagementProps = {
   profile: UserProfile;
   subscription: SubscriptionRecord | null;
+  onRefresh?: () => Promise<SubscriptionRecord | null>;
 };
 
 function subscriptionLabel(profile: UserProfile, subscription: SubscriptionRecord | null) {
@@ -51,10 +52,12 @@ function subscriptionHelpText(subscription: SubscriptionRecord | null) {
   return "Stripe Customer Portal lets families update cards, view invoices, and cancel monthly billing.";
 }
 
-export function SubscriptionManagement({ profile, subscription }: SubscriptionManagementProps) {
+export function SubscriptionManagement({ profile, subscription, onRefresh }: SubscriptionManagementProps) {
   const [checkoutError, setCheckoutError] = useState("");
   const [isStartingCheckout, setIsStartingCheckout] = useState(false);
   const [isOpeningPortal, setIsOpeningPortal] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [refreshStatus, setRefreshStatus] = useState("");
   const rolePlanId: SubscriptionTierId = profile.role === "teacher" ? "teacherPro" : "familyPlus";
   const rolePlanLabel = profile.role === "teacher" ? "Teacher Pro" : "Family Plus";
   const freeLabel = profile.role === "teacher" ? "Free teacher profile" : "Free access";
@@ -71,17 +74,33 @@ export function SubscriptionManagement({ profile, subscription }: SubscriptionMa
     setCheckoutError("");
 
     try {
-      const checkoutUrl = await startSubscriptionCheckout(rolePlanId);
-
-      if (checkoutUrl) {
-        window.open(checkoutUrl, "_blank", "noopener,noreferrer");
-      } else {
-        setCheckoutError("Checkout is not configured yet. Contact support for billing help.");
-      }
+      window.location.assign(await startSubscriptionCheckout(rolePlanId));
     } catch (error) {
       setCheckoutError(error instanceof Error ? error.message : "Checkout could not start right now.");
-    } finally {
       setIsStartingCheckout(false);
+    }
+  }
+
+  async function refreshSubscriptionStatus() {
+    if (!onRefresh) {
+      return;
+    }
+
+    setIsRefreshing(true);
+    setRefreshStatus("");
+
+    try {
+      const refreshed = await onRefresh();
+
+      setRefreshStatus(
+        refreshed?.status === "active"
+          ? "Paid access is active."
+          : "Status refreshed. Stripe confirmation can take a few moments after checkout."
+      );
+    } catch (error) {
+      setRefreshStatus(error instanceof Error ? error.message : "Could not refresh the subscription right now.");
+    } finally {
+      setIsRefreshing(false);
     }
   }
 
@@ -145,9 +164,20 @@ export function SubscriptionManagement({ profile, subscription }: SubscriptionMa
         >
           {isOpeningPortal ? "Opening billing..." : "Manage or cancel subscription"}
         </button>
+        {onRefresh && !isPaidActive ? (
+          <button
+            className="secondary-button"
+            disabled={isRefreshing}
+            type="button"
+            onClick={() => void refreshSubscriptionStatus()}
+          >
+            {isRefreshing ? "Checking..." : "Refresh status"}
+          </button>
+        ) : null}
       </div>
 
       {checkoutError ? <p className="form-error">{checkoutError}</p> : null}
+      {refreshStatus ? <p className="helper-text">{refreshStatus}</p> : null}
 
       <p className="helper-text">
         Stripe Customer Portal lets active subscribers update cards, view invoices, and cancel monthly billing.
