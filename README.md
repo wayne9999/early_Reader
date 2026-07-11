@@ -23,7 +23,7 @@ For Codex continuity and project handoff notes, see `.codex/project.md` and `PRO
 - Trusted subscription architecture using `subscriptions/{userId}` as the production paid-access source of truth.
 - Activity tiers: guests get Reading and Memory; registered free users get Rhymes and Sounds; Family Plus / Teacher Pro unlock Sentences, Story Steps, Word Garden, Echo Reader, and Voice Quest.
 - Teacher Pro gating for classroom dashboard, student analysis, reports, intervention planning, paid activity review, and AI-supported recommendations when enabled.
-- Teacher-created invite-code scaffold for families.
+- Teacher invite codes for families: teachers create and revoke single-use, expiring codes; students redeem them on Find Teacher through a capacity-checked backend callable that links the accounts (instantly for auto-approve invites, as a pending request otherwise).
 - Legal/support pages for privacy, terms, children's privacy, parent consent, teacher terms, refunds, billing help, and data deletion requests.
 - Firebase Auth account page with email, Google, and Facebook support.
 - Firebase Firestore profile, assignment, event, and progress repositories with local storage fallback for development.
@@ -56,6 +56,8 @@ npm run validate:content
 ```
 
 The project uses Node 24.17+ so local development, Vitest, jsdom, Playwright, Firebase tooling, and GitHub Actions stay on the same LTS runtime.
+
+In remote/CI sandboxes that pre-install a Chromium build that does not match the pinned Playwright browser revision, set `PLAYWRIGHT_CHROMIUM_PATH` (for example `PLAYWRIGHT_CHROMIUM_PATH=/opt/pw-browsers/chromium npm run test:e2e`) to reuse the installed browser instead of downloading one.
 
 Test metrics:
 
@@ -175,7 +177,8 @@ Current behavior:
 - Premium voice activities call the backend `createActivityVoiceClip` Firebase Function. The function checks paid access, rate limits requests, calls ElevenLabs with `ELEVENLABS_API_KEY`, and falls back to browser speech on the client if provider audio is unavailable.
 - Teacher compensation should be calculated on trusted backend data from active assignments before real payouts are made.
 - Firebase Functions in `functions/` handle Stripe webhooks, billing portal sessions, AI insight jobs, scheduled processing, OpenAI budget guarding, and rule-based fallback.
-- Signed-in support requests are stored in `supportCases`, including billing, data deletion, teacher verification, technical, and general help. Backend deletion/export fulfillment still needs an operations process.
+- Signed-in support requests are stored in `supportCases`, including billing, data deletion, teacher verification, technical, and general help. Data-deletion requests are fulfilled by the admin-only `fulfillDataDeletion` backend callable; see `docs/data-deletion-runbook.md`.
+- Backend callables enforce Firebase App Check by default in production (`READNEST_ENFORCE_APP_CHECK=false` is a temporary rollback switch only), and production builds require `VITE_FIREBASE_APP_CHECK_SITE_KEY`.
 
 ## Donations And Subscriptions
 
@@ -193,8 +196,12 @@ Required production values:
 
 Backend-only production values are documented in `docs/production-env.md` and `docs/stripe-setup.md`.
 
+Checkout flows redirect the current tab to Stripe (never `window.open`, which popup blockers can silently stop), and returning from Stripe reloads the app so trusted subscription state is refetched. The Account page also offers a manual "Refresh status" while a Stripe webhook is still settling. On the backend, subscription writes are guarded against out-of-order webhook delivery, refunds/disputes/failed payments revoke Firebase auth claims as well as Firestore access, partial refunds do not cancel access, and the nightly AI insight scheduler only processes students with recorded parent/caregiver consent. See `docs/pressure-test-2026-07-05.md` for the full review.
+
 ## Launch Docs
 
+- `docs/pressure-test-2026-07-05.md`
+- `docs/data-deletion-runbook.md`
 - `docs/go-live-readiness.md`
 - `docs/production-env.md`
 - `docs/stripe-setup.md`
@@ -226,9 +233,8 @@ Suggested subscriptions:
 
 - Add full multi-child parent profile UI.
 - Add a parent-facing personalization editor for grade, reading goal, and preferred practice time.
-- Register and verify the Stripe webhook endpoint with test events.
+- Run the Register Stripe Webhook workflow in test and live mode (registration and test events are automated).
 - Finish Firebase Auth provider setup in Firebase Console.
-- Complete invite acceptance/revocation UI.
 - Add backend payout reporting for teachers based on active assigned students and approved pay rules.
 - Replace remaining demo classroom fallback data with fully live Firestore enrollment data.
 - Add production monitoring and prompt evaluation for AI-supported teacher recommendations.

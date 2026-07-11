@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { isFirebaseConfigured } from "../../services/firebase";
+import { trackProductEvent } from "../../services/productAnalytics";
 import { labelFromSignupPath, saveSignupIntent } from "../../services/signupIntent";
 import { subscriptionTiers } from "../../services/billingConfig";
 import type { AppView, SignupPath, SocialProvider, SubscriptionTierId } from "../../types";
@@ -38,6 +39,20 @@ export function SignInPanel({ preferredSignupPath = null, redirectView = null, s
       setSelectedPath(preferredSignupPath);
     }
   }, [preferredSignupPath]);
+
+  useEffect(() => {
+    // Only emit for unauthenticated visitors; a signed-in user landing on the
+    // Account page for billing is not starting signup.
+    if (!isAuthenticated) {
+      void trackProductEvent(null, "signup_started", {
+        signupPath: preferredSignupPath ?? null,
+        redirectView: redirectView ?? null,
+        subscriptionIntent: subscriptionIntent ?? null
+      });
+    }
+    // Fire once per Sign-in panel render (mount only).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function signInForPath(provider: SocialProvider) {
     setAuthError("");

@@ -3964,3 +3964,110 @@ button {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Accessibility utilities */
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.skip-link {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 12px 20px;
+  background: #202338;
+  color: #ffffff;
+  font-weight: 700;
+  border-radius: 0 0 12px 0;
+  text-decoration: none;
+  transform: translateY(-100%);
+  transition: transform 0.15s ease-in-out;
+  z-index: 9999;
+}
+
+.skip-link:focus,
+.skip-link:focus-visible {
+  transform: translateY(0);
+  outline: 3px solid #ffde59;
+  outline-offset: 2px;
+}
+
+.main-content:focus {
+  outline: none;
+}
+
+/* Ensure interactive targets meet the 44x44 touch target minimum on small
+   screens. Buttons and links inside interactive regions get a floor. */
+@media (pointer: coarse) {
+  button,
+  .primary-button,
+  .secondary-button,
+  .nav-tab,
+  a.button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* PWA install prompt */
+.install-prompt {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px 22px;
+  margin: 0 0 20px 0;
+  background: linear-gradient(135deg, #f0f9ff, #dbeafe);
+  border: 1px solid #bee3f8;
+  border-radius: 16px;
+  box-shadow: 0 8px 22px rgba(32, 35, 56, 0.06);
+}
+
+.install-prompt p {
+  margin: 0;
+}
+
+.install-prompt-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+@media (min-width: 720px) {
+  .install-prompt {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+/* Error boundary panel */
+.error-boundary-panel {
+  max-width: 640px;
+  margin: 64px auto;
+  padding: 32px;
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 22px 48px rgba(32, 35, 56, 0.10);
+  text-align: left;
+}
+
+.error-boundary-panel h1 {
+  font-size: 1.75rem;
+  margin: 8px 0 12px;
+}
+
+.error-boundary-panel .helper-text {
+  margin-top: 16px;
+  font-family: ui-monospace, "SFMono-Regular", monospace;
+  font-size: 0.85rem;
+  color: #5f6277;
+  word-break: break-all;
+}

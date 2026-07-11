@@ -112,7 +112,16 @@ export function HomePage({ onNavigate, onSelectPlan }: HomePageProps) {
         <div className="home-story-card" aria-hidden="true">
           <div className="home-story-badge home-story-badge-left">+3 stars earned!</div>
           <div className="home-story-scene">
-            <img className="home-story-image" src={birdBookImageSrc} alt="" loading="eager" />
+            <img
+              className="home-story-image"
+              src={birdBookImageSrc}
+              alt=""
+              loading="eager"
+              fetchPriority="high"
+              decoding="async"
+              width="640"
+              height="640"
+            />
             <span className="scene-sun">A</span>
             <span className="scene-tree">B</span>
             <span className="scene-owl">go</span>

@@ -173,29 +173,34 @@ let pagesChecked = 0;
 let faqTotal = 0;
 let breadcrumbTotal = 0;
 
-for (const entry of await readdir(publicDir, { withFileTypes: true })) {
-  if (!entry.isDirectory()) {
-    continue;
+async function walkPageDirs(dir, relativeSlug = "") {
+  for (const entry of await readdir(dir, { withFileTypes: true })) {
+    if (!entry.isDirectory()) {
+      continue;
+    }
+
+    const nextSlug = relativeSlug ? `${relativeSlug}/${entry.name}` : entry.name;
+    const pagePath = join(dir, entry.name, "index.html");
+
+    if (existsSync(pagePath)) {
+      const html = await readFile(pagePath, "utf8");
+      const expectedCanonical = `${siteUrl}/${nextSlug}/`;
+      const counts = validatePage(html, `${nextSlug}/index.html`, expectedCanonical);
+
+      if (!uniqueLocs.has(expectedCanonical)) {
+        errors.push(`${nextSlug}/index.html exists but ${expectedCanonical} is missing from sitemap.xml.`);
+      }
+
+      pagesChecked += 1;
+      faqTotal += counts.faqCount;
+      breadcrumbTotal += counts.breadcrumbCount;
+    }
+
+    await walkPageDirs(join(dir, entry.name), nextSlug);
   }
-
-  const pagePath = join(publicDir, entry.name, "index.html");
-
-  if (!existsSync(pagePath)) {
-    continue;
-  }
-
-  const html = await readFile(pagePath, "utf8");
-  const expectedCanonical = `${siteUrl}/${entry.name}/`;
-  const counts = validatePage(html, `${entry.name}/index.html`, expectedCanonical);
-
-  if (!uniqueLocs.has(expectedCanonical)) {
-    errors.push(`${entry.name}/index.html exists but ${expectedCanonical} is missing from sitemap.xml.`);
-  }
-
-  pagesChecked += 1;
-  faqTotal += counts.faqCount;
-  breadcrumbTotal += counts.breadcrumbCount;
 }
+
+await walkPageDirs(publicDir);
 
 for (const warning of warnings) {
   console.warn(`Warning: ${warning}`);

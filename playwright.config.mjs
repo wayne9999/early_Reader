@@ -1,5 +1,10 @@
 import { defineConfig, devices } from "@playwright/test";
 
+// Some CI/remote sandboxes pre-install a Chromium build that does not match the
+// pinned Playwright browser revision. Set PLAYWRIGHT_CHROMIUM_PATH to reuse it
+// instead of downloading a new browser.
+const chromiumExecutablePath = process.env.PLAYWRIGHT_CHROMIUM_PATH || undefined;
+
 export default defineConfig({
   testDir: "tests/e2e",
   timeout: 30_000,
@@ -20,7 +25,12 @@ export default defineConfig({
   projects: [
     {
       name: "chromium",
-      use: { ...devices["Desktop Chrome"] }
+      use: {
+        ...devices["Desktop Chrome"],
+        ...(chromiumExecutablePath
+          ? { launchOptions: { executablePath: chromiumExecutablePath } }
+          : {})
+      }
     }
   ]
 });
