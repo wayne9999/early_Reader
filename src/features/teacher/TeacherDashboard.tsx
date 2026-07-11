@@ -12,7 +12,7 @@ import { loadLearningEvents } from "../../services/learningEventRepository";
 import { recentNeeds, summarizeByArea, summarizeEvents } from "../../services/learningEventSummary";
 import { trackProductEvent } from "../../services/productAnalytics";
 import { downloadStudentReportCard } from "../../services/reportCardService";
-import { createTeacherInvite, loadTeacherInvites } from "../../services/teacherInviteRepository";
+import { createTeacherInvite, loadTeacherInvites, revokeTeacherInvite } from "../../services/teacherInviteRepository";
 import type { AiAnalysisJob, AppUser, LearningEvent, Progress, SkillInsight, StudentAiInsight, StudentPlacementQueue, StudentSummary, TeacherInvite, TeacherStudentLink, UserProfile } from "../../types";
 
 type TeacherDashboardProps = {
@@ -292,6 +292,15 @@ export function TeacherDashboard({ progress, user, profile }: TeacherDashboardPr
     setIsCreatingInvite(false);
   }
 
+  async function revokeInvite(invite: TeacherInvite) {
+    if (!user) {
+      return;
+    }
+
+    const revokedInvite = await revokeTeacherInvite(user, invite);
+    setInvites((current) => current.map((existing) => (existing.id === invite.id ? revokedInvite : existing)));
+  }
+
   async function claimStudentFromHoldingSpace(placement: StudentPlacementQueue) {
     if (!user) {
       return;
@@ -398,7 +407,8 @@ export function TeacherDashboard({ progress, user, profile }: TeacherDashboardPr
           <p className="eyebrow">Invite families</p>
           <h3>Create a student invite code</h3>
           <p className="helper-text">
-            Share a code with a parent. Invites expire after 30 days and can be revoked from the backend/admin workflow.
+            Share a code with a parent. The family enters it on Find Teacher to connect with you. Invites are
+            single-use, expire after 30 days, and can be revoked here before they are used.
           </p>
           <button className="primary-button" type="button" disabled={isCreatingInvite || !user || !profile} onClick={() => void createInvite()}>
             Create invite
@@ -409,6 +419,11 @@ export function TeacherDashboard({ progress, user, profile }: TeacherDashboardPr
                 <li key={invite.id}>
                   <strong>{invite.code}</strong>
                   <span>{invite.status} - expires {typeof invite.expiresAt === "string" ? invite.expiresAt.slice(0, 10) : "soon"}</span>
+                  {invite.status === "active" ? (
+                    <button className="secondary-button" type="button" onClick={() => void revokeInvite(invite)}>
+                      Revoke
+                    </button>
+                  ) : null}
                 </li>
               ))}
             </ul>

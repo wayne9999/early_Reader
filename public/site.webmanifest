@@ -1,15 +1,17 @@
 {
-  "name": "ReadNest - Personalized Reading Practice",
+  "name": "ReadNest — Personalized Reading Practice",
   "short_name": "ReadNest",
-  "description": "Personalized early reading, phonics, sight word, sentence fluency, memory practice, and teacher progress insights for young learners.",
+  "description": "Personalized K-2 reading, phonics, sight word, sentence fluency, memory practice, and teacher progress insights for young learners.",
   "start_url": "/",
   "scope": "/",
+  "id": "readnest-web-app",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "browser"],
   "background_color": "#fff7d7",
   "theme_color": "#2f80ed",
   "categories": ["education", "kids", "productivity"],
   "lang": "en-US",
-  "orientation": "portrait-primary",
+  "orientation": "any",
   "icons": [
     {
       "src": "brand/readnest-icon-192.png",
@@ -28,6 +30,29 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Reading practice",
+      "short_name": "Read",
+      "description": "Open today's personalized reading practice",
+      "url": "/#/reading",
+      "icons": [{ "src": "brand/readnest-icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Memory game",
+      "short_name": "Memory",
+      "description": "Play the memory game",
+      "url": "/#/memory",
+      "icons": [{ "src": "brand/readnest-icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Account",
+      "short_name": "Account",
+      "description": "Manage subscription and billing",
+      "url": "/#/account",
+      "icons": [{ "src": "brand/readnest-icon-192.png", "sizes": "192x192" }]
     }
   ]
 }

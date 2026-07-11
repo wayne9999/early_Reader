@@ -18,7 +18,16 @@ const expectedUrls = [
   "https://myreadnest.org/teacher-dashboard/",
   "https://myreadnest.org/reading-intervention/",
   "https://myreadnest.org/caregiver-progress/",
-  "https://myreadnest.org/pricing/"
+  "https://myreadnest.org/pricing/",
+  "https://myreadnest.org/kid-safe/",
+  "https://myreadnest.org/vs/",
+  "https://myreadnest.org/vs/abcmouse/",
+  "https://myreadnest.org/vs/reading-eggs/",
+  "https://myreadnest.org/vs/homer/",
+  "https://myreadnest.org/vs/hooked-on-phonics/",
+  "https://myreadnest.org/for-tutors/",
+  "https://myreadnest.org/my-child-cant-read-yet/",
+  "https://myreadnest.org/science-of-reading/"
 ];
 
 const errors = [];

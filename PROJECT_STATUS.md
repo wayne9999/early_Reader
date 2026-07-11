@@ -34,18 +34,23 @@
 - Added and verified automated search submission for IndexNow and Google Search Console.
 - Added revenue launch plan for parent, teacher, donation, and paid subscription growth.
 - Completed the first live authenticated release QA cycle; see `docs/qa-release-2026-06-25.md` for tested journeys, fixes, and remaining launch work.
+- Completed a full-stack paid-product pressure test with fixes for checkout popup blocking, webhook ordering, claim revocation on refunds/disputes, partial-refund handling, scheduled AI consent enforcement, and Firestore rule tightening; see `docs/pressure-test-2026-07-05.md`.
 - Added GitHub Pages deployment workflow.
 - Added Firebase backend deployment workflow for rules, functions, secrets, and scheduled functions.
 - Deployed successfully to GitHub Pages.
 - Deployed Firebase rules, Functions, Stripe/OpenAI secrets, and scheduled AI insight job through GitHub Actions.
 
+- Completed the launch-blocker follow-up: automated Stripe webhook registration workflow, production-default App Check enforcement, invite acceptance/revocation flow (`acceptTeacherInvite` callable + Find Teacher redemption + dashboard revoke), and admin data-deletion fulfillment (`fulfillDataDeletion` callable + `docs/data-deletion-runbook.md`).
+- Automated search-engine submission: IndexNow (Bing/Yandex) URL submission, Search Console API sitemap submission and URL inspection (pending `GSC_SERVICE_ACCOUNT_JSON` secret), local Rich Results validation in `validate:seo`, and the **Submit To Search Engines** workflow that runs after every production deploy. See `docs/growth-seo-plan.md`.
+
 ## Not Yet Fully Connected
 
 - Facebook sign-in needs Firebase Console provider setup with the Meta app ID and secret before live use.
-- Stripe webhook code is deployed with secrets, but live subscription checkout still needs a final end-to-end paid test event before scaling paid acquisition.
-- Teacher-created invitation codes can be created, but invite acceptance/revocation/admin tooling still needs completion.
+- Stripe webhook registration is automated by the **Register Stripe Webhook** GitHub Actions workflow; it still needs one run in test mode and one approved run in live mode.
+- Live subscription checkout still needs a final end-to-end paid test event before scaling paid acquisition.
+- App Check enforcement is now the production default; the reCAPTCHA v3 site key (`PROD_VITE_FIREBASE_APP_CHECK_SITE_KEY`) must be registered before the next production deploy or the build fails validation.
 - AI insight generation uses a backend OpenAI adapter with a rule-based fallback. Legal review, prompt evaluation, and production monitoring are still needed before broad launch.
-- Parent multi-child profiles, placement onboarding, printable sheets, and backend data deletion fulfillment still need completion.
+- Parent multi-child profiles, placement onboarding, and printable sheets still need completion.
 - Production role enforcement should move to backend logic/custom claims before live classroom use at scale.
 
 ## Verification Last Run

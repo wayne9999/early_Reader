@@ -1,0 +1,111 @@
+name: Register Stripe Webhook
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Stripe mode to register
+        required: true
+        default: test
+        type: choice
+        options:
+          - test
+          - live
+      rotate:
+        description: Recreate the endpoint to mint a fresh signing secret (required to store a secret when the endpoint already exists).
+        required: true
+        default: false
+        type: boolean
+      send_test_event:
+        description: Fire a checkout.session.completed test event after registration (test mode only).
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: stripe-webhook-registration
+  cancel-in-progress: false
+
+jobs:
+  register:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.mode == 'live' && 'production' || '' }}
+    env:
+      FIREBASE_PROJECT_ID: ${{ inputs.mode == 'live' && 'readnest-f9c67' || 'readnest-dev-f9c67' }}
+      FIREBASE_SECRET_NAME: ${{ inputs.mode == 'live' && 'STRIPE_LIVE_WEBHOOK_SECRET' || 'STRIPE_WEBHOOK_SECRET' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Register webhook endpoint with Stripe
+        id: register
+        env:
+          STRIPE_API_KEY: ${{ inputs.mode == 'live' && secrets.STRIPE_LIVE_SECRET_KEY || secrets.STRIPE_SECRET_KEY }}
+          STRIPE_WEBHOOK_MODE: ${{ inputs.mode }}
+          ROTATE_WEBHOOK: ${{ inputs.rotate }}
+        run: node scripts/register-stripe-webhook.mjs
+
+      - name: Authenticate to Google Cloud
+        if: steps.register.outputs.endpoint_created == 'true' || (inputs.mode == 'test' && inputs.send_test_event)
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ inputs.mode == 'live' && secrets.READNEST_FIREBASE_SERVICE_ACCOUNT || secrets.READNEST_DEV_FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: Install Firebase CLI
+        if: steps.register.outputs.endpoint_created == 'true'
+        run: |
+          npm install -g firebase-tools@15.21.0
+          npm install --prefix "$(npm root -g)/firebase-tools" google-auth-library@10.7.0 --no-save --ignore-scripts
+          node scripts/patch-firebase-cli-transport.mjs "$(npm root -g)/firebase-tools"
+          firebase --version
+
+      - name: Store signing secret in Firebase Functions
+        if: steps.register.outputs.endpoint_created == 'true'
+        env:
+          WEBHOOK_SECRET: ${{ steps.register.outputs.webhook_secret }}
+        run: |
+          printf '%s' "$WEBHOOK_SECRET" | firebase functions:secrets:set "$FIREBASE_SECRET_NAME" --project "$FIREBASE_PROJECT_ID" --data-file - --non-interactive
+          echo "Stored signing secret as $FIREBASE_SECRET_NAME in $FIREBASE_PROJECT_ID."
+
+      - name: Redeploy webhook function with the new secret
+        if: steps.register.outputs.endpoint_created == 'true'
+        working-directory: functions
+        env:
+          DEPLOY_TARGET: ${{ inputs.mode == 'live' && 'functions:stripeWebhook' || 'functions:stripeWebhookTest' }}
+        run: |
+          npm ci
+          npm run build
+          firebase deploy --only "$DEPLOY_TARGET" --project "$FIREBASE_PROJECT_ID" --non-interactive --force
+
+      - name: Remind about the GitHub repository secret
+        if: steps.register.outputs.endpoint_created == 'true'
+        run: |
+          echo "::warning::A new Stripe signing secret was stored directly in Firebase. Update the GitHub secret ${FIREBASE_SECRET_NAME} to the same value before the next billing deploy, or that deploy will overwrite Firebase with the stale GitHub value."
+
+      - name: Send Stripe test event
+        if: inputs.mode == 'test' && inputs.send_test_event
+        env:
+          STRIPE_API_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+        run: |
+          curl -fsSL https://github.com/stripe/stripe-cli/releases/download/v1.31.0/stripe_1.31.0_linux_x86_64.tar.gz | tar -xz
+          ./stripe trigger checkout.session.completed --api-key "$STRIPE_API_KEY"
+          echo "Test event sent. Delivery result appears in the Stripe Dashboard webhook attempts and in the function logs below."
+
+      - name: Check webhook function logs for processing
+        if: inputs.mode == 'test' && inputs.send_test_event
+        continue-on-error: true
+        run: |
+          sleep 30
+          gcloud logging read 'jsonPayload.eventName="stripe_webhook_processed"' \
+            --project "$FIREBASE_PROJECT_ID" \
+            --freshness=5m \
+            --limit=5 \
+            --format='value(timestamp, jsonPayload.message)' || true
