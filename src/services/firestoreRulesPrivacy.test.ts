@@ -108,4 +108,14 @@ describe("firestore privacy rules", () => {
     expect(rules).toContain("allow read: if isAdmin();");
     expect(rules).toContain("allow create, update, delete: if false;");
   });
+
+  it("accepts bounded client-side runtime error reports and restricts reads to admins", () => {
+    expect(rules).toContain("match /runtimeErrors/{errorId}");
+    expect(rules).toContain('request.resource.data.source in [');
+    expect(rules).toContain('"react-error-boundary", "window-onerror", "unhandled-rejection", "checkout", "manual"');
+    expect(rules).toContain("request.resource.data.message.size() <= 500");
+    expect(rules).toContain("request.resource.data.stack == null || request.resource.data.stack.size() <= 4000");
+    expect(rules).toContain("allow read: if isAdmin();");
+    expect(rules).toContain("allow update, delete: if false;");
+  });
 });

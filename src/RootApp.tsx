@@ -3,6 +3,7 @@ import { RoleSetup } from "./features/account/RoleSetup";
 import { SubscriptionManagement } from "./features/account/SubscriptionManagement";
 import { SubscriptionPrompt } from "./features/account/SubscriptionPrompt";
 import { UpgradeCheckoutButton } from "./features/account/UpgradeCheckoutButton";
+import { InstallPrompt } from "./features/pwa/InstallPrompt";
 import { LearningActivityPage } from "./features/activities/LearningActivityPage";
 import { SignInPanel } from "./features/auth/SignInPanel";
 import { useAuth } from "./features/auth/AuthProvider";
@@ -29,6 +30,7 @@ import {
 import { billingConfig, isStripeLinkCompatible } from "./services/billingConfig";
 import { paidStudentActivitiesDescription, studentActivityAccess, teacherDashboardAccess } from "./services/entitlementService";
 import { defaultProgress, loadProgress, saveProgress } from "./services/progressRepository";
+import { trackProductEvent } from "./services/productAnalytics";
 import { clearSignupIntent, loadSignupIntent, saveSignupIntent } from "./services/signupIntent";
 import { loadTrustedSubscription } from "./services/subscriptionRepository";
 import {
@@ -320,6 +322,27 @@ export function RootApp() {
     return loadedSubscription;
   }, [profile, user]);
 
+  // Fire subscription_active exactly once when the client observes the
+  // trusted subscription document flip to active. GA4 dedupe still applies,
+  // but we also guard here so a refetch does not re-fire.
+  const [reportedActiveFor, setReportedActiveFor] = useState<string | null>(null);
+  useEffect(() => {
+    if (!user || !subscription || subscription.status !== "active") {
+      return;
+    }
+
+    const key = `${user.id}:${subscription.tier}`;
+    if (reportedActiveFor === key) {
+      return;
+    }
+
+    setReportedActiveFor(key);
+    void trackProductEvent(user, "subscription_active", {
+      tier: subscription.tier,
+      source: subscription.source ?? "stripe"
+    });
+  }, [reportedActiveFor, subscription, user]);
+
   useEffect(() => {
     let isMounted = true;
 
@@ -608,6 +631,9 @@ export function RootApp() {
 
   return (
     <div className={`app-shell${isMenuOpen ? " is-menu-open" : ""}`}>
+      <a className="skip-link" href="#main-content">
+        Skip to main content
+      </a>
       <button
         className="mobile-menu-button"
         type="button"
@@ -700,7 +726,8 @@ export function RootApp() {
         </section>
       </aside>
 
-      <main className="main-content">
+      <main className="main-content" id="main-content" tabIndex={-1}>
+        <InstallPrompt />
         {currentView !== "home" ? (
         <section className="hero">
           <div>

@@ -250,6 +250,28 @@ service cloud.firestore {
       allow create, update, delete: if false;
     }
 
+    match /runtimeErrors/{errorId} {
+      // Client-side runtime error reports: anyone may write a bounded payload
+      // so we can see silent frontend crashes; only admins read them.
+      allow create: if request.resource.data.keys().hasOnly([
+          "source", "message", "stack", "componentStack", "environment",
+          "firebaseProjectId", "url", "userAgent", "metadata", "userId", "createdAt"
+        ])
+        && request.resource.data.source in [
+          "react-error-boundary", "window-onerror", "unhandled-rejection", "checkout", "manual"
+        ]
+        && request.resource.data.message is string
+        && request.resource.data.message.size() <= 500
+        && (request.resource.data.stack == null || request.resource.data.stack.size() <= 4000)
+        && (request.resource.data.componentStack == null || request.resource.data.componentStack.size() <= 4000)
+        && (request.resource.data.userAgent == null || request.resource.data.userAgent.size() <= 500)
+        && request.resource.data.metadata is map
+        && request.resource.data.metadata.size() <= 8
+        && request.resource.data.createdAt != null;
+      allow read: if isAdmin();
+      allow update, delete: if false;
+    }
+
     match /aiRecommendationRequests/{requestId} {
       allow read: if isSignedIn()
         && (resource.data.requestedBy == request.auth.uid || isAdmin());

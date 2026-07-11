@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { subscriptionTiers } from "../../services/billingConfig";
 import { startSubscriptionCheckout } from "../../services/billingRepository";
 import {
@@ -20,6 +20,12 @@ export function SubscriptionPrompt({ user, profile, onProfileUpdated, onContinue
   const [isStartingCheckout, setIsStartingCheckout] = useState(false);
   const [checkoutError, setCheckoutError] = useState("");
   const paidTierId: SubscriptionTierId = profile.role === "teacher" ? "teacherPro" : "familyPlus";
+
+  useEffect(() => {
+    void trackProductEvent(user, "paywall_viewed", { tier: paidTierId, role: profile.role });
+    // Fire once per mount; role and tier are stable within one prompt render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const paidTier = useMemo(
     () => subscriptionTiers.find((tier) => tier.id === paidTierId),
     [paidTierId]
