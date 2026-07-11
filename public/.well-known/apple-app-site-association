@@ -1,0 +1,16 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appIDs": ["TEAMIDPLACEHOLDER.org.myreadnest.app"],
+        "components": [
+          { "/": "/*", "comment": "Match every ReadNest URL as a Universal Link" }
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": ["TEAMIDPLACEHOLDER.org.myreadnest.app"]
+  }
+}
