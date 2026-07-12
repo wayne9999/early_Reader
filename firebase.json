@@ -9,7 +9,7 @@
   },
   "hosting": {
     "public": "dist",
-    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "ignore": ["firebase.json", "**/.*", "!.well-known/**", "**/node_modules/**"],
     "headers": [
       {
         "source": "**",
@@ -38,6 +38,20 @@
             "key": "Strict-Transport-Security",
             "value": "max-age=31536000; includeSubDomains"
           }
+        ]
+      },
+      {
+        "source": "/.well-known/apple-app-site-association",
+        "headers": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Cache-Control", "value": "public, max-age=3600" }
+        ]
+      },
+      {
+        "source": "/.well-known/assetlinks.json",
+        "headers": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Cache-Control", "value": "public, max-age=3600" }
         ]
       },
       {

@@ -13,3 +13,10 @@ Thumbs.db
 .tools/
 functions/lib/
 .codex-remote-attachments/
+
+# Capacitor generates per-workstation native projects. Do not commit them —
+# they encode local paths and drift constantly. Recreate with
+# `npm run cap:add:ios` / `npm run cap:add:android`.
+ios/
+android/
+.capacitor/
