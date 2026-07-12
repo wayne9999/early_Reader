@@ -24,7 +24,14 @@
     "validate:seo": "npm run generate:seo && node scripts/validate-seo-assets.mjs && node scripts/validate-rich-results.mjs",
     "validate:deployment-env": "node scripts/validate-deployment-env.mjs",
     "submit:indexnow": "node scripts/submit-indexnow.mjs",
-    "submit:google": "node scripts/google-search-console.mjs submit-sitemap"
+    "submit:google": "node scripts/google-search-console.mjs submit-sitemap",
+    "cap:sync": "npm run build && cap sync",
+    "cap:open:ios": "cap open ios",
+    "cap:open:android": "cap open android",
+    "cap:add:ios": "cap add ios",
+    "cap:add:android": "cap add android",
+    "cap:build:ios": "npm run build && cap sync ios && cap open ios",
+    "cap:build:android": "npm run build && cap sync android && cap open android"
   },
   "dependencies": {
     "@auth0/auth0-react": "^2.3.0",
@@ -33,6 +40,17 @@
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@capacitor-community/text-to-speech": "8.0.2",
+    "@capacitor/android": "8.4.1",
+    "@capacitor/app": "8.0.0",
+    "@capacitor/cli": "8.4.1",
+    "@capacitor/core": "8.4.1",
+    "@capacitor/haptics": "8.0.0",
+    "@capacitor/ios": "8.4.1",
+    "@capacitor/keyboard": "8.0.0",
+    "@capacitor/network": "8.0.0",
+    "@capacitor/preferences": "8.0.0",
+    "@capacitor/status-bar": "8.0.0",
     "@playwright/test": "^1.61.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
