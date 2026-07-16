@@ -497,7 +497,7 @@ export function RootApp() {
     }
 
     if (currentView === "memory") {
-      return <MemoryGame progress={progress} user={user} onProgressChange={handleProgressChange} />;
+      return <MemoryGame progress={progress} user={user} profile={profile} subscription={subscription} onProgressChange={handleProgressChange} />;
     }
 
     if (
@@ -537,6 +537,7 @@ export function RootApp() {
           progress={progress}
           user={user}
           profile={profile}
+          subscription={subscription}
           onProgressChange={handleProgressChange}
         />
       );
@@ -608,7 +609,7 @@ export function RootApp() {
       );
     }
 
-    return <ReadingPractice progress={progress} user={user} onProgressChange={handleProgressChange} />;
+    return <ReadingPractice progress={progress} user={user} profile={profile} subscription={subscription} onProgressChange={handleProgressChange} />;
   }, [
     currentView,
     isAuthLoading,

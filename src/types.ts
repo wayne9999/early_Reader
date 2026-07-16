@@ -36,6 +36,8 @@ export type StudentGradeLevel = "K" | "1" | "2";
 
 export type StudentReadingGoal = "confidence" | "phonics" | "sightWords" | "fluency";
 
+export type ContentAccessTier = "guest" | "registered" | "paid";
+
 export type SubscriptionRecord = {
   userId: string;
   tier: SubscriptionTierId;
@@ -64,6 +66,9 @@ export type ReadingWord = {
   hint: string;
   phonics: PhonicsPrompt;
   sentence: string;
+  accessTier?: ContentAccessTier;
+  gradeBand?: StudentGradeLevel;
+  tags?: string[];
 };
 
 export type ReadingLevel = {
@@ -77,6 +82,8 @@ export type MemoryCardContent = {
   id: string;
   label: string;
   category: string;
+  accessTier?: ContentAccessTier;
+  gradeBand?: StudentGradeLevel;
 };
 
 export type Progress = {
@@ -246,6 +253,9 @@ export type LearningActivityRound = {
   correctChoice: string;
   successMessage: string;
   coachMessage: string;
+  accessTier?: ContentAccessTier;
+  gradeBand?: StudentGradeLevel;
+  tags?: string[];
 };
 
 export type StudentSummary = {

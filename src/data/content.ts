@@ -1,4 +1,4 @@
-import type { LearningActivity, MemoryCardContent, ReadingLevel } from "../types";
+import type { LearningActivity, LearningActivityRound, MemoryCardContent, ReadingLevel } from "../types";
 
 export const readingLevels: ReadingLevel[] = [
   {
@@ -773,3 +773,310 @@ export const learningActivities: LearningActivity[] = [
     ]
   }
 ];
+
+readingLevels[0].words.push(
+  {
+    text: "bed",
+    hint: "A short /e/ word children meet at home.",
+    phonics: { title: "Blend /b/ /e/ /d/", sounds: ["b", "e", "d"], word: "bed" },
+    sentence: "The bed is red.",
+    accessTier: "registered",
+    gradeBand: "K",
+    tags: ["CVC", "short-e", "home"]
+  },
+  {
+    text: "dog",
+    hint: "A short /o/ animal word.",
+    phonics: { title: "Blend /d/ /o/ /g/", sounds: ["d", "o", "g"], word: "dog" },
+    sentence: "The dog can dig.",
+    accessTier: "registered",
+    gradeBand: "K",
+    tags: ["CVC", "short-o", "animal"]
+  },
+  {
+    text: "fish",
+    hint: "The letters s and h make one sound.",
+    phonics: { title: "Blend /f/ /i/ /sh/", sounds: ["f", "i", "sh"], word: "fish" },
+    sentence: "The fish is in a dish.",
+    accessTier: "paid",
+    gradeBand: "1",
+    tags: ["digraph", "short-i", "animal"]
+  },
+  {
+    text: "shop",
+    hint: "Listen for the /sh/ sound at the start.",
+    phonics: { title: "Blend /sh/ /o/ /p/", sounds: ["sh", "o", "p"], word: "shop" },
+    sentence: "We shop for a red hat.",
+    accessTier: "paid",
+    gradeBand: "1",
+    tags: ["digraph", "short-o", "community"]
+  }
+);
+
+readingLevels[1].words.push(
+  {
+    text: "clap",
+    hint: "A blend word that starts with /cl/.",
+    phonics: { title: "Blend /cl/ /a/ /p/", sounds: ["cl", "a", "p"], word: "clap" },
+    sentence: "We clap for the class.",
+    accessTier: "registered",
+    gradeBand: "1",
+    tags: ["blend", "short-a", "school"]
+  },
+  {
+    text: "flag",
+    hint: "The letters f and l slide together.",
+    phonics: { title: "Blend /fl/ /a/ /g/", sounds: ["fl", "a", "g"], word: "flag" },
+    sentence: "The flag is on the wall.",
+    accessTier: "registered",
+    gradeBand: "1",
+    tags: ["blend", "short-a", "school"]
+  },
+  {
+    text: "chain",
+    hint: "The letters c and h work together.",
+    phonics: { title: "Chunk ch-ai-n", sounds: ["ch", "ai", "n"], word: "chain" },
+    sentence: "The chain is by the gate.",
+    accessTier: "paid",
+    gradeBand: "2",
+    tags: ["digraph", "vowel-team", "stretch"]
+  },
+  {
+    text: "bright",
+    hint: "A longer word with the /br/ blend.",
+    phonics: { title: "Chunk br-ight", sounds: ["br", "ight"], word: "bright" },
+    sentence: "The bright light helps me read.",
+    accessTier: "paid",
+    gradeBand: "2",
+    tags: ["blend", "rime", "fluency"]
+  }
+);
+
+readingLevels[2].words.push(
+  {
+    text: "answer",
+    hint: "A school word used when someone asks a question.",
+    phonics: { title: "Chunk an-swer", sounds: ["an", "swer"], word: "answer" },
+    sentence: "I can answer with a full sentence.",
+    accessTier: "registered",
+    gradeBand: "2",
+    tags: ["vocabulary", "school", "fluency"]
+  },
+  {
+    text: "picture",
+    hint: "A word that helps readers connect text to meaning.",
+    phonics: { title: "Chunk pic-ture", sounds: ["pic", "ture"], word: "picture" },
+    sentence: "The picture helps me understand the story.",
+    accessTier: "registered",
+    gradeBand: "2",
+    tags: ["vocabulary", "comprehension", "fluency"]
+  },
+  {
+    text: "explain",
+    hint: "A thinking word for telling why.",
+    phonics: { title: "Chunk ex-plain", sounds: ["ex", "plain"], word: "explain" },
+    sentence: "I explain how I found the answer.",
+    accessTier: "paid",
+    gradeBand: "2",
+    tags: ["academic", "vowel-team", "comprehension"]
+  },
+  {
+    text: "carefully",
+    hint: "A longer word that reminds readers to slow down.",
+    phonics: { title: "Chunk care-ful-ly", sounds: ["care", "ful", "ly"], word: "carefully" },
+    sentence: "I read carefully and check the ending.",
+    accessTier: "paid",
+    gradeBand: "2",
+    tags: ["multisyllable", "fluency", "self-monitoring"]
+  }
+);
+
+memoryCards.push(
+  { id: "raise-hand", label: "Raise hand", category: "classroom skill", accessTier: "registered", gradeBand: "K" },
+  { id: "take-turns", label: "Take turns", category: "social skill", accessTier: "registered", gradeBand: "K" },
+  { id: "pack-bag", label: "Pack backpack", category: "routine", accessTier: "registered", gradeBand: "1" },
+  { id: "line-up", label: "Line up calmly", category: "classroom skill", accessTier: "registered", gradeBand: "1" },
+  { id: "check-work", label: "Check my work", category: "learning habit", accessTier: "paid", gradeBand: "2" },
+  { id: "ask-why", label: "Ask why", category: "thinking skill", accessTier: "paid", gradeBand: "2" },
+  { id: "reread", label: "Reread a sentence", category: "reading strategy", accessTier: "paid", gradeBand: "2" },
+  { id: "find-clue", label: "Find a clue", category: "comprehension", accessTier: "paid", gradeBand: "2" }
+);
+
+const extraRounds: Partial<Record<LearningActivity["id"], LearningActivityRound[]>> = {
+  rhymes: [
+    {
+      prompt: "Which word rhymes with pin?",
+      target: "pin",
+      choices: ["win", "cake", "dog", "leaf"],
+      correctChoice: "win",
+      successMessage: "Yes. Pin and win share the /in/ sound.",
+      coachMessage: "Listen to the ending sound. Pin ends like win.",
+      accessTier: "registered",
+      gradeBand: "K",
+      tags: ["rhyme", "short-i"]
+    },
+    {
+      prompt: "Which word rhymes with coat?",
+      target: "coat",
+      choices: ["boat", "bed", "sun", "fish"],
+      correctChoice: "boat",
+      successMessage: "Correct. Coat and boat rhyme.",
+      coachMessage: "Coat has the long /o/ ending, like boat.",
+      accessTier: "paid",
+      gradeBand: "2",
+      tags: ["rhyme", "vowel-team"]
+    }
+  ],
+  soundSort: [
+    {
+      prompt: "Pick the word that starts with /ch/.",
+      target: "ch",
+      choices: ["chair", "sun", "map", "dog"],
+      correctChoice: "chair",
+      successMessage: "Correct. Chair starts with /ch/.",
+      coachMessage: "The letters c and h work together in chair.",
+      accessTier: "registered",
+      gradeBand: "1",
+      tags: ["digraph", "beginning-sound"]
+    },
+    {
+      prompt: "Pick the word that starts with /br/.",
+      target: "br",
+      choices: ["bright", "fish", "cup", "tree"],
+      correctChoice: "bright",
+      successMessage: "Yes. Bright starts with the /br/ blend.",
+      coachMessage: "Listen for two sounds close together at the start.",
+      accessTier: "paid",
+      gradeBand: "2",
+      tags: ["blend", "beginning-sound"]
+    }
+  ],
+  sentenceBuilder: [
+    {
+      prompt: "Which sentence tells a complete idea?",
+      target: "The class reads together.",
+      choices: ["Reads together class the.", "The class reads together.", "Together the reads class.", "Class the together reads."],
+      correctChoice: "The class reads together.",
+      successMessage: "Yes. That sentence is complete and in order.",
+      coachMessage: "Start with who the sentence is about.",
+      accessTier: "paid",
+      gradeBand: "1",
+      tags: ["syntax", "fluency"]
+    },
+    {
+      prompt: "Which sentence uses because correctly?",
+      target: "I reread because I missed a word.",
+      choices: ["Because missed I reread word.", "I reread because I missed a word.", "Missed because word I reread.", "A word because reread I missed."],
+      correctChoice: "I reread because I missed a word.",
+      successMessage: "Correct. Because tells the reason.",
+      coachMessage: "Look for the sentence that gives a reason.",
+      accessTier: "paid",
+      gradeBand: "2",
+      tags: ["syntax", "because", "comprehension"]
+    }
+  ],
+  storyOrder: [
+    {
+      prompt: "What happens first when you borrow a library book?",
+      target: "First",
+      choices: ["Choose a book.", "Return the book.", "Write a report.", "Close the backpack."],
+      correctChoice: "Choose a book.",
+      successMessage: "Right. You choose a book before borrowing it.",
+      coachMessage: "Think about the first step at the library.",
+      accessTier: "paid",
+      gradeBand: "1",
+      tags: ["sequencing", "school"]
+    },
+    {
+      prompt: "What should happen after you make a reading mistake?",
+      target: "Next",
+      choices: ["Reread the sentence.", "Skip every page.", "Close your eyes.", "Erase the book."],
+      correctChoice: "Reread the sentence.",
+      successMessage: "Yes. Good readers reread to check meaning.",
+      coachMessage: "Think about what helps the sentence make sense.",
+      accessTier: "paid",
+      gradeBand: "2",
+      tags: ["sequencing", "self-monitoring"]
+    }
+  ],
+  wordMeaning: [
+    {
+      prompt: "Which word belongs with reading strategies?",
+      target: "strategy",
+      choices: ["reread", "banana", "shoe", "chair"],
+      correctChoice: "reread",
+      successMessage: "Correct. Reread is a reading strategy.",
+      coachMessage: "Look for something a reader can do.",
+      accessTier: "paid",
+      gradeBand: "2",
+      tags: ["vocabulary", "strategy"]
+    },
+    {
+      prompt: "Which word belongs with feelings?",
+      target: "feeling",
+      choices: ["proud", "pencil", "rain", "desk"],
+      correctChoice: "proud",
+      successMessage: "Yes. Proud is a feeling word.",
+      coachMessage: "Look for a word that names how someone feels.",
+      accessTier: "paid",
+      gradeBand: "1",
+      tags: ["vocabulary", "emotion"]
+    }
+  ],
+  echoReader: [
+    {
+      prompt: "Listen to the sentence. Which one did you hear?",
+      target: "I can read it again.",
+      voicePrompt: "I can read it again.",
+      choices: ["I can read it again.", "I can ride it again.", "I can read a game.", "I read it can again."],
+      correctChoice: "I can read it again.",
+      successMessage: "Yes. You matched the sentence exactly.",
+      coachMessage: "Listen for read and again.",
+      accessTier: "paid",
+      gradeBand: "1",
+      tags: ["listening", "fluency"]
+    },
+    {
+      prompt: "Listen to the sentence. Which one did you hear?",
+      target: "She found the clue in the picture.",
+      voicePrompt: "She found the clue in the picture.",
+      choices: ["She found the clue in the picture.", "She found the blue picture.", "She found a shoe in the picture.", "The clue found she picture."],
+      correctChoice: "She found the clue in the picture.",
+      successMessage: "Correct. You listened for the full idea.",
+      coachMessage: "Listen for clue and picture.",
+      accessTier: "paid",
+      gradeBand: "2",
+      tags: ["listening", "comprehension"]
+    }
+  ],
+  voiceQuest: [
+    {
+      prompt: "Listen to the clue. Which word fits?",
+      target: "A tool for checking meaning",
+      voicePrompt: "When a sentence does not make sense, I help you try it again.",
+      choices: ["reread", "jump", "milk", "sock"],
+      correctChoice: "reread",
+      successMessage: "Right. Rereading helps the sentence make sense.",
+      coachMessage: "Think about what readers do after a tricky sentence.",
+      accessTier: "paid",
+      gradeBand: "2",
+      tags: ["strategy", "comprehension"]
+    },
+    {
+      prompt: "Listen to the clue. Which word fits?",
+      target: "A reason word",
+      voicePrompt: "I help you tell why something happened.",
+      choices: ["because", "green", "chair", "ship"],
+      correctChoice: "because",
+      successMessage: "Correct. Because tells why.",
+      coachMessage: "Listen for the word that gives a reason.",
+      accessTier: "paid",
+      gradeBand: "2",
+      tags: ["academic", "meaning"]
+    }
+  ]
+};
+
+learningActivities.forEach((activity) => {
+  activity.rounds.push(...(extraRounds[activity.id] ?? []));
+});

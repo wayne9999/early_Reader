@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { memoryCards } from "../../data/content";
+import { contentAccessTier, contentTierSummary, filterContentForTier } from "../../services/contentAccess";
 import { recordMemoryWin } from "../../services/progressRepository";
 import { celebrate, speak } from "../../shared/speech";
-import type { AppUser, MemoryCardContent, Progress } from "../../types";
+import type { AppUser, MemoryCardContent, Progress, SubscriptionRecord, UserProfile } from "../../types";
 import { recordLearningEvent } from "../../services/learningEventRepository";
 
 type MemoryCardInstance = MemoryCardContent & {
@@ -12,6 +13,8 @@ type MemoryCardInstance = MemoryCardContent & {
 type MemoryGameProps = {
   progress: Progress;
   user: AppUser | null;
+  profile?: UserProfile | null;
+  subscription?: SubscriptionRecord | null;
   onProgressChange: (progress: Progress) => void;
 };
 
@@ -19,17 +22,21 @@ function shuffle<T>(items: T[]) {
   return [...items].sort(() => Math.random() - 0.5);
 }
 
-function buildDeck() {
+function buildDeck(cards: MemoryCardContent[]) {
   return shuffle(
-    memoryCards.flatMap((card) => [
+    cards.flatMap((card) => [
       { ...card, instanceId: `${card.id}-a` },
       { ...card, instanceId: `${card.id}-b` }
     ])
   );
 }
 
-export function MemoryGame({ progress, user, onProgressChange }: MemoryGameProps) {
-  const [deck, setDeck] = useState<MemoryCardInstance[]>(() => buildDeck());
+export function MemoryGame({ progress, user, profile, subscription, onProgressChange }: MemoryGameProps) {
+  const tier = contentAccessTier(user, profile, subscription);
+  const tierSummary = contentTierSummary(tier);
+  const availableCards = useMemo(() => filterContentForTier(memoryCards, tier), [tier]);
+  const practiceCards = useMemo(() => shuffle(availableCards).slice(0, tier === "paid" ? 10 : tier === "registered" ? 8 : 6), [availableCards, tier]);
+  const [deck, setDeck] = useState<MemoryCardInstance[]>(() => buildDeck(practiceCards));
   const [selected, setSelected] = useState<MemoryCardInstance[]>([]);
   const [matchedIds, setMatchedIds] = useState<Set<string>>(() => new Set());
   const [turns, setTurns] = useState(0);
@@ -38,10 +45,21 @@ export function MemoryGame({ progress, user, onProgressChange }: MemoryGameProps
 
   useEffect(() => {
     void recordLearningEvent(user, "memory_started", "Memory board started", "workingMemory", {
-      pairs: memoryCards.length,
-      cards: memoryCards.length * 2
+      pairs: practiceCards.length,
+      cards: practiceCards.length * 2,
+      availablePairs: availableCards.length,
+      contentTier: tier
     });
-  }, [user]);
+  }, [availableCards.length, practiceCards.length, tier, user]);
+
+  useEffect(() => {
+    setDeck(buildDeck(practiceCards));
+    setSelected([]);
+    setMatchedIds(new Set());
+    setTurns(0);
+    setLocked(false);
+    setCompleted(false);
+  }, [practiceCards]);
 
   const message = useMemo(() => {
     if (completed) {
@@ -56,15 +74,17 @@ export function MemoryGame({ progress, user, onProgressChange }: MemoryGameProps
   }, [completed, selected.length, turns]);
 
   function resetGame() {
-    setDeck(buildDeck());
+    setDeck(buildDeck(practiceCards));
     setSelected([]);
     setMatchedIds(new Set());
     setTurns(0);
     setLocked(false);
     setCompleted(false);
     void recordLearningEvent(user, "memory_started", "New memory board", "workingMemory", {
-      pairs: memoryCards.length,
-      cards: memoryCards.length * 2,
+      pairs: practiceCards.length,
+      cards: practiceCards.length * 2,
+      availablePairs: availableCards.length,
+      contentTier: tier,
       action: "new_game"
     });
   }
@@ -108,12 +128,14 @@ export function MemoryGame({ progress, user, onProgressChange }: MemoryGameProps
       });
       celebrate(`You found a match: ${first.label}!`);
 
-      if (nextMatchedIds.size === memoryCards.length) {
+      if (nextMatchedIds.size === practiceCards.length) {
         setCompleted(true);
         onProgressChange(recordMemoryWin(progress, nextTurns));
         void recordLearningEvent(user, "memory_completed", "Memory board completed", "workingMemory", {
           turns: nextTurns,
-          matches: memoryCards.length
+          matches: practiceCards.length,
+          availablePairs: availableCards.length,
+          contentTier: tier
         });
         celebrate(`Amazing work! You finished the board in ${nextTurns} turns.`);
       }
@@ -140,12 +162,20 @@ export function MemoryGame({ progress, user, onProgressChange }: MemoryGameProps
         </button>
       </div>
 
+      <article className={`content-tier-banner is-${tier}`}>
+        <div>
+          <p className="eyebrow">{tierSummary.label}</p>
+          <h3>{tierSummary.message}</h3>
+        </div>
+        <span>{availableCards.length} memory pairs available</span>
+      </article>
+
       <div className="memory-status">
         <span>
           {turns} {turns === 1 ? "turn" : "turns"} taken
         </span>
         <span>
-          {matchedIds.size} of {memoryCards.length} pairs matched
+          {matchedIds.size} of {practiceCards.length} pairs matched
         </span>
       </div>
       <p className="memory-message">{message}</p>
