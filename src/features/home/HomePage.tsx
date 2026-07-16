@@ -37,6 +37,33 @@ const skillCards = [
   { icon: "idea", title: "Word meaning", text: "Connect words to pictures, actions, and ideas." }
 ];
 
+const adventureCards = [
+  {
+    label: "Free",
+    title: "Tap, listen, read",
+    text: "Start with Reading and Memory before creating an account.",
+    action: "Try reading",
+    view: "reading" as AppView,
+    tone: "coral"
+  },
+  {
+    label: "Account",
+    title: "Build a daily habit",
+    text: "Create a reader profile to save progress and unlock starter games.",
+    action: "Create profile",
+    view: "account" as AppView,
+    tone: "teal"
+  },
+  {
+    label: "Plus",
+    title: "Grow a personal path",
+    text: "Upgrade when you want premium activities, printable plans, and deeper progress.",
+    action: "See plans",
+    view: "support" as AppView,
+    tone: "purple"
+  }
+];
+
 const testimonials = [
   {
     quote: "The five-minute practice finally feels doable after school.",
@@ -147,6 +174,30 @@ export function HomePage({ onNavigate, onSelectPlan }: HomePageProps) {
           <strong>Private</strong>
           <span>child-focused progress</span>
         </article>
+      </section>
+
+      <section className="home-section home-adventure-section" aria-labelledby="adventure-title">
+        <div className="home-section-heading home-centered-heading">
+          <p className="eyebrow">Choose the next happy step</p>
+          <h2 id="adventure-title">A simple path from first tap to real progress.</h2>
+          <p>
+            ReadNest gives kids obvious actions and gives adults the reason behind each step, so practice feels playful
+            instead of confusing.
+          </p>
+        </div>
+        <div className="home-adventure-grid">
+          {adventureCards.map((card, index) => (
+            <article className={`home-adventure-card is-${card.tone}`} key={card.title}>
+              <span className="home-adventure-step" aria-hidden="true">{index + 1}</span>
+              <p>{card.label}</p>
+              <h3>{card.title}</h3>
+              <small>{card.text}</small>
+              <button type="button" onClick={() => onNavigate(card.view)}>
+                {card.action}
+              </button>
+            </article>
+          ))}
+        </div>
       </section>
 
       <section className="home-section home-skill-section" aria-labelledby="skills-title">

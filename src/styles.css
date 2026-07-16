@@ -968,6 +968,109 @@ button {
   font-weight: 900;
 }
 
+.home-adventure-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.home-adventure-card {
+  position: relative;
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  min-height: 260px;
+  padding: 24px;
+  overflow: hidden;
+  border: 3px solid rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  background: linear-gradient(180deg, #ffffff, #fff2b8);
+  box-shadow: 0 16px 34px rgba(54, 74, 102, 0.1);
+}
+
+.home-adventure-card::after {
+  content: "";
+  position: absolute;
+  right: -28px;
+  bottom: -28px;
+  width: 116px;
+  height: 116px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.home-adventure-card p,
+.home-adventure-card h3,
+.home-adventure-card small {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+}
+
+.home-adventure-card p {
+  color: var(--blue-dark);
+  font-size: 0.78rem;
+  font-weight: 1000;
+  text-transform: uppercase;
+}
+
+.home-adventure-card h3 {
+  color: #151936;
+  font-size: clamp(1.45rem, 3vw, 2.15rem);
+  line-height: 1;
+}
+
+.home-adventure-card small {
+  color: var(--muted);
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.home-adventure-card button {
+  position: relative;
+  z-index: 1;
+  align-self: end;
+  min-height: 52px;
+  margin-top: 8px;
+  border: 0;
+  border-radius: 8px;
+  background: #151936;
+  color: #ffffff;
+  font-weight: 1000;
+}
+
+.home-adventure-step {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border-radius: 8px;
+  background: var(--coral);
+  color: #ffffff;
+  font-size: 1.7rem;
+  font-weight: 1000;
+  box-shadow: 0 10px 0 rgba(199, 57, 108, 0.16);
+}
+
+.home-adventure-card.is-teal {
+  background: linear-gradient(180deg, #ffffff, #eaffec);
+}
+
+.home-adventure-card.is-teal .home-adventure-step {
+  background: var(--teal);
+  box-shadow: 0 10px 0 rgba(8, 127, 140, 0.16);
+}
+
+.home-adventure-card.is-purple {
+  background: linear-gradient(180deg, #ffffff, #f2eaff);
+}
+
+.home-adventure-card.is-purple .home-adventure-step {
+  background: var(--purple);
+  box-shadow: 0 10px 0 rgba(93, 63, 176, 0.16);
+}
+
 .home-section {
   display: grid;
   gap: 20px;
@@ -1327,6 +1430,74 @@ button {
   font-weight: 800;
 }
 
+.kid-step-guide {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.kid-step-guide article {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  grid-template-areas:
+    "badge title"
+    "badge text";
+  align-items: center;
+  min-height: 76px;
+  padding: 12px;
+  border: 3px solid rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  background: linear-gradient(135deg, #ffffff, #eef8ff);
+  box-shadow: 0 10px 22px rgba(54, 74, 102, 0.08);
+}
+
+.kid-step-guide article:nth-child(2) {
+  background: linear-gradient(135deg, #ffffff, #fff2b8);
+}
+
+.kid-step-guide article:nth-child(3) {
+  background: linear-gradient(135deg, #ffffff, #eaffec);
+}
+
+.kid-step-guide span {
+  grid-area: badge;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  background: var(--blue);
+  color: #ffffff;
+  font-size: 1.35rem;
+  font-weight: 1000;
+  box-shadow: 0 6px 0 rgba(29, 93, 187, 0.16);
+}
+
+.kid-step-guide article:nth-child(2) span {
+  background: var(--gold);
+  color: #5a3f00;
+  box-shadow: 0 6px 0 rgba(184, 121, 0, 0.14);
+}
+
+.kid-step-guide article:nth-child(3) span {
+  background: var(--green);
+  box-shadow: 0 6px 0 rgba(42, 142, 56, 0.14);
+}
+
+.kid-step-guide strong {
+  grid-area: title;
+  color: var(--ink);
+  font-size: 1.08rem;
+  font-weight: 1000;
+}
+
+.kid-step-guide small {
+  grid-area: text;
+  color: var(--muted);
+  font-weight: 800;
+  line-height: 1.25;
+}
+
 .learning-grid {
   display: grid;
   grid-template-columns: minmax(260px, 1.15fr) minmax(240px, 0.85fr);
@@ -1556,8 +1727,9 @@ button {
 }
 
 .memory-front {
-  font-size: 3.4rem;
-  font-weight: 900;
+  font-size: clamp(1.55rem, 4vw, 2.2rem);
+  font-weight: 1000;
+  text-transform: uppercase;
   text-shadow: 0 3px 0 rgba(0, 0, 0, 0.12);
 }
 
@@ -1925,13 +2097,14 @@ button {
 .dashboard-stat-card > span {
   display: grid;
   place-items: center;
-  width: 48px;
+  width: 54px;
   height: 48px;
-  border-radius: 999px;
+  border-radius: 8px;
   background: var(--gold);
   color: #5a3f00;
-  font-size: 1.35rem;
+  font-size: 0.78rem;
   font-weight: 1000;
+  text-transform: uppercase;
 }
 
 .dashboard-stat-card:nth-child(2) > span {
@@ -3729,6 +3902,7 @@ button {
   }
 
   .home-benefit-grid,
+  .home-adventure-grid,
   .home-skill-grid,
   .home-testimonial-grid,
   .home-plan-grid,
@@ -3738,6 +3912,10 @@ button {
 
   .home-value-band-wide {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .kid-step-guide {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -3813,9 +3991,18 @@ button {
   }
 
   .home-value-band-wide,
+  .home-adventure-grid,
   .home-skill-grid,
   .home-testimonial-grid {
     grid-template-columns: 1fr;
+  }
+
+  .home-adventure-card {
+    min-height: 0;
+  }
+
+  .kid-step-guide article {
+    min-height: 68px;
   }
 
   .home-final-cta .home-hero-actions {

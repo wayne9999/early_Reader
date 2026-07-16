@@ -169,7 +169,7 @@ export function MemoryGame({ progress, user, onProgressChange }: MemoryGameProps
               aria-label={isSelected || isMatched ? card.label : "Hidden memory card"}
               onClick={() => selectCard(card)}
             >
-              <span className="memory-front">?</span>
+              <span className="memory-front">Tap</span>
               <span className="memory-back">
                 <strong>{card.label}</strong>
                 <small>{card.category}</small>
