@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { defaultProgress } from "../../services/progressRepository";
 import { loadLearningEvents, recordLearningEvent } from "../../services/learningEventRepository";
 import { learningActivities } from "../../data/content";
+import { filterContentForTier } from "../../services/contentAccess";
 import { LearningActivityPage } from "./LearningActivityPage";
 
 vi.mock("../../shared/speech", () => ({
@@ -23,10 +24,10 @@ describe("LearningActivityPage", () => {
     vi.mocked(recordLearningEvent).mockReset();
   });
 
-  it("coaches wrong choices and records one completion after ten rounds", async () => {
+  it("coaches wrong choices and records one completion after the registered rounds", async () => {
     const user = userEvent.setup();
     const onProgressChange = vi.fn();
-    const correctChoices = ["hat", "run", "top", "red", "make", "rug", "night", "dish", "wall", "bee"];
+    const correctChoices = ["hat", "run", "top", "red", "make", "rug", "night", "dish", "wall", "bee", "win"];
 
     render(
       <LearningActivityPage
@@ -77,7 +78,7 @@ describe("LearningActivityPage", () => {
       }
     }
 
-    expect(screen.getByRole("heading", { name: /tree and bee rhyme/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /pin and win share/i })).toBeInTheDocument();
     expect(onProgressChange).toHaveBeenCalledTimes(1);
     expect(onProgressChange.mock.calls[0][0]).toMatchObject({
       activityCompletions: 1,
@@ -90,24 +91,30 @@ describe("LearningActivityPage", () => {
       "phonics",
       expect.objectContaining({
         activityId: "rhymes",
-        rounds: 10,
-        correctAnswers: 10
+        rounds: 11,
+        correctAnswers: 11,
+        contentTier: "registered"
       })
     );
 
-    await user.click(screen.getByRole("button", { name: "bee" }));
+    await user.click(screen.getByRole("button", { name: "win" }));
 
     expect(onProgressChange).toHaveBeenCalledTimes(1);
 
     await user.click(screen.getByRole("button", { name: "Play again" }));
 
-    expect(screen.getByText("Round 1 of 10")).toBeInTheDocument();
+    expect(screen.getByText("Round 1 of 11")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "hat" })).toBeEnabled();
   });
 
   it.each(learningActivities.map((activity) => [activity.id, activity.rounds.length]))(
-    "%s provides ten complete practice rounds",
+    "%s provides a complete registered practice path",
     (activityId, roundCount) => {
+      const visibleRoundCount = filterContentForTier(
+        learningActivities.find((activity) => activity.id === activityId)?.rounds ?? [],
+        "registered"
+      ).length;
+
       render(
         <LearningActivityPage
           activityId={activityId}
@@ -117,8 +124,9 @@ describe("LearningActivityPage", () => {
         />
       );
 
-      expect(roundCount).toBe(10);
-      expect(screen.getByText("Round 1 of 10")).toBeInTheDocument();
+      expect(roundCount).toBeGreaterThanOrEqual(10);
+      expect(visibleRoundCount).toBeGreaterThanOrEqual(10);
+      expect(screen.getByText(`Round 1 of ${visibleRoundCount}`)).toBeInTheDocument();
     }
   );
 });

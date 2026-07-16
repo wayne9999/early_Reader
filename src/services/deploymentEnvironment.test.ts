@@ -10,6 +10,9 @@ function validateEnvironment(env: Record<string, string>) {
     env: {
       ...process.env,
       VITE_STRIPE_DONATION_LINK: "",
+      VITE_STRIPE_FAMILY_PLUS_LINK: "",
+      VITE_STRIPE_TEACHER_PRO_LINK: "",
+      VITE_STRIPE_CUSTOMER_PORTAL_LINK: "",
       ...env
     }
   });

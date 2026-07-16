@@ -26,7 +26,7 @@ describe("MemoryGame", () => {
       "memory_started",
       "Memory board started",
       "workingMemory",
-      expect.objectContaining({ pairs: 6, cards: 12 })
+      expect.objectContaining({ pairs: 8, cards: 16, availablePairs: 10, contentTier: "registered" })
     );
 
     await user.click(screen.getAllByRole("button", { name: "Hidden memory card" })[0]);

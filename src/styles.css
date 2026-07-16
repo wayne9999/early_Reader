@@ -1436,6 +1436,60 @@ button {
   gap: 12px;
 }
 
+.content-tier-banner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  padding: 16px 18px;
+  border: 3px solid rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  background: linear-gradient(135deg, #ffffff, #eef8ff);
+  box-shadow: 0 12px 28px rgba(54, 74, 102, 0.08);
+}
+
+.content-tier-banner h3,
+.content-tier-banner p {
+  margin: 0;
+}
+
+.content-tier-banner h3 {
+  color: var(--ink);
+  font-size: 1.05rem;
+  line-height: 1.35;
+}
+
+.content-tier-banner > span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--blue-dark);
+  font-size: 0.86rem;
+  font-weight: 1000;
+  text-align: center;
+  box-shadow: 0 8px 16px rgba(47, 128, 237, 0.1);
+}
+
+.content-tier-banner.is-registered {
+  background: linear-gradient(135deg, #ffffff, #fff2b8);
+}
+
+.content-tier-banner.is-registered > span {
+  color: #6b4600;
+}
+
+.content-tier-banner.is-paid {
+  background: linear-gradient(135deg, #ffffff, #eaffec);
+}
+
+.content-tier-banner.is-paid > span {
+  color: #206e38;
+}
+
 .kid-step-guide article {
   display: grid;
   grid-template-columns: 52px minmax(0, 1fr);
@@ -3915,6 +3969,10 @@ button {
   }
 
   .kid-step-guide {
+    grid-template-columns: 1fr;
+  }
+
+  .content-tier-banner {
     grid-template-columns: 1fr;
   }
 }
