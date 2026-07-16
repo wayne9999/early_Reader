@@ -160,6 +160,7 @@ jobs:
       - name: Sync Capacitor iOS project
         run: npx cap sync ios
       - name: Install CocoaPods
+        if: ${{ hashFiles('ios/App/Podfile') != '' }}
         working-directory: ios/App
         run: pod install --repo-update
       - name: Import code-signing certificate
@@ -180,7 +181,12 @@ jobs:
         if: env.IOS_DIST_CERT_P12_BASE64 == '' || env.IOS_APP_STORE_PROVISION_BASE64 == ''
         working-directory: ios/App
         run: |
-          xcodebuild -workspace App.xcworkspace \
+          if [ -d App.xcworkspace ]; then
+            xcode_container=(-workspace App.xcworkspace)
+          else
+            xcode_container=(-project App.xcodeproj)
+          fi
+          xcodebuild "${xcode_container[@]}" \
             -scheme App \
             -configuration Debug \
             -sdk iphonesimulator \
@@ -192,7 +198,12 @@ jobs:
         if: env.IOS_DIST_CERT_P12_BASE64 != '' && env.IOS_APP_STORE_PROVISION_BASE64 != '' && env.IOS_EXPORT_OPTIONS_PLIST != ''
         working-directory: ios/App
         run: |
-          xcodebuild -workspace App.xcworkspace \
+          if [ -d App.xcworkspace ]; then
+            xcode_container=(-workspace App.xcworkspace)
+          else
+            xcode_container=(-project App.xcodeproj)
+          fi
+          xcodebuild "${xcode_container[@]}" \
             -scheme App \
             -configuration Release \
             -archivePath $PWD/build/App.xcarchive \
