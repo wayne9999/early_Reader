@@ -197,6 +197,24 @@ export function LearningActivityPage({ activityId, progress, user, profile, onPr
         </button>
       </div>
 
+      <section className="kid-step-guide activity-step-guide" aria-label={`${activity.title} play steps`}>
+        <article>
+          <span aria-hidden="true">1</span>
+          <strong>Hear it</strong>
+          <small>Tap the voice button.</small>
+        </article>
+        <article>
+          <span aria-hidden="true">2</span>
+          <strong>Choose</strong>
+          <small>Pick the best answer card.</small>
+        </article>
+        <article>
+          <span aria-hidden="true">3</span>
+          <strong>Keep going</strong>
+          <small>Finish all {roundCount} quick rounds.</small>
+        </article>
+      </section>
+
       <section className={`activity-hero practice-panel activity-${activity.id}`}>
         <div>
           <p className="eyebrow">Round {roundIndex + 1} of {roundCount}</p>
@@ -225,7 +243,7 @@ export function LearningActivityPage({ activityId, progress, user, profile, onPr
             type="button"
             onClick={() => chooseAnswer(choice)}
           >
-            <span className="choice-mark" aria-hidden="true">{answeredCorrectly && choice === currentRound.correctChoice ? "✓" : "?"}</span>
+            <span className="choice-mark" aria-hidden="true">{answeredCorrectly && choice === currentRound.correctChoice ? "✓" : "Tap"}</span>
             <span>{choice}</span>
           </button>
         ))}

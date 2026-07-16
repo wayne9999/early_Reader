@@ -47,28 +47,28 @@ export function ProgressDashboard({ progress, user, profile, onProgressChange }:
     value
   }));
   const stats = [
-    { label: "Stars earned", value: starsEarned, note: "Practice points collected.", icon: "☆" },
+    { label: "Stars earned", value: starsEarned, note: "Practice points collected.", icon: "Star" },
     {
       label: "Accuracy",
       value: eventSummary.accuracy === null ? "New" : `${eventSummary.accuracy}%`,
       note: "Correct choices in recent activities.",
-      icon: "◎"
+      icon: "Goal"
     },
-    { label: "Attempts", value: eventSummary.totalInteractions || knownWordCount + progress.activityCompletions, note: "Live learning interactions.", icon: "↗" },
-    { label: "Best streak", value: `${streakDays} days`, note: "Practice rhythm this week.", icon: "♨" },
+    { label: "Attempts", value: eventSummary.totalInteractions || knownWordCount + progress.activityCompletions, note: "Live learning interactions.", icon: "Try" },
+    { label: "Best streak", value: `${streakDays} days`, note: "Practice rhythm this week.", icon: "Run" },
     { label: "Known words", value: knownWordCount, note: "Sight words marked as known.", icon: "Aa" },
-    { label: "Memory boards", value: progress.memoryWins, note: "Full matching boards completed.", icon: "□" },
+    { label: "Memory boards", value: progress.memoryWins, note: "Full matching boards completed.", icon: "Pair" },
     {
       label: "Best memory board",
       value: progress.bestMemoryTurns ?? "Not yet",
       note: "Fewest turns used to finish a board.",
-      icon: "✓"
+      icon: "Yes"
     },
     {
       label: "Avg. memory turns",
       value: averageTurns || "Not yet",
       note: "Average turns across completed boards.",
-      icon: "↺"
+      icon: "Loop"
     }
   ];
   const strengthItems = [

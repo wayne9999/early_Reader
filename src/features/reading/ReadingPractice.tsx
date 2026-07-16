@@ -103,6 +103,24 @@ export function ReadingPractice({ progress, user, onProgressChange }: ReadingPra
         </select>
       </div>
 
+      <section className="kid-step-guide" aria-label="Reading practice steps">
+        <article>
+          <span aria-hidden="true">1</span>
+          <strong>Listen</strong>
+          <small>Hear the word first.</small>
+        </article>
+        <article>
+          <span aria-hidden="true">2</span>
+          <strong>Read</strong>
+          <small>Try it out loud.</small>
+        </article>
+        <article>
+          <span aria-hidden="true">3</span>
+          <strong>Tap yes</strong>
+          <small>Use the green check when it feels good.</small>
+        </article>
+      </section>
+
       <div className="learning-grid">
         <article className="practice-panel word-panel">
           <div className="panel-header">
