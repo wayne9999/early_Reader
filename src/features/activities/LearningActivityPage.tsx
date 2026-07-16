@@ -1,23 +1,27 @@
 import { useEffect, useMemo, useState } from "react";
 import { learningActivities } from "../../data/content";
+import { contentAccessTier, contentTierSummary, filterContentForTier } from "../../services/contentAccess";
 import { playActivityVoicePrompt } from "../../services/activityVoiceService";
 import { loadLearningEvents, recordLearningEvent } from "../../services/learningEventRepository";
 import { buildStudentPersonalizedPlan, personalizeActivityRounds } from "../../services/personalizationService";
 import { trackProductEvent } from "../../services/productAnalytics";
 import { recordActivityCompletion } from "../../services/progressRepository";
 import { celebrate, speak, speakSentence } from "../../shared/speech";
-import type { AppUser, LearningActivity, LearningEvent, Progress, UserProfile } from "../../types";
+import type { AppUser, LearningActivity, LearningEvent, Progress, SubscriptionRecord, UserProfile } from "../../types";
 
 type LearningActivityPageProps = {
   activityId: LearningActivity["id"];
   progress: Progress;
   user: AppUser | null;
   profile?: UserProfile | null;
+  subscription?: SubscriptionRecord | null;
   onProgressChange: (progress: Progress) => void;
 };
 
-export function LearningActivityPage({ activityId, progress, user, profile, onProgressChange }: LearningActivityPageProps) {
+export function LearningActivityPage({ activityId, progress, user, profile, subscription, onProgressChange }: LearningActivityPageProps) {
   const activity = learningActivities.find((item) => item.id === activityId) ?? learningActivities[0];
+  const tier = contentAccessTier(user, profile, subscription);
+  const tierSummary = contentTierSummary(tier);
   const [roundIndex, setRoundIndex] = useState(0);
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [answeredCorrectly, setAnsweredCorrectly] = useState(false);
@@ -30,12 +34,15 @@ export function LearningActivityPage({ activityId, progress, user, profile, onPr
   );
   const personalizedRounds = useMemo(
     () => personalizeActivityRounds({
-      activity,
+      activity: {
+        ...activity,
+        rounds: filterContentForTier(activity.rounds, tier)
+      },
       profile,
       events,
       focusAreas: personalizedPlan.focusAreas
     }),
-    [activity, events, personalizedPlan.focusAreas, profile]
+    [activity, events, personalizedPlan.focusAreas, profile, tier]
   );
   const currentRound = personalizedRounds.rounds[roundIndex] ?? personalizedRounds.rounds[0];
   const roundCount = personalizedRounds.rounds.length;
@@ -61,9 +68,10 @@ export function LearningActivityPage({ activityId, progress, user, profile, onPr
       currentRound: roundIndex + 1,
       personalized: true,
       personalizationReason: personalizedRounds.reason,
-      focusAreas: personalizedPlan.focusAreas.join(",")
+      focusAreas: personalizedPlan.focusAreas.join(","),
+      contentTier: tier
     });
-  }, [activity.id, activity.skill, activity.title, personalizedPlan.focusAreas, personalizedRounds.reason, roundCount, roundIndex, user]);
+  }, [activity.id, activity.skill, activity.title, personalizedPlan.focusAreas, personalizedRounds.reason, roundCount, roundIndex, tier, user]);
 
   useEffect(() => {
     setRoundIndex(0);
@@ -88,7 +96,8 @@ export function LearningActivityPage({ activityId, progress, user, profile, onPr
       correctChoice: currentRound.correctChoice,
       correct: isCorrect,
       personalized: true,
-      personalizationReason: personalizedRounds.reason
+      personalizationReason: personalizedRounds.reason,
+      contentTier: tier
     });
 
     if (!isCorrect) {
@@ -116,7 +125,8 @@ export function LearningActivityPage({ activityId, progress, user, profile, onPr
       target: currentRound.target,
       correctChoice: currentRound.correctChoice,
       personalized: true,
-      personalizationReason: personalizedRounds.reason
+      personalizationReason: personalizedRounds.reason,
+      contentTier: tier
     });
     void trackProductEvent(user, "activity_completed", {
       activityId: activity.id,
@@ -152,7 +162,8 @@ export function LearningActivityPage({ activityId, progress, user, profile, onPr
       currentRound: 1,
       action: "play_again",
       personalized: true,
-      personalizationReason: personalizedRounds.reason
+      personalizationReason: personalizedRounds.reason,
+      contentTier: tier
     });
   }
 
@@ -173,7 +184,8 @@ export function LearningActivityPage({ activityId, progress, user, profile, onPr
       prompt: promptText,
       personalized: true,
       premiumVoice: activity.voiceMode === "elevenLabs",
-      voiceProvider
+      voiceProvider,
+      contentTier: tier
     });
   }
 
@@ -196,6 +208,14 @@ export function LearningActivityPage({ activityId, progress, user, profile, onPr
           <span>{activity.voiceMode === "elevenLabs" ? "Hear story voice" : "Hear prompt"}</span>
         </button>
       </div>
+
+      <article className={`content-tier-banner is-${tier}`}>
+        <div>
+          <p className="eyebrow">{tierSummary.label}</p>
+          <h3>{tierSummary.message}</h3>
+        </div>
+        <span>{roundCount} rounds in this game</span>
+      </article>
 
       <section className="kid-step-guide activity-step-guide" aria-label={`${activity.title} play steps`}>
         <article>

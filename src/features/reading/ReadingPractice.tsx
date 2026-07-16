@@ -1,21 +1,33 @@
 import { useEffect, useState } from "react";
 import { readingLevels } from "../../data/content";
+import { contentAccessTier, contentTierSummary, filterContentForTier } from "../../services/contentAccess";
 import { recordKnownWord, recordReadingSession } from "../../services/progressRepository";
 import { celebrate, speak, speakSentence, speakSounds, speakWord } from "../../shared/speech";
-import type { AppUser, Progress } from "../../types";
+import type { AppUser, Progress, SubscriptionRecord, UserProfile } from "../../types";
 import { recordLearningEvent } from "../../services/learningEventRepository";
 
 type ReadingPracticeProps = {
   progress: Progress;
   user: AppUser | null;
+  profile?: UserProfile | null;
+  subscription?: SubscriptionRecord | null;
   onProgressChange: (progress: Progress) => void;
 };
 
-export function ReadingPractice({ progress, user, onProgressChange }: ReadingPracticeProps) {
+export function ReadingPractice({ progress, user, profile, subscription, onProgressChange }: ReadingPracticeProps) {
   const [levelIndex, setLevelIndex] = useState(0);
   const [wordIndex, setWordIndex] = useState(0);
+  const tier = contentAccessTier(user, profile, subscription);
+  const tierSummary = contentTierSummary(tier);
   const level = readingLevels[levelIndex];
-  const word = level.words[wordIndex];
+  const levelWords = filterContentForTier(level.words, tier);
+  const word = levelWords[wordIndex] ?? levelWords[0] ?? level.words[0];
+
+  useEffect(() => {
+    if (wordIndex >= levelWords.length) {
+      setWordIndex(0);
+    }
+  }, [levelWords.length, wordIndex]);
 
   useEffect(() => {
     void recordLearningEvent(user, "reading_started", word.text, "sightWords", {
@@ -23,9 +35,10 @@ export function ReadingPractice({ progress, user, onProgressChange }: ReadingPra
       word: word.text,
       sentence: word.sentence,
       wordIndex: wordIndex + 1,
-      totalWords: level.words.length
+      totalWords: levelWords.length,
+      contentTier: tier
     });
-  }, [level.id, level.words.length, user, word.sentence, word.text, wordIndex]);
+  }, [level.id, levelWords.length, tier, user, word.sentence, word.text, wordIndex]);
 
   function wordMetadata() {
     return {
@@ -33,12 +46,13 @@ export function ReadingPractice({ progress, user, onProgressChange }: ReadingPra
       word: word.text,
       sentence: word.sentence,
       wordIndex: wordIndex + 1,
-      totalWords: level.words.length
+      totalWords: levelWords.length,
+      contentTier: tier
     };
   }
 
   function advanceWord() {
-    setWordIndex((current) => (current + 1) % level.words.length);
+    setWordIndex((current) => (current + 1) % levelWords.length);
   }
 
   function skipWord() {
@@ -83,12 +97,15 @@ export function ReadingPractice({ progress, user, onProgressChange }: ReadingPra
           onChange={(event) => {
             const nextLevelIndex = Number(event.target.value);
             const nextLevel = readingLevels[nextLevelIndex];
-            void recordLearningEvent(user, "reading_started", nextLevel.words[0].text, "sightWords", {
+            const nextLevelWords = filterContentForTier(nextLevel.words, tier);
+            const nextWord = nextLevelWords[0] ?? nextLevel.words[0];
+            void recordLearningEvent(user, "reading_started", nextWord.text, "sightWords", {
               level: nextLevel.id,
-              word: nextLevel.words[0].text,
-              sentence: nextLevel.words[0].sentence,
+              word: nextWord.text,
+              sentence: nextWord.sentence,
               wordIndex: 1,
-              totalWords: nextLevel.words.length,
+              totalWords: nextLevelWords.length,
+              contentTier: tier,
               action: "level_changed"
             });
             setLevelIndex(nextLevelIndex);
@@ -102,6 +119,14 @@ export function ReadingPractice({ progress, user, onProgressChange }: ReadingPra
           ))}
         </select>
       </div>
+
+      <article className={`content-tier-banner is-${tier}`}>
+        <div>
+          <p className="eyebrow">{tierSummary.label}</p>
+          <h3>{tierSummary.message}</h3>
+        </div>
+        <span>{levelWords.length} words in this level</span>
+      </article>
 
       <section className="kid-step-guide" aria-label="Reading practice steps">
         <article>
@@ -126,7 +151,7 @@ export function ReadingPractice({ progress, user, onProgressChange }: ReadingPra
           <div className="panel-header">
             <p className="eyebrow">Sight word</p>
             <span>
-              {wordIndex + 1} of {level.words.length}
+              {wordIndex + 1} of {levelWords.length}
             </span>
           </div>
           <button
