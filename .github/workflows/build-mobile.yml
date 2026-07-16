@@ -74,7 +74,6 @@ jobs:
     if: ${{ (github.event.inputs.platform || 'both') == 'android' || (github.event.inputs.platform || 'both') == 'both' }}
     needs: build-web
     runs-on: ubuntu-latest
-    environment: production
     env:
       ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
       ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -137,7 +136,6 @@ jobs:
     if: ${{ (github.event.inputs.platform || 'both') == 'ios' || (github.event.inputs.platform || 'both') == 'both' }}
     needs: build-web
     runs-on: macos-14
-    environment: production
     env:
       IOS_DIST_CERT_P12_BASE64: ${{ secrets.IOS_DIST_CERT_P12_BASE64 }}
       IOS_DIST_CERT_PASSWORD: ${{ secrets.IOS_DIST_CERT_PASSWORD }}
