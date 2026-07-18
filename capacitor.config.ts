@@ -42,10 +42,6 @@ const config: CapacitorConfig = {
       // Deep-link scheme (fallback to Universal Links / App Links).
       launchUrl: "https://myreadnest.org/"
     },
-    StatusBar: {
-      style: "DARK",
-      backgroundColor: "#fff7d7"
-    },
     Keyboard: {
       resize: "body",
       resizeOnFullScreen: true
