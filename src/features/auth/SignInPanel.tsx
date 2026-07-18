@@ -29,6 +29,7 @@ export function SignInPanel({ preferredSignupPath = null, redirectView = null, s
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState("");
+  const [authNotice, setAuthNotice] = useState("");
   const intendedTier = useMemo(
     () => subscriptionTiers.find((tier) => tier.id === subscriptionIntent),
     [subscriptionIntent]
@@ -67,6 +68,7 @@ export function SignInPanel({ preferredSignupPath = null, redirectView = null, s
   async function submitEmailAuth(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setAuthError("");
+    setAuthNotice("");
 
     if (emailMode === "signUp") {
       saveSignupIntent(selectedPath);
@@ -79,6 +81,9 @@ export function SignInPanel({ preferredSignupPath = null, redirectView = null, s
         displayName,
         mode: emailMode
       });
+      if (emailMode === "signUp") {
+        setAuthNotice(`Check ${email} for a confirmation email before coming back to finish setup.`);
+      }
     } catch (caughtError) {
       setAuthError(caughtError instanceof Error ? caughtError.message : "Email sign-in failed.");
     }
@@ -213,6 +218,7 @@ export function SignInPanel({ preferredSignupPath = null, redirectView = null, s
                 {emailMode === "signUp" ? `Create ${labelFromSignupPath(selectedPath)} account` : "Sign in with email"}
               </button>
             </form>
+            {authNotice ? <p className="success-message auth-panel-notice">{authNotice}</p> : null}
             {authError ? <p className="form-error auth-panel-error">{authError}</p> : null}
 
             <div className="auth-divider">

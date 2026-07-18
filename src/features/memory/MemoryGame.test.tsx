@@ -1,6 +1,6 @@
-import { render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { recordLearningEvent } from "../../services/learningEventRepository";
 import { defaultProgress } from "../../services/progressRepository";
 import { MemoryGame } from "./MemoryGame";
@@ -15,6 +15,24 @@ vi.mock("../../services/learningEventRepository", () => ({
 }));
 
 describe("MemoryGame", () => {
+  beforeEach(() => {
+    vi.useRealTimers();
+    Object.defineProperty(window, "matchMedia", {
+      configurable: true,
+      writable: true,
+      value: vi.fn().mockImplementation((query: string) => ({
+        matches: query.includes("700px"),
+        media: query,
+        onchange: null,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        dispatchEvent: vi.fn()
+      }))
+    });
+  });
+
   it("records board starts, resets, and card reveals", async () => {
     const user = userEvent.setup();
     const student = { id: "student-1", name: "Reader" };
@@ -26,7 +44,7 @@ describe("MemoryGame", () => {
       "memory_started",
       "Memory board started",
       "workingMemory",
-      expect.objectContaining({ pairs: 8, cards: 16, availablePairs: 10, contentTier: "registered" })
+        expect.objectContaining({ pairs: 5, cards: 10, availablePairs: 10, contentTier: "registered" })
     );
 
     await user.click(screen.getAllByRole("button", { name: "Hidden memory card" })[0]);
@@ -49,4 +67,30 @@ describe("MemoryGame", () => {
       expect.objectContaining({ action: "new_game" })
     );
   });
+
+  it("keeps mobile boards compact and leaves mismatches visible long enough to review", async () => {
+    render(<MemoryGame progress={defaultProgress} user={null} onProgressChange={vi.fn()} />);
+
+    expect(screen.getAllByRole("button", { name: "Hidden memory card" })).toHaveLength(8);
+
+    act(() => fireEvent.click(screen.getAllByRole("button", { name: "Hidden memory card" })[0]));
+    await waitFor(() => expect(screen.getAllByRole("button", { name: "Hidden memory card" })).toHaveLength(7));
+    const firstVisibleCard = Array.from(document.querySelectorAll<HTMLButtonElement>(".memory-card"))
+      .find((button) => button.getAttribute("aria-label") !== "Hidden memory card");
+    const firstLabel = firstVisibleCard?.getAttribute("aria-label");
+    expect(firstLabel).toBeTruthy();
+    const secondCard = screen
+      .getAllByRole("button", { name: "Hidden memory card" })
+      .find((button) => !button.textContent?.includes(firstLabel ?? ""));
+    expect(secondCard).toBeDefined();
+
+    act(() => fireEvent.click(secondCard!));
+
+    await new Promise((resolve) => window.setTimeout(resolve, 1200));
+    expect(screen.getAllByRole("button", { name: "Hidden memory card" }).length).toBeLessThan(8);
+
+    await new Promise((resolve) => window.setTimeout(resolve, 500));
+
+    expect(screen.getAllByRole("button", { name: "Hidden memory card" })).toHaveLength(8);
+  }, 7000);
 });

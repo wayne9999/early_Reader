@@ -144,6 +144,7 @@ jobs:
       APPSTORE_CONNECT_API_KEY: ${{ secrets.APPSTORE_CONNECT_API_KEY }}
       APPSTORE_CONNECT_KEY_ID: ${{ secrets.APPSTORE_CONNECT_KEY_ID }}
       APPSTORE_CONNECT_ISSUER_ID: ${{ secrets.APPSTORE_CONNECT_ISSUER_ID }}
+      IOS_ENABLE_NATIVE_BUILD: ${{ vars.IOS_ENABLE_NATIVE_BUILD }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -160,11 +161,11 @@ jobs:
       - name: Sync Capacitor iOS project
         run: npx cap sync ios
       - name: Install CocoaPods
-        if: ${{ hashFiles('ios/App/Podfile') != '' }}
+        if: ${{ hashFiles('ios/App/Podfile') != '' && env.IOS_ENABLE_NATIVE_BUILD == 'true' }}
         working-directory: ios/App
         run: pod install --repo-update
       - name: Import code-signing certificate
-        if: env.IOS_DIST_CERT_P12_BASE64 != '' && env.IOS_DIST_CERT_PASSWORD != ''
+        if: env.IOS_ENABLE_NATIVE_BUILD == 'true' && env.IOS_DIST_CERT_P12_BASE64 != '' && env.IOS_DIST_CERT_PASSWORD != ''
         run: |
           echo "$IOS_DIST_CERT_P12_BASE64" | base64 -d > /tmp/dist.p12
           security create-keychain -p "" build.keychain
@@ -173,12 +174,12 @@ jobs:
           security import /tmp/dist.p12 -k build.keychain -P "$IOS_DIST_CERT_PASSWORD" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple: -s -k "" build.keychain
       - name: Install provisioning profile
-        if: env.IOS_APP_STORE_PROVISION_BASE64 != ''
+        if: env.IOS_ENABLE_NATIVE_BUILD == 'true' && env.IOS_APP_STORE_PROVISION_BASE64 != ''
         run: |
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           echo "$IOS_APP_STORE_PROVISION_BASE64" | base64 -d > ~/Library/MobileDevice/Provisioning\ Profiles/ReadNest.mobileprovision
       - name: Build simulator app
-        if: env.IOS_DIST_CERT_P12_BASE64 == '' || env.IOS_APP_STORE_PROVISION_BASE64 == ''
+        if: env.IOS_ENABLE_NATIVE_BUILD == 'true' && (env.IOS_DIST_CERT_P12_BASE64 == '' || env.IOS_APP_STORE_PROVISION_BASE64 == '')
         working-directory: ios/App
         run: |
           if [ -d App.xcworkspace ]; then
@@ -195,7 +196,7 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             build
       - name: Archive signed app
-        if: env.IOS_DIST_CERT_P12_BASE64 != '' && env.IOS_APP_STORE_PROVISION_BASE64 != '' && env.IOS_EXPORT_OPTIONS_PLIST != ''
+        if: env.IOS_ENABLE_NATIVE_BUILD == 'true' && env.IOS_DIST_CERT_P12_BASE64 != '' && env.IOS_APP_STORE_PROVISION_BASE64 != '' && env.IOS_EXPORT_OPTIONS_PLIST != ''
         working-directory: ios/App
         run: |
           if [ -d App.xcworkspace ]; then
@@ -209,7 +210,7 @@ jobs:
             -archivePath $PWD/build/App.xcarchive \
             archive
       - name: Export IPA
-        if: env.IOS_DIST_CERT_P12_BASE64 != '' && env.IOS_APP_STORE_PROVISION_BASE64 != '' && env.IOS_EXPORT_OPTIONS_PLIST != ''
+        if: env.IOS_ENABLE_NATIVE_BUILD == 'true' && env.IOS_DIST_CERT_P12_BASE64 != '' && env.IOS_APP_STORE_PROVISION_BASE64 != '' && env.IOS_EXPORT_OPTIONS_PLIST != ''
         working-directory: ios/App
         run: |
           echo "$IOS_EXPORT_OPTIONS_PLIST" > /tmp/export-options.plist
@@ -218,7 +219,7 @@ jobs:
             -exportPath $PWD/build \
             -exportOptionsPlist /tmp/export-options.plist
       - name: Upload to TestFlight
-        if: env.MOBILE_RELEASE_CHANNEL == 'testflight' && env.APPSTORE_CONNECT_API_KEY != '' && env.APPSTORE_CONNECT_KEY_ID != '' && env.APPSTORE_CONNECT_ISSUER_ID != ''
+        if: env.IOS_ENABLE_NATIVE_BUILD == 'true' && env.MOBILE_RELEASE_CHANNEL == 'testflight' && env.APPSTORE_CONNECT_API_KEY != '' && env.APPSTORE_CONNECT_KEY_ID != '' && env.APPSTORE_CONNECT_ISSUER_ID != ''
         run: |
           mkdir -p ~/.appstoreconnect/private_keys
           echo "$APPSTORE_CONNECT_API_KEY" > ~/.appstoreconnect/private_keys/AuthKey_${APPSTORE_CONNECT_KEY_ID}.p8
@@ -230,6 +231,9 @@ jobs:
         with:
           name: readnest-ios
           path: |
+            ios/App/App.xcodeproj/**
+            ios/App/App/**
+            ios/App/Package.swift
             ios/App/build/App.ipa
             ios/App/build/DerivedData/Build/Products/Debug-iphonesimulator/*.app
-          if-no-files-found: warn
+          if-no-files-found: error

@@ -864,7 +864,7 @@ readingLevels[2].words.push(
   },
   {
     text: "picture",
-    hint: "A word that helps readers connect text to meaning.",
+    hint: "Here, picture means an image that helps you understand a story.",
     phonics: { title: "Chunk pic-ture", sounds: ["pic", "ture"], word: "picture" },
     sentence: "The picture helps me understand the story.",
     accessTier: "registered",
