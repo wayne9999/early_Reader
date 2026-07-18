@@ -40,17 +40,15 @@
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
-    "@capacitor-community/text-to-speech": "8.0.2",
     "@capacitor/android": "8.4.1",
-    "@capacitor/app": "8.0.0",
-    "@capacitor/cli": "8.4.1",
+    "@capacitor/app": "8.1.1",
+    "@capacitor/cli": "8.4.2",
     "@capacitor/core": "8.4.1",
-    "@capacitor/haptics": "8.0.0",
+    "@capacitor/haptics": "8.0.2",
     "@capacitor/ios": "8.4.1",
-    "@capacitor/keyboard": "8.0.0",
-    "@capacitor/network": "8.0.0",
-    "@capacitor/preferences": "8.0.0",
-    "@capacitor/status-bar": "8.0.0",
+    "@capacitor/keyboard": "8.0.5",
+    "@capacitor/network": "8.0.1",
+    "@capacitor/preferences": "8.0.1",
     "@playwright/test": "^1.61.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
@@ -71,5 +69,6 @@
     "memory",
     "mvp"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "overrides": {}
 }

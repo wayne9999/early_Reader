@@ -1,10 +1,16 @@
 const naturalVoiceHints = [
   "Natural",
+  "Ava",
+  "Allison",
+  "Susan",
+  "Victoria",
+  "Karen",
+  "Serena",
+  "Google US English",
   "Jenny",
   "Aria",
   "Samantha",
   "Zira",
-  "Google US English",
   "Microsoft"
 ];
 
@@ -51,8 +57,8 @@ function makeUtterance(text: string, options: Partial<SpeechSynthesisUtterance> 
     utterance.lang = "en-US";
   }
 
-  utterance.rate = options.rate ?? 0.86;
-  utterance.pitch = options.pitch ?? 1.18;
+  utterance.rate = options.rate ?? 0.9;
+  utterance.pitch = options.pitch ?? 1.03;
   utterance.volume = options.volume ?? 1;
   return utterance;
 }
@@ -83,20 +89,20 @@ async function speakBestAvailable(text: string, options: Partial<SpeechSynthesis
 }
 
 export function speakWord(word: string) {
-  void speakBestAvailable(word, { rate: 0.82, pitch: 1.22 });
+  void speakBestAvailable(word, { rate: 0.86, pitch: 1.04 });
 }
 
 export function speakSentence(sentence: string) {
-  void speakBestAvailable(sentence, { rate: 0.84, pitch: 1.14 });
+  void speakBestAvailable(sentence, { rate: 0.88, pitch: 1.02 });
 }
 
 export function speakSounds(sounds: string[], word: string) {
   void speakBestAvailable(`${sounds.join(" ... ")}. Blend it together: ${word}!`, {
-    rate: 0.72,
-    pitch: 1.2
+    rate: 0.78,
+    pitch: 1.04
   });
 }
 
 export function celebrate(message = "Great job! You did it!") {
-  void speakBestAvailable(message, { rate: 0.94, pitch: 1.28 });
+  void speakBestAvailable(message, { rate: 0.96, pitch: 1.08 });
 }

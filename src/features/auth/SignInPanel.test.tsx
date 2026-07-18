@@ -82,6 +82,7 @@ describe("SignInPanel", () => {
       displayName: "Mrs. Baker",
       mode: "signUp"
     });
+    expect(screen.getByText(/check teacher@example.com for a confirmation email/i)).toBeInTheDocument();
   });
 
   it("does not overwrite signup intent when returning users sign in with email", async () => {
