@@ -1685,6 +1685,29 @@ button {
   color: #ffffff;
 }
 
+.reading-reward-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: center;
+  margin-bottom: 18px;
+  border-color: rgba(255, 203, 71, 0.55);
+  background: linear-gradient(135deg, #fff8cf, #ffffff 48%, #eaffec);
+}
+
+.reward-medal {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--gold), var(--coral));
+  color: #ffffff;
+  font-size: 2rem;
+  font-weight: 1000;
+  box-shadow: 0 8px 0 rgba(255, 107, 107, 0.2);
+}
+
 .sound-chips {
   display: flex;
   flex-wrap: wrap;
@@ -1728,7 +1751,7 @@ button {
 
 .memory-card {
   position: relative;
-  min-height: 138px;
+  min-height: clamp(92px, 14vw, 138px);
   border: 3px solid rgba(255, 255, 255, 0.82);
   border-radius: 8px;
   background:
@@ -1798,12 +1821,15 @@ button {
 
 .memory-back strong {
   align-self: end;
-  font-size: 1.22rem;
+  font-size: clamp(0.92rem, 2.3vw, 1.22rem);
+  line-height: 1.1;
 }
 
 .memory-back small {
   align-self: start;
   color: var(--muted);
+  font-size: clamp(0.68rem, 1.6vw, 0.85rem);
+  line-height: 1.2;
 }
 
 .activity-hero {
@@ -1939,7 +1965,15 @@ button {
 }
 
 .activity-coach-panel {
+  display: grid;
+  gap: 12px;
   background: linear-gradient(180deg, #ffffff, #fffdf2);
+}
+
+.activity-coach-panel.is-complete {
+  justify-items: start;
+  border-color: rgba(128, 87, 230, 0.25);
+  background: linear-gradient(135deg, #ffffff, #fff8cf 48%, #f2eaff);
 }
 
 .stats-grid {
@@ -3793,6 +3827,77 @@ button {
   opacity: 0.58;
 }
 
+.tour-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(21, 37, 54, 0.46);
+}
+
+.tour-card {
+  width: min(760px, 100%);
+  max-height: min(720px, calc(100vh - 40px));
+  overflow: auto;
+  padding: 28px;
+  border-radius: 28px;
+  background: linear-gradient(135deg, #ffffff, #fff8cf 52%, #eef8ff);
+  box-shadow: 0 24px 70px rgba(21, 37, 54, 0.28);
+}
+
+.tour-card h2 {
+  margin: 0 0 18px;
+  font-size: clamp(2rem, 5vw, 3.2rem);
+  line-height: 1;
+}
+
+.tour-steps {
+  display: grid;
+  gap: 12px;
+}
+
+.tour-steps section {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 8px 14px;
+  align-items: start;
+  padding: 16px;
+  border: 2px solid rgba(47, 128, 237, 0.12);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.tour-steps span {
+  grid-row: span 2;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, var(--blue), var(--teal));
+  color: #ffffff;
+  font-weight: 1000;
+}
+
+.tour-steps strong,
+.tour-steps p {
+  margin: 0;
+}
+
+.tour-steps p {
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.tour-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 18px;
+}
+
 @media (max-width: 1100px) {
   .app-shell {
     grid-template-columns: 1fr;
@@ -3800,14 +3905,14 @@ button {
 
   .mobile-menu-button {
     position: fixed;
-    top: max(10px, env(safe-area-inset-top));
-    left: max(10px, env(safe-area-inset-left));
+    top: max(12px, env(safe-area-inset-top));
+    left: max(12px, env(safe-area-inset-left));
     z-index: 70;
     display: inline-grid;
     gap: 4px;
     place-content: center;
-    width: 42px;
-    height: 42px;
+    width: 38px;
+    height: 38px;
     border: 0;
     border-radius: 12px;
     background: linear-gradient(135deg, var(--purple), var(--blue));
@@ -3816,7 +3921,7 @@ button {
 
   .mobile-menu-button span {
     display: block;
-    width: 20px;
+    width: 18px;
     height: 2px;
     border-radius: 999px;
     background: #ffffff;
@@ -3869,7 +3974,7 @@ button {
   }
 
   .main-content {
-    padding-top: 80px;
+    padding-top: 88px;
   }
 
   .daily-goal {
@@ -3943,6 +4048,10 @@ button {
     grid-template-columns: repeat(2, minmax(120px, 1fr));
   }
 
+  .memory-board {
+    grid-template-columns: repeat(4, minmax(72px, 1fr));
+  }
+
   .auth-grid {
     grid-template-columns: 1fr;
   }
@@ -3979,7 +4088,7 @@ button {
 
 @media (max-width: 560px) {
   .main-content {
-    padding: 70px 16px 16px;
+    padding: 84px 16px 16px;
   }
 
   .hero {
@@ -4112,7 +4221,6 @@ button {
     grid-template-columns: 1fr;
   }
 
-  .memory-board,
   .stats-grid,
   .dashboard-stat-grid,
   .teacher-command-grid,
@@ -4120,6 +4228,41 @@ button {
   .auth-grid,
   .signup-choice-grid {
     grid-template-columns: 1fr;
+  }
+
+  .memory-board {
+    gap: 8px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .memory-card {
+    min-height: clamp(66px, 18vw, 86px);
+    border-width: 2px;
+  }
+
+  .memory-front,
+  .memory-back {
+    padding: 8px 5px;
+  }
+
+  .memory-front {
+    font-size: 1rem;
+  }
+
+  .memory-status {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .reading-reward-card,
+  .tour-steps section {
+    grid-template-columns: 1fr;
+  }
+
+  .reward-medal {
+    width: 52px;
+    height: 52px;
+    font-size: 1.55rem;
   }
 
   .goal-spotlight {

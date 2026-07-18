@@ -10,6 +10,7 @@ import { useAuth } from "./features/auth/AuthProvider";
 import { HomePage } from "./features/home/HomePage";
 import { LegalPage } from "./features/legal/LegalPage";
 import { MemoryGame } from "./features/memory/MemoryGame";
+import { OnboardingTour } from "./features/onboarding/OnboardingTour";
 import { ProgressDashboard } from "./features/progress/ProgressDashboard";
 import { ReadingPractice } from "./features/reading/ReadingPractice";
 import { FindTeacher } from "./features/student/FindTeacher";
@@ -160,6 +161,10 @@ const roleIndicatorMeta: Record<UserRole, { label: string; shortLabel: string; d
   }
 };
 
+function tourStorageKey(userId: string) {
+  return `readnest-tour-seen-${userId}`;
+}
+
 function openDonationLink() {
   if (isStripeLinkCompatible(billingConfig.donationLink)) {
     window.open(billingConfig.donationLink, "_blank", "noopener,noreferrer");
@@ -212,6 +217,7 @@ export function RootApp() {
   const [isSubscriptionLoading, setIsSubscriptionLoading] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showSubscriptionPrompt, setShowSubscriptionPrompt] = useState(false);
+  const [showWelcomeTour, setShowWelcomeTour] = useState(false);
   const [postSubscriptionView, setPostSubscriptionView] = useState<AppView | null>(null);
   const goalCompleted = Math.min(progress.completedToday, 3);
   const navGroups =
@@ -225,6 +231,12 @@ export function RootApp() {
   const currentView = routeState.view;
   const requestedAuthView = currentView === "account" ? routeState.nextView ?? pendingAuthView : null;
   const closeMenu = useCallback(() => setIsMenuOpen(false), []);
+  const closeWelcomeTour = useCallback(() => {
+    if (user) {
+      localStorage.setItem(tourStorageKey(user.id), "true");
+    }
+    setShowWelcomeTour(false);
+  }, [user]);
 
   const navigateToView = useCallback((view: AppView, options: { nextView?: AppView | null; replace?: boolean } = {}) => {
     const nextHash = hashForView(view, options.nextView ?? null);
@@ -293,6 +305,9 @@ export function RootApp() {
   useEffect(() => {
     setSignupIntent(loadSignupIntent());
     setSubscriptionIntent(loadSubscriptionIntent());
+    if (!user) {
+      setShowWelcomeTour(false);
+    }
   }, [user]);
 
   useEffect(() => {
@@ -422,6 +437,7 @@ export function RootApp() {
       const nextView = canAccessView(createdProfile, targetView) ? targetView : homeViewForRole(createdProfile.role);
 
       setProfile(createdProfile);
+      setShowWelcomeTour(true);
       clearSignupIntent();
       setSignupIntent(null);
       clearSubscriptionIntent();
@@ -609,7 +625,16 @@ export function RootApp() {
       );
     }
 
-    return <ReadingPractice progress={progress} user={user} profile={profile} subscription={subscription} onProgressChange={handleProgressChange} />;
+    return (
+      <ReadingPractice
+        progress={progress}
+        user={user}
+        profile={profile}
+        subscription={subscription}
+        onProgressChange={handleProgressChange}
+        onNextActivity={navigateToView}
+      />
+    );
   }, [
     currentView,
     isAuthLoading,
@@ -753,6 +778,9 @@ export function RootApp() {
         <section className="view-root" aria-live="polite">
           {view}
         </section>
+        {profile && showWelcomeTour && !showSubscriptionPrompt ? (
+          <OnboardingTour profile={profile} onClose={closeWelcomeTour} onNavigate={navigateToView} />
+        ) : null}
         <footer className="site-footer" aria-label="Legal and support links">
           {legalNavItems.map((item) => (
             <button key={item.id} type="button" onClick={() => navigateToView(item.id)}>

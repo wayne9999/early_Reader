@@ -3,7 +3,7 @@ import { readingLevels } from "../../data/content";
 import { contentAccessTier, contentTierSummary, filterContentForTier } from "../../services/contentAccess";
 import { recordKnownWord, recordReadingSession } from "../../services/progressRepository";
 import { celebrate, speak, speakSentence, speakSounds, speakWord } from "../../shared/speech";
-import type { AppUser, Progress, SubscriptionRecord, UserProfile } from "../../types";
+import type { AppUser, AppView, Progress, SubscriptionRecord, UserProfile } from "../../types";
 import { recordLearningEvent } from "../../services/learningEventRepository";
 
 type ReadingPracticeProps = {
@@ -12,11 +12,13 @@ type ReadingPracticeProps = {
   profile?: UserProfile | null;
   subscription?: SubscriptionRecord | null;
   onProgressChange: (progress: Progress) => void;
+  onNextActivity?: (view: AppView) => void;
 };
 
-export function ReadingPractice({ progress, user, profile, subscription, onProgressChange }: ReadingPracticeProps) {
+export function ReadingPractice({ progress, user, profile, subscription, onProgressChange, onNextActivity }: ReadingPracticeProps) {
   const [levelIndex, setLevelIndex] = useState(0);
   const [wordIndex, setWordIndex] = useState(0);
+  const [reward, setReward] = useState<{ title: string; message: string; nextView: AppView; nextLabel: string } | null>(null);
   const tier = contentAccessTier(user, profile, subscription);
   const tierSummary = contentTierSummary(tier);
   const level = readingLevels[levelIndex];
@@ -55,11 +57,29 @@ export function ReadingPractice({ progress, user, profile, subscription, onProgr
     setWordIndex((current) => (current + 1) % levelWords.length);
   }
 
+  function showSetReward(source: "word" | "sentence") {
+    if (wordIndex !== levelWords.length - 1) {
+      setReward(null);
+      return;
+    }
+
+    setReward({
+      title: "Sunny Reader badge earned",
+      message:
+        source === "word"
+          ? "You read the whole word set. Try Memory Match next so the words stick."
+          : "You finished the sentence set. Try Memory Match next so the story words stay fresh.",
+      nextView: "memory",
+      nextLabel: "Play Memory Match"
+    });
+  }
+
   function skipWord() {
     void recordLearningEvent(user, "word_skipped", word.text, "sightWords", {
       ...wordMetadata(),
       action: "next_word"
     });
+    setReward(null);
     advanceWord();
   }
 
@@ -69,7 +89,9 @@ export function ReadingPractice({ progress, user, profile, subscription, onProgr
       ...wordMetadata(),
       correct: true
     });
-    celebrate(`Nice reading! You knew ${word.text}.`);
+    const isSetComplete = wordIndex === levelWords.length - 1;
+    celebrate(isSetComplete ? "Badge earned! You finished this word set." : `Nice reading! You knew ${word.text}.`);
+    showSetReward("word");
     advanceWord();
   }
 
@@ -79,7 +101,9 @@ export function ReadingPractice({ progress, user, profile, subscription, onProgr
       ...wordMetadata(),
       correct: true
     });
-    celebrate("Wonderful reading! Let's try the next one.");
+    const isSetComplete = wordIndex === levelWords.length - 1;
+    celebrate(isSetComplete ? "Badge earned! You finished this sentence set." : "Wonderful reading! Let's try the next one.");
+    showSetReward("sentence");
     advanceWord();
   }
 
@@ -146,6 +170,29 @@ export function ReadingPractice({ progress, user, profile, subscription, onProgr
         </article>
       </section>
 
+      {reward ? (
+        <article className="practice-panel reading-reward-card" role="status" aria-live="polite">
+          <span className="reward-medal" aria-hidden="true">
+            ★
+          </span>
+          <div>
+            <p className="eyebrow">Level complete</p>
+            <h3>{reward.title}</h3>
+            <p className="helper-text">{reward.message}</p>
+          </div>
+          <button
+            className="primary-button child-action-button"
+            type="button"
+            onClick={() => onNextActivity?.(reward.nextView)}
+          >
+            <span>{reward.nextLabel}</span>
+            <span className="button-symbol" aria-hidden="true">
+              →
+            </span>
+          </button>
+        </article>
+      ) : null}
+
       <div className="learning-grid">
         <article className="practice-panel word-panel">
           <div className="panel-header">
@@ -192,7 +239,7 @@ export function ReadingPractice({ progress, user, profile, subscription, onProgr
                 key={sound}
                 type="button"
                 onClick={() => {
-                  speak(sound, { rate: 0.76, pitch: 1.24 });
+                  speak(sound, { rate: 0.8, pitch: 1.04 });
                   void recordLearningEvent(user, "sound_listened", sound, "phonics", {
                     ...wordMetadata(),
                     sound,

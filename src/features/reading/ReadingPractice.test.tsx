@@ -112,4 +112,29 @@ describe("ReadingPractice", () => {
       expect.anything()
     );
   });
+
+  it("celebrates a finished reading set and offers the next best activity", async () => {
+    const user = userEvent.setup();
+    const onNextActivity = vi.fn();
+
+    render(
+      <ReadingPractice
+        progress={defaultProgress}
+        user={null}
+        onProgressChange={vi.fn()}
+        onNextActivity={onNextActivity}
+      />
+    );
+
+    for (let index = 0; index < 4; index += 1) {
+      await user.click(screen.getByRole("button", { name: "I know it" }));
+    }
+
+    expect(screen.getByRole("heading", { name: /sunny reader badge/i })).toBeInTheDocument();
+    expect(screen.getByText(/try memory match next/i)).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /play memory match/i }));
+
+    expect(onNextActivity).toHaveBeenCalledWith("memory");
+  });
 });

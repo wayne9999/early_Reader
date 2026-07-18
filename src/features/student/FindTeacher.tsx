@@ -142,8 +142,9 @@ export function FindTeacher({ progress, user, profile }: FindTeacherProps) {
           <p className="eyebrow">Human-in-the-loop support</p>
           <h3>Pick a teacher who fits your reading goals</h3>
           <p className="helper-text">
-            Teachers review student activity history, spot strong and weak areas, and help keep each child on the
-            right path. To keep support realistic, ReadNest shows teacher load before a request is sent.
+            Assigned teachers are verified ReadNest teacher accounts connected to this child. They can review this
+            child's practice history, spot strong and weak areas, and suggest what to practice next. To keep support
+            realistic, ReadNest shows teacher load before a request is sent.
           </p>
         </div>
         <div className="teacher-choice-actions">
@@ -281,7 +282,10 @@ export function FindTeacher({ progress, user, profile }: FindTeacherProps) {
             ))}
           </ul>
         ) : (
-          <p className="helper-text">No teacher requests yet.</p>
+          <p className="helper-text">
+            No assigned teacher yet. Choose one from the list, use an invite code, or skip into the holding space so an
+            available teacher can pick up the student later.
+          </p>
         )}
       </article>
     </>

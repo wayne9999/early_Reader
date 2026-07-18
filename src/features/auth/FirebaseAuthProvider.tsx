@@ -4,6 +4,7 @@ import {
   FacebookAuthProvider,
   GoogleAuthProvider,
   onAuthStateChanged,
+  sendEmailVerification,
   signInWithEmailAndPassword,
   signInWithPopup,
   signInWithRedirect,
@@ -144,6 +145,10 @@ export function FirebaseReadNestAuthProvider({ children }: PropsWithChildren) {
               displayName: input.displayName.trim()
             });
             setUser(toAppUser(credential.user));
+          }
+
+          if (!credential.user.emailVerified) {
+            await sendEmailVerification(credential.user);
           }
           return;
         }

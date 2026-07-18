@@ -78,7 +78,8 @@ describe("LearningActivityPage", () => {
       }
     }
 
-    expect(screen.getByRole("heading", { name: /pin and win share/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /rhymes badge earned/i })).toBeInTheDocument();
+    expect(screen.getByText(/play again to beat your score/i)).toBeInTheDocument();
     expect(onProgressChange).toHaveBeenCalledTimes(1);
     expect(onProgressChange.mock.calls[0][0]).toMatchObject({
       activityCompletions: 1,

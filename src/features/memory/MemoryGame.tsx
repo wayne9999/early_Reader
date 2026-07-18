@@ -31,11 +31,41 @@ function buildDeck(cards: MemoryCardContent[]) {
   );
 }
 
+function useCompactMemoryBoard() {
+  const [isCompact, setIsCompact] = useState(() =>
+    typeof window !== "undefined" ? window.matchMedia("(max-width: 700px)").matches : false
+  );
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 700px)");
+    const update = () => setIsCompact(mediaQuery.matches);
+
+    update();
+    mediaQuery.addEventListener("change", update);
+
+    return () => mediaQuery.removeEventListener("change", update);
+  }, []);
+
+  return isCompact;
+}
+
+function pairCountForTier(tier: ReturnType<typeof contentAccessTier>, isCompact: boolean) {
+  if (isCompact) {
+    return tier === "paid" ? 6 : tier === "registered" ? 5 : 4;
+  }
+
+  return tier === "paid" ? 10 : tier === "registered" ? 8 : 6;
+}
+
 export function MemoryGame({ progress, user, profile, subscription, onProgressChange }: MemoryGameProps) {
   const tier = contentAccessTier(user, profile, subscription);
   const tierSummary = contentTierSummary(tier);
+  const isCompactBoard = useCompactMemoryBoard();
   const availableCards = useMemo(() => filterContentForTier(memoryCards, tier), [tier]);
-  const practiceCards = useMemo(() => shuffle(availableCards).slice(0, tier === "paid" ? 10 : tier === "registered" ? 8 : 6), [availableCards, tier]);
+  const practiceCards = useMemo(
+    () => shuffle(availableCards).slice(0, pairCountForTier(tier, isCompactBoard)),
+    [availableCards, isCompactBoard, tier]
+  );
   const [deck, setDeck] = useState<MemoryCardInstance[]>(() => buildDeck(practiceCards));
   const [selected, setSelected] = useState<MemoryCardInstance[]>([]);
   const [matchedIds, setMatchedIds] = useState<Set<string>>(() => new Set());
@@ -142,12 +172,12 @@ export function MemoryGame({ progress, user, profile, subscription, onProgressCh
       return;
     }
 
-    speak("Try again. Look carefully for the matching card.", { rate: 0.88, pitch: 1.16 });
+    speak("Try again. Look carefully for the matching card.", { rate: 0.88, pitch: 1.05 });
     setLocked(true);
     window.setTimeout(() => {
       setSelected([]);
       setLocked(false);
-    }, 850);
+    }, 1600);
   }
 
   return (

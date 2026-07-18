@@ -102,7 +102,7 @@ export function LearningActivityPage({ activityId, progress, user, profile, subs
 
     if (!isCorrect) {
       setFeedback(currentRound.coachMessage);
-      speak(currentRound.coachMessage, { rate: 0.9, pitch: 1.14 });
+      speak(currentRound.coachMessage, { rate: 0.9, pitch: 1.04 });
       return;
     }
 
@@ -112,7 +112,7 @@ export function LearningActivityPage({ activityId, progress, user, profile, subs
     setFeedback(currentRound.successMessage);
 
     if (roundIndex < roundCount - 1) {
-      speak(currentRound.successMessage, { rate: 0.92, pitch: 1.16 });
+      speak(currentRound.successMessage, { rate: 0.92, pitch: 1.05 });
       return;
     }
 
@@ -269,12 +269,13 @@ export function LearningActivityPage({ activityId, progress, user, profile, subs
         ))}
       </section>
 
-      <article className="practice-panel activity-coach-panel">
+      <article className={`practice-panel activity-coach-panel${isCompleted ? " is-complete" : ""}`}>
         <p className="eyebrow">{isCompleted ? "Activity complete" : answeredCorrectly ? "Nice work" : "Teacher tip"}</p>
-        <h3>{feedback}</h3>
+        {isCompleted ? <span className="reward-medal" aria-hidden="true">★</span> : null}
+        <h3>{isCompleted ? `${activity.shortLabel} badge earned` : feedback}</h3>
         <p className="helper-text">
           {isCompleted
-            ? `Nice work. You completed ${correctAnswers} of ${roundCount} rounds. Choose another activity from the menu when you are ready.`
+            ? `Nice work. You completed ${correctAnswers} of ${roundCount} rounds. Play again to beat your score or open the menu for the next challenge.`
             : answeredCorrectly
               ? "Move to the next round when you are ready."
               : "Try the answer that matches the sound, meaning, or story clue."}
