@@ -42,7 +42,9 @@ jobs:
           fetch-depth: 1
 
       - name: Claude review
+        id: claude_review
         if: steps.key.outputs.present == 'true'
+        continue-on-error: true
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -65,3 +67,8 @@ jobs:
             suggested fix. If the PR is clean, say so in two sentences.
           claude_args: |
             --allowedTools "Read,Grep,Glob,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
+
+      - name: Report advisory review outage
+        if: ${{ always() && steps.key.outputs.present == 'true' && steps.claude_review.outcome == 'failure' }}
+        run: |
+          echo "::warning::Claude PR review did not complete. The production readiness workflow remains the release gate; retry this review after the provider issue is resolved."
